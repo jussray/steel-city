@@ -33,8 +33,14 @@ def verify(page, url, require_webgl, require_hardware):
     page.wait_for_function("typeof window.__steelCityDebug === 'function'", timeout=10000)
     before = page.evaluate("window.__steelCityDebug()")
     assert before.get("campaignStage") == 0 and before.get("started") is False, before
-    assert page.locator("#playMuted").is_visible()
+    # Visual-to-code gate: key art belongs to the title, not the rendered world.
+    title_art = page.evaluate("""() => getComputedStyle(document.querySelector('#titlecover')).backgroundImage""")
+    assert "data:image/jpeg" in title_art, "Cinematic title image absent"
+    assert page.locator("#playMuted").is_visible(), "Start control must be readable"
+    assert not page.locator("#hud").is_visible(), "Gameplay HUD must not overlap title art"
     page.locator("#playMuted").click()
+    assert not page.locator("#titlecover").is_visible(), "Title must dismiss on play"
+    assert page.locator("#hud").is_visible(), "Gameplay HUD missing after play"
     page.locator("#storyOpen").click()
     assert page.locator(".storyAct").count() == 7, "Expected seven acts in journal"
     page.locator("#storyClose").click()
