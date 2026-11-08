@@ -39,7 +39,14 @@ def verify(page, url, require_webgl, require_hardware):
     assert page.locator("#playMuted").is_visible(), "Start control must be readable"
     assert not page.locator("#hud").is_visible(), "Gameplay HUD must not overlap title art"
     page.locator("#playMuted").click()
-    assert not page.locator("#titlecover").is_visible(), "Title must dismiss on play"
+    # The title fades to opacity 0 instead of being display:none.
+    page.wait_for_function("""() => {
+        const title = document.querySelector('#titlecover');
+        const style = getComputedStyle(title);
+        return title.classList.contains('hidden') &&
+               Number(style.opacity) === 0 &&
+               style.pointerEvents === 'none';
+    }""", timeout=3000)
     assert page.locator("#hud").is_visible(), "Gameplay HUD missing after play"
     page.locator("#storyOpen").click()
     assert page.locator(".storyAct").count() == 7, "Expected seven acts in journal"
