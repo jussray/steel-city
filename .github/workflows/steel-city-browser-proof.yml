@@ -1,0 +1,27 @@
+name: Steel City Browser Proof
+on:
+  push:
+    branches:
+      - main
+      - build/restore-steel-city-saga
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: steel-city-browser-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check playwright==1.56.0
+          python -m playwright install --with-deps chromium
+      - name: Desktop and mobile-emulated gameplay + cinematic gate
+        run: python tests/verify_browser.py
