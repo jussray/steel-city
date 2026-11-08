@@ -16,6 +16,27 @@
 #storyJournal[hidden],#storyVictory[hidden]{display:none!important}#storyJournal{position:absolute;inset:6% 15%;max-height:88%;overflow:auto;z-index:20;pointer-events:auto;padding:24px;background:#09172cf7;color:#e3eef9;border:1px solid #eac17e;border-radius:14px;box-shadow:0 15px 70px #000d}#storyJournal h2{color:#ffdc93;font-size:24px;margin:0 0 9px}#storyJournal p{color:#b6c8da;font-size:12px;line-height:1.5}.storyActs{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin:18px 0}.storyAct{padding:11px;border-radius:9px;border:1px solid #475775;background:#172b44}.storyAct.current{border-color:#e7bd72;background:#41392566}.storyAct.complete{border-color:#55a99c}.storyAct b{font-size:11px;color:#ffe3af}.storyAct span{display:block;color:#bad0dc;font-size:10px;margin-top:5px;line-height:1.5}#storyVictory{position:absolute;inset:0;z-index:24;display:flex;align-items:center;justify-content:center;pointer-events:auto;background:#061225e9;backdrop-filter:blur(9px);padding:22px}#storyVictory>div{max-width:490px;text-align:center;padding:35px;background:#13243b;border:1px solid #ecc677;border-radius:17px}#storyVictory h2{font-size:34px;color:#ffe1a5}#storyVictory p{color:#c6d9e6;line-height:1.6}
 body .objective{display:none!important}#storyHud{top:100px}#storyHud button:focus-visible,#storyJournal button:focus-visible{outline:2px solid #bafcff}
 @media(max-width:800px){#storyHud{top:138px;left:12px;width:min(200px,51vw);padding:8px 10px}#storyHud h2{font-size:13px;margin:3px 0}#storyHud .eyebrow{font-size:8px}#storyHud p{font-size:9px;min-height:0}#storyHud .actions{gap:4px;margin-top:7px}#storyHud button{padding:6px 3px;font-size:9px}#storyHud .progress{margin-top:6px}#storyJournal{inset:4% 5%;padding:16px}.storyActs{grid-template-columns:1fr}#storyVictory h2{font-size:25px}}
+</style><style id="steel-cinematic-quality">
+/* Cinematic visual-to-code pass: preserve authored art and real gameplay. */
+body:has(#titlecover:not(.hidden)) #hud{visibility:hidden}
+.titlecover{isolation:isolate}
+.titlecover::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 72% 33%,transparent 4%,#03071346 75%,#02050d98 100%),linear-gradient(0deg,#030611c9 0%,transparent 37%)}
+.titlecover>.intro{position:relative;z-index:1;max-width:min(680px,95vw);filter:drop-shadow(0 12px 25px #0009)}
+.titlecover .sup{letter-spacing:.23em;text-shadow:0 2px 10px #000}
+.titlecover .bigtitle{filter:drop-shadow(0 4px 2px #0008);text-wrap:balance}
+.titlecover .features span{background:#071022ac;border-color:#e1ba6f75;backdrop-filter:blur(8px)}
+.titlecover .mainbtn{box-shadow:0 18px 38px #000b,0 0 34px #e3b84d4a}
+.titlecover .smallprint{max-width:42rem;text-shadow:0 2px 5px #000}
+@media(max-width:760px){
+.titlecover::after{background:linear-gradient(0deg,#020611ed 0%,#020815bb 37%,#02081540 100%)}
+.titlecover>.intro{width:100%;max-width:100%;filter:drop-shadow(0 5px 9px #0008)}
+.titlecover .bigtitle{font-size:clamp(52px,13vw,92px);line-height:.86}
+.titlecover .features{gap:6px;margin:14px 0 18px}
+.titlecover .features span{font-size:9px}
+.titlecover .subhead{font-size:clamp(12px,3.35vw,15px);line-height:1.4;margin-top:16px}
+.titlecover .smallprint{font-size:10px;line-height:1.3}
+}
+@media(prefers-reduced-motion:reduce){.titlecover *{animation:none!important;transition:none!important}}
 </style></head><body>
 <canvas id="game" aria-label="Free-roaming third-person 3D Pittsburgh-inspired game world"></canvas>
 <div id="hud"><div class="bar"><div class="logo">STEEL CITY<br><b>OPEN WORLD</b></div><div class="citytag">PITTSBURGH, PA<br>THE THREE RIVERS</div></div><div class="objective"><small id="missionLabel">◆ MISSION 01 · THE GOLDEN ROUTE</small><strong id="objectiveTitle">Collect five Steel Stars</strong><span id="objectiveDetail">Explore the city and rooftops</span></div><div class="compass" id="compass">N  ◇  PITTSBURGH</div><div class="counter">STEEL STARS &nbsp;<b id="count">0/5</b><small id="mode">FREEROAM · NIGHT DISTRICT</small></div><div class="buttons"><button class="mini skylaunch" id="skyToggle" aria-label="Toggle Sky Mode">✦ SKY MODE · F</button><button class="mini" id="audio">♫ SOUND OFF</button><button class="mini" id="camReset">↺ CAMERA</button><button class="mini" id="restart">↻ RESET</button></div><div id="skyhud" aria-live="polite"><div class="sky-title">☄ SKY PATROL <span id="skyStatus">STANDBY</span></div><div class="healthline"><span>ARMOR</span><div class="meter"><i id="healthFill"></i></div><b id="healthText">100</b></div><div class="skyline"><span id="bugsCount">BUGS 0 / 6</span><span id="altitude">ALT 0 M</span></div><div class="sky-advice" id="skyAdvice">F: FLY · SPACE: RISE · C: DESCEND · J: BLAST</div></div><div id="reticle"><span>+</span><small id="targetLabel">TARGET ACQUIRED</small></div><div class="location" id="place">DOWNTOWN · GOLDEN TRIANGLE</div><div class="help">WASD MOVE · DRAG LOOK · F FLY/LAND · SPACE RISE · C DESCEND · J / CLICK FIRE · SHIFT BOOST</div><div class="mapwrap"><canvas id="map" width="300" height="300"></canvas><div class="maplabel">CITY DISTRICT</div></div><div class="toast" id="toast"></div></div>
