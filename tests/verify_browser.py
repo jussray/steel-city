@@ -29,7 +29,18 @@ def verify(page, url, require_webgl, require_hardware):
         source = "deployed_http"
     else:
         source = "offline_dom_only"
-        page.set_content((ROOT / "index.html").read_text(encoding="utf-8"), wait_until="domcontentloaded")
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        # The graphics branch uses document.baseURI for its checked-in skyline.
+        # set_content() otherwise runs at about:blank, which cannot resolve relative URLs.
+        if "assets/pittsburgh-night-skyline.jpg" in html:
+            asset = ROOT / "assets" / "pittsburgh-night-skyline.jpg"
+            assert asset.is_file(), "Checked-in skyline asset is missing"
+            page.route(
+                "https://steel-city.test/assets/pittsburgh-night-skyline.jpg",
+                lambda route: route.fulfill(path=str(asset), content_type="image/jpeg"),
+            )
+            html = html.replace("<head>", '<head><base href="https://steel-city.test/">', 1)
+        page.set_content(html, wait_until="domcontentloaded")
     page.wait_for_function("typeof window.__steelCityDebug === 'function'", timeout=10000)
     before = page.evaluate("window.__steelCityDebug()")
     assert before.get("campaignStage") == 0 and before.get("started") is False, before
