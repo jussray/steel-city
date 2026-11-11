@@ -22,7 +22,7 @@ jobs:
       - name: Install browser test dependencies
         run: |
           python -m pip install --disable-pip-version-check playwright==1.56.0
-          python -m playwright install --with-deps chromium
+          python -m playwright install chromium
       - name: Desktop and mobile-emulated gameplay + cinematic gate
         run: python tests/verify_browser.py
       - name: Verify approved skyline export matches source
