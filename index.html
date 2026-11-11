@@ -222,7 +222,30 @@ if(!sky.active)skyTick(dt);sagaTick(dt);for(let p of pickups){if(p.taken)continu
 if(Math.hypot(state.pos.x-gate.x,state.pos.z-gate.z)<3.6&&state.stars>=5)finish();el('count').textContent=state.stars+'/5';if(state.pos.z<-23)el('place').textContent='GOLDEN BRIDGE · THE THREE RIVERS';else if(state.pos.x>7&&state.pos.z<0)el('place').textContent='POINT STATE PARK · RIVERFRONT';else if(state.pos.x>7)el('place').textContent='ROOFTOP PARKOUR · MARKET DISTRICT';else el('place').textContent='DOWNTOWN · GOLDEN TRIANGLE';el('compass').textContent=(Math.round(((state.yaw%(Math.PI*2)+Math.PI*2)%(Math.PI*2))*180/Math.PI))+'°  ◇  '+(sky.active?'SKY PATROL':'FREE EXPLORE');}
 function renderHero(m){const p=state.pos,walk=(state.keys.size+state.touch.size)>0?Math.sin(state.t*12)*.28:0,base=p.y+.04;let ang=state.heading,cs=Math.cos(ang),sn=Math.sin(ang);function transform(a){return[p.x+a[0]*cs+a[2]*sn,base+a[1],p.z-a[0]*sn+a[2]*cs]}function box(lx,ly,lz,w,h,d,col,gl=0){const B=new Mesh();B.box(lx,ly,lz,w,h,d,col,gl);for(let i=0;i<B.v.length;i+=10){let o=transform([B.v[i],B.v[i+1],B.v[i+2]]),n=[B.v[i+3]*cs+B.v[i+5]*sn,B.v[i+4],-B.v[i+3]*sn+B.v[i+5]*cs];m.v.push(...o,...n,...B.v.slice(i+6,i+10))}}
 // Original armored explorer with metallic shoulder guards, visor and animated legs.
-box(0,1.55,.06,.85,1.05,.49,'#141d2c');box(0,1.67,-.22,.67,.53,.09,'#bb923f',.48);box(0,1.62,-.29,.3,.20,.06,'#ffd982',.7);box(0,2.33,-.01,.53,.55,.55,'#161f2d');box(0,2.37,-.30,.45,.16,.06,'#a7e9ff',.93);box(0,2.54,-.07,.57,.13,.55,'#b59b61');box(-.59,1.89,.02,.42,.43,.53,'#6c7275');box(.59,1.89,.02,.42,.43,.53,'#6c7275');box(-.58,1.39+.14*walk,.08,.25,.65,.26,'#1b2635');box(.58,1.39-.14*walk,.08,.25,.65,.26,'#1b2635');box(-.23,.67+.15*walk,.07,.33,.8,.40,'#273343');box(.23,.67-.15*walk,.07,.33,.8,.40,'#273343');box(-.23,.21+.15*walk,-.12,.37,.24,.64,'#0b111d');box(.23,.21-.15*walk,-.12,.37,.24,.64,'#0b111d');box(0,1.76,.35,.89,1,.12,'#1b2337');box(0,1.79,.43,.48,.83,.09,'#af833a',.21);}
+box(0,1.55,.06,.85,1.05,.49,'#141d2c');box(0,1.67,-.22,.67,.53,.09,'#bb923f',.48);box(0,1.62,-.29,.3,.20,.06,'#ffd982',.7);box(0,2.33,-.01,.53,.55,.55,'#161f2d');box(0,2.37,-.30,.45,.16,.06,'#a7e9ff',.93);box(0,2.54,-.07,.57,.13,.55,'#b59b61');box(-.59,1.89,.02,.42,.43,.53,'#6c7275');box(.59,1.89,.02,.42,.43,.53,'#6c7275');box(-.58,1.39+.14*walk,.08,.25,.65,.26,'#1b2635');box(.58,1.39-.14*walk,.08,.25,.65,.26,'#1b2635');box(-.23,.67+.15*walk,.07,.33,.8,.40,'#273343');box(.23,.67-.15*walk,.07,.33,.8,.40,'#273343');box(-.23,.21+.15*walk,-.12,.37,.24,.64,'#0b111d');box(.23,.21-.15*walk,-.12,.37,.24,.64,'#0b111d');box(0,1.76,.35,.89,1,.12,'#1b2337');box(0,1.79,.43,.48,.83,.09,'#af833a',.21);
+// STEEL CITY VISUAL RUNTIME: real 3D black-and-gold armor, based on the approved cinematic reference.
+for(const side of [-1,1]){
+ box(side*.38,1.9,-.27,.14,.80,.12,'#e2b65b',.83);
+ box(side*.62,1.91,-.03,.18,.23,.67,'#f0c773',.68);
+ box(side*.61,1.23,.1,.31,.18,.30,'#a87a3c',.45);
+ box(side*.25,.65,-.19,.21,.55,.13,'#cba357',.34);
+ box(side*.24,.19,-.29,.40,.13,.40,'#e4ad48',.58);
+}
+box(0,1.67,-.32,.38,.12,.13,'#f9dd95',1.50);
+box(0,2.36,-.35,.51,.10,.12,'#8deaff',2.0);
+if(sky.active){
+ for(const side of [-1,1]){
+  const wave=Math.sin(state.t*21+side)*.22;
+  box(side*.31,.16,.32,.19,.28,.30,'#e6b853',1.10);
+  box(side*.31,-.30-wave,.38,.15,.73+Math.abs(wave),.18,'#ffe7a5',2.0);
+  box(side*.31,-.75-wave,.44,.09,.55+Math.abs(wave),.13,'#5ef0ff',2.3);
+ }
+ for(let k=0;k<3;k++){
+  let wave=Math.sin(state.t*5+k*.8)*.14;
+  box(wave,1.35,.51+k*.20,.80-k*.20,.76+k*.35,.075,'#151a30',.11);
+ }
+}
+}
 function renderDynamic(){dynamic.v.length=0;renderHero(dynamic);sagaDraw3D(dynamic);for(let s of pickups){if(s.taken)continue;let a=state.t*1.7,y=s.y+Math.sin(state.t*3+s.x)*.20;for(let k=0;k<8;k++){let p=k/8*6.283,q=(k+1)/8*6.283;dynamic.rod([s.x+Math.cos(p)*.50,y+Math.sin(p)*.50,s.z],[s.x+Math.cos(q)*.50,y+Math.sin(q)*.50,s.z],.11,'#ffce6f',1.3)}dynamic.pyramid(s.x,y-.23,s.z,.44,.59,.44,'#ffe3a0',.83)}if(state.stars>=5&&!state.finished){let y=5.2+Math.sin(state.t*2)*.6;dynamic.rod([0,y-1.2,-33],[0,y+1.2,-33],.20,'#ffe9ab',1.9)}
 if(sky.active){dynamic.box(state.pos.x,state.pos.y+.75,state.pos.z+.8,.44,1.5,.22,'#33dff1',1.6);dynamic.pyramid(state.pos.x,state.pos.y+.15,state.pos.z+1.0,.54,-1.8,.52,'#46d9ff',1.8)}
 for(let e of sky.enemies){if(e.dead)continue;let flap=Math.sin(state.t*15+e.phase)*.9;dynamic.box(e.x,e.y,e.z,2.45,1.5,1.75,'#4d336f',.2);dynamic.box(e.x,e.y+.18,e.z-.86,1.4,.70,.32,'#aa63d6',.53);for(let xx of [-.7,.7]){dynamic.box(e.x+xx,e.y+.22,e.z-1.06,.37,.25,.12,'#80f5ff',1.6);for(let j=0;j<3;j++){dynamic.rod([e.x+xx*1.4,e.y+.3,e.z+(j-1)*.48],[e.x+xx*1.95,e.y-1.15,e.z+(j-1)*.57],.12,'#9a8cce',.2)}}for(let sign of [-1,1]){dynamic.pyramid(e.x+sign*1.35,e.y+.3+flap*.1,e.z,1.1,.75+Math.abs(flap),1.1,'#7043af',.40)}}
@@ -350,7 +373,18 @@ for(let s of sky.enemyShots){let p=put(s.x,s.y,s.z);if(!p)continue;let r=Math.ma
 for(let b of sky.bursts){let p=put(b.x,b.y,b.z);if(!p)continue;let rr=(.4-b.life)*60;g.strokeStyle='#ffe08b';g.lineWidth=5;g.shadowColor='#ffb970';g.shadowBlur=20;g.beginPath();g.arc(p.x,p.y,rr,0,6.283);g.stroke();g.shadowBlur=0}
 
 // Original black-and-gold armored protagonist, not a licensed character.
-let ft=put(state.x,state.y,state.z),hd=put(state.x,state.y+2.65,state.z);if(ft&&hd){let height=Math.max(40,ft.y-hd.y),width=height*.52,xx=(ft.x+hd.x)/2,yy=hd.y;g.save();g.translate(xx,yy);let s=height/2.65;g.scale(s,s);g.fillStyle='#151d2a';g.strokeStyle='#c99e4f';g.lineWidth=.065;g.beginPath();g.moveTo(-.45,.72);g.lineTo(.45,.72);g.lineTo(.61,1.82);g.lineTo(-.62,1.82);g.closePath();g.fill();g.stroke();g.fillStyle='#35435a';g.fillRect(-.39,1.82,.32,.77);g.fillRect(.1,1.82,.32,.77);g.fillStyle='#0a101d';g.fillRect(-.46,2.47,.4,.19);g.fillRect(.06,2.47,.4,.19);g.fillStyle='#b9a071';g.fillRect(-.45,.80,.90,.20);g.fillStyle='#28374e';g.fillRect(-.38,.10,.76,.69);g.fillStyle='#7c91a6';g.beginPath();g.ellipse(0,.18,.35,.29,0,0,6.283);g.fill();g.fillStyle='#a0eaf6';g.shadowColor='#69e6f7';g.shadowBlur=11;g.fillRect(-.28,.24,.56,.08);g.shadowBlur=0;g.fillStyle='#ca9c4c';g.fillRect(-.31,1.17,.62,.13);if(sky.active){g.shadowColor='#45ecff';g.shadowBlur=25;g.fillStyle='#65eaff';g.beginPath();g.moveTo(-.29,2.6);g.lineTo(0,3.85+Math.sin(state.t*19)*.3);g.lineTo(.29,2.6);g.closePath();g.fill();}g.restore()}
+let ft=put(state.x,state.y,state.z),hd=put(state.x,state.y+2.65,state.z);if(ft&&hd){let height=Math.max(40,ft.y-hd.y),width=height*.52,xx=(ft.x+hd.x)/2,yy=hd.y;g.save();g.translate(xx,yy);let s=height/2.65;g.scale(s,s);g.fillStyle='#151d2a';g.strokeStyle='#c99e4f';g.lineWidth=.065;g.beginPath();g.moveTo(-.45,.72);g.lineTo(.45,.72);g.lineTo(.61,1.82);g.lineTo(-.62,1.82);g.closePath();g.fill();g.stroke();g.fillStyle='#35435a';g.fillRect(-.39,1.82,.32,.77);g.fillRect(.1,1.82,.32,.77);g.fillStyle='#0a101d';g.fillRect(-.46,2.47,.4,.19);g.fillRect(.06,2.47,.4,.19);g.fillStyle='#b9a071';g.fillRect(-.45,.80,.90,.20);g.fillStyle='#28374e';g.fillRect(-.38,.10,.76,.69);g.fillStyle='#7c91a6';g.beginPath();g.ellipse(0,.18,.35,.29,0,0,6.283);g.fill();g.fillStyle='#a0eaf6';g.shadowColor='#69e6f7';g.shadowBlur=11;g.fillRect(-.28,.24,.56,.08);g.shadowBlur=0;g.fillStyle='#ca9c4c';g.fillRect(-.31,1.17,.62,.13);
+// 2D fallback uses the same visual silhouette without claiming hardware GPU rendering.
+g.shadowColor='#ffc86b';g.shadowBlur=7;g.fillStyle='#f1c975';g.fillRect(-.43,.75,.86,.10);
+g.fillRect(-.46,1.05,.12,.71);g.fillRect(.34,1.05,.12,.71);
+g.fillRect(-.38,2.47,.36,.09);g.fillRect(.02,2.47,.36,.09);
+g.shadowBlur=0;g.strokeStyle='#ffda78';g.lineWidth=.065;
+g.beginPath();g.moveTo(-.33,.90);g.lineTo(0,1.14);g.lineTo(.33,.90);g.stroke();
+if(sky.active){g.fillStyle='#111929';g.strokeStyle='#e2ac50';g.lineWidth=.035;
+ g.beginPath();g.moveTo(-.42,.78);g.lineTo(-.90,2.67+Math.sin(state.t*5)*.14);g.lineTo(0,2.05);g.lineTo(.90,2.67+Math.sin(state.t*5+1)*.14);g.lineTo(.42,.78);g.closePath();g.fill();g.stroke();
+ for(let side of [-1,1]){g.shadowColor='#ffc661';g.shadowBlur=17;g.fillStyle='#ffe19a';g.beginPath();g.moveTo(side*.22,2.68);g.lineTo(side*.38,2.68);g.lineTo(side*.30,3.70+Math.sin(state.t*17+side)*.22);g.closePath();g.fill()}
+ g.shadowBlur=0;}
+if(sky.active){g.shadowColor='#45ecff';g.shadowBlur=25;g.fillStyle='#65eaff';g.beginPath();g.moveTo(-.29,2.6);g.lineTo(0,3.85+Math.sin(state.t*19)*.3);g.lineTo(.29,2.6);g.closePath();g.fill();}g.restore()}
 const mm=$('map').getContext('2d'),W=300;mm.clearRect(0,0,W,W);mm.fillStyle='#0e2636';mm.fillRect(0,0,W,W);const X=x=>150+x*1.7,Z=z=>158+z*1.7;mm.fillStyle='#184457';mm.fillRect(0,Z(-64),300,Z(-36)-Z(-64));mm.fillStyle='#8f814f';mm.fillRect(X(-7),0,14*1.7,300);mm.fillRect(0,Z(-17)-4,300,8);mm.fillRect(0,Z(2)-4,300,8);mm.fillRect(0,Z(26)-4,300,8);mm.strokeStyle='#edbf59';mm.lineWidth=5;mm.beginPath();mm.moveTo(X(0),Z(-63));mm.lineTo(X(0),Z(-34));mm.stroke();mm.fillStyle='#b7edeb';mm.beginPath();mm.arc(X(state.x),Z(state.z),5,0,6.283);mm.fill();for(let s of stars){if(s.taken)continue;mm.fillStyle='#ffd77e';mm.beginPath();mm.arc(X(s.x),Z(s.z),3,0,6.283);mm.fill()}
 }
 function frame(t){let dt=Math.min(.05,(t-last)/1000||0);last=t;tick(dt);render();requestAnimationFrame(frame)}requestAnimationFrame(frame);
