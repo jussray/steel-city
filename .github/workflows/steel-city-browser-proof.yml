@@ -25,3 +25,7 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Desktop and mobile-emulated gameplay + cinematic gate
         run: python tests/verify_browser.py
+      - name: Verify approved skyline export matches source
+        run: python scripts/export_graphics.py
+      - name: Desktop and mobile joystick, camera, and skyline proof
+        run: python tests/verify_joystick.py
