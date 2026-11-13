@@ -29,3 +29,11 @@ jobs:
         run: python scripts/export_graphics.py
       - name: Desktop and mobile joystick, camera, and skyline proof
         run: python tests/verify_joystick.py
+      - name: Verify 3D scene WebGL rendering (software GPU, not production proof)
+        run: xvfb-run -a python tests/verify_webgl.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: steel-city-webgl-${{ github.sha }}
+          path: proof/steel-city/
+          retention-days: 30

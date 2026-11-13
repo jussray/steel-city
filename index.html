@@ -88,7 +88,17 @@ let pr;try{pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,V));gl.a
 const loc={p:gl.getAttribLocation(pr,'aP'),n:gl.getAttribLocation(pr,'aN'),c:gl.getAttribLocation(pr,'aC'),e:gl.getAttribLocation(pr,'aE'),proj:gl.getUniformLocation(pr,'uP'),view:gl.getUniformLocation(pr,'uV'),cam:gl.getUniformLocation(pr,'uCam'),time:gl.getUniformLocation(pr,'uTime')};gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);
 const c=(h)=>{if(Array.isArray(h))return h;h=h.replace('#','');return [parseInt(h.slice(0,2),16)/255,parseInt(h.slice(2,4),16)/255,parseInt(h.slice(4,6),16)/255]},clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 function sub(a,b){return [a[0]-b[0],a[1]-b[1],a[2]-b[2]]}function cross(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}function unit(a){let l=Math.hypot(...a)||1;return a.map(x=>x/l)}
-class Mesh{constructor(){this.v=[]}vert(p,n,col,emi){this.v.push(...p,...n,...col,emi)}tri(a,b,d,col,emi=0){const n=unit(cross(sub(b,a),sub(d,a))),C=c(col);this.vert(a,n,C,emi);this.vert(b,n,C,emi);this.vert(d,n,C,emi)}quad(a,b,d,e,col,emi=0){this.tri(a,b,d,col,emi);this.tri(a,d,e,col,emi)}box(x,y,z,w,h,d,col,glow=0){const a=x-w/2,b=x+w/2,l=z-d/2,r=z+d/2,t=y+h/2,bot=y-h/2;this.quad([a,bot,r],[b,bot,r],[b,t,r],[a,t,r],col,glow);this.quad([b,bot,l],[a,bot,l],[a,t,l],[b,t,l],col,glow);this.quad([a,bot,l],[a,bot,r],[a,t,r],[a,t,l],col,glow);this.quad([b,bot,r],[b,bot,l],[b,t,l],[b,t,r],col,glow);this.quad([a,t,r],[b,t,r],[b,t,l],[a,t,l],col,glow);this.quad([a,bot,l],[b,bot,l],[b,bot,r],[a,bot,r],col,glow)}rod(a,b,r,col,emi=0){let axis=unit(sub(b,a)),ar=Math.abs(axis[1])<.9?[0,1,0]:[1,0,0],s=unit(cross(axis,ar)),t=unit(cross(s,axis));let pts=[];for(let v of [a,b]){pts.push([[v[0]+s[0]*r+t[0]*r,v[1]+s[1]*r+t[1]*r,v[2]+s[2]*r+t[2]*r],[v[0]-s[0]*r+t[0]*r,v[1]-s[1]*r+t[1]*r,v[2]-s[2]*r+t[2]*r],[v[0]-s[0]*r-t[0]*r,v[1]-s[1]*r-t[1]*r,v[2]-s[2]*r-t[2]*r],[v[0]+s[0]*r-t[0]*r,v[1]+s[1]*r-t[1]*r,v[2]+s[2]*r-t[2]*r]]);}for(let j=0;j<4;j++)this.quad(pts[0][j],pts[0][(j+1)%4],pts[1][(j+1)%4],pts[1][j],col,emi)}pyramid(x,y,z,w,h,d,col,emi=0){let a=[x-w/2,y,z-d/2],b=[x+w/2,y,z-d/2],cc=[x+w/2,y,z+d/2],dd=[x-w/2,y,z+d/2],tip=[x,y+h,z];this.tri(a,b,tip,col,emi);this.tri(b,cc,tip,col,emi);this.tri(cc,dd,tip,col,emi);this.tri(dd,a,tip,col,emi)}disc(x,y,z,r,color,emi=0,segments=20){for(let i=0;i<segments;i++){let t=i/segments*Math.PI*2,tt=(i+1)/segments*Math.PI*2;this.tri([x,y,z],[x+Math.sin(t)*r,y,z+Math.cos(t)*r],[x+Math.sin(tt)*r,y,z+Math.cos(tt)*r],color,emi)}}}
+class Mesh{constructor(){this.v=[]}vert(p,n,col,emi){this.v.push(...p,...n,...col,emi)}tri(a,b,d,col,emi=0){const n=unit(cross(sub(b,a),sub(d,a))),C=c(col);this.vert(a,n,C,emi);this.vert(b,n,C,emi);this.vert(d,n,C,emi)}quad(a,b,d,e,col,emi=0){this.tri(a,b,d,col,emi);this.tri(a,d,e,col,emi)}box(x,y,z,w,h,d,col,glow=0){const a=x-w/2,b=x+w/2,l=z-d/2,r=z+d/2,t=y+h/2,bot=y-h/2;this.quad([a,bot,r],[b,bot,r],[b,t,r],[a,t,r],col,glow);this.quad([b,bot,l],[a,bot,l],[a,t,l],[b,t,l],col,glow);this.quad([a,bot,l],[a,bot,r],[a,t,r],[a,t,l],col,glow);this.quad([b,bot,r],[b,bot,l],[b,t,l],[b,t,r],col,glow);this.quad([a,t,r],[b,t,r],[b,t,l],[a,t,l],col,glow);this.quad([a,bot,l],[b,bot,l],[b,bot,r],[a,bot,r],col,glow)}rod(a,b,r,col,emi=0){let axis=unit(sub(b,a)),ar=Math.abs(axis[1])<.9?[0,1,0]:[1,0,0],s=unit(cross(axis,ar)),t=unit(cross(s,axis));let pts=[];for(let v of [a,b]){pts.push([[v[0]+s[0]*r+t[0]*r,v[1]+s[1]*r+t[1]*r,v[2]+s[2]*r+t[2]*r],[v[0]-s[0]*r+t[0]*r,v[1]-s[1]*r+t[1]*r,v[2]-s[2]*r+t[2]*r],[v[0]-s[0]*r-t[0]*r,v[1]-s[1]*r-t[1]*r,v[2]-s[2]*r-t[2]*r],[v[0]+s[0]*r-t[0]*r,v[1]+s[1]*r-t[1]*r,v[2]+s[2]*r-t[2]*r]]);}for(let j=0;j<4;j++)this.quad(pts[0][j],pts[0][(j+1)%4],pts[1][(j+1)%4],pts[1][j],col,emi)}pyramid(x,y,z,w,h,d,col,emi=0){let a=[x-w/2,y,z-d/2],b=[x+w/2,y,z-d/2],cc=[x+w/2,y,z+d/2],dd=[x-w/2,y,z+d/2],tip=[x,y+h,z];this.tri(a,b,tip,col,emi);this.tri(b,cc,tip,col,emi);this.tri(cc,dd,tip,col,emi);this.tri(dd,a,tip,col,emi)}disc(x,y,z,r,color,emi=0,segments=20){for(let i=0;i<segments;i++){let t=i/segments*Math.PI*2,tt=(i+1)/segments*Math.PI*2;this.tri([x,y,z],[x+Math.sin(t)*r,y,z+Math.cos(t)*r],[x+Math.sin(tt)*r,y,z+Math.cos(tt)*r],color,emi)}}
+ellipsoid(x,y,z,rx,ry,rz,col,emi=0,segments=10,rings=6){
+ // Faceted original helmet/armor primitive, actual 3D triangles with lit normals.
+ for(let lat=0;lat<rings;lat++)for(let lon=0;lon<segments;lon++){
+  const a=lat/rings*Math.PI,b=(lat+1)/rings*Math.PI,c=lon/segments*2*Math.PI,d=(lon+1)/segments*2*Math.PI;
+  const p=(u,v)=>[x+rx*Math.sin(u)*Math.cos(v),y+ry*Math.cos(u),z+rz*Math.sin(u)*Math.sin(v)];
+  const p0=p(a,c),p1=p(b,c),p2=p(b,d),p3=p(a,d);
+  if(lat!==0)this.tri(p0,p1,p3,col,emi);
+  if(lat!==rings-1)this.tri(p1,p2,p3,col,emi);
+ }
+}}
 const world=new Mesh(),dynamic=new Mesh(),buildings=[],pickups=[],platforms=[];let rndSeed=9812;function rand(){rndSeed=(rndSeed*1664525+1013904223)>>>0;return rndSeed/4294967296}const R=(a,b)=>a+(b-a)*rand();
 // Wet streets and walkable open play spaces.
 world.box(0,-.8,0,160,1.3,180,'#152235');world.box(0,-.125,6,13,.12,105,'#1d2638');for(let z=-29;z<53;z+=8)world.box(0,-.045,z,.25,.025,3.3,'#d4ac63',.31);
@@ -272,7 +282,31 @@ if(sky.active){
  }
 }
 }
-function renderDynamic(){dynamic.v.length=0;renderHero(dynamic);sagaDraw3D(dynamic);for(let s of pickups){if(s.taken)continue;let a=state.t*1.7,y=s.y+Math.sin(state.t*3+s.x)*.20;for(let k=0;k<8;k++){let p=k/8*6.283,q=(k+1)/8*6.283;dynamic.rod([s.x+Math.cos(p)*.50,y+Math.sin(p)*.50,s.z],[s.x+Math.cos(q)*.50,y+Math.sin(q)*.50,s.z],.11,'#ffce6f',1.3)}dynamic.pyramid(s.x,y-.23,s.z,.44,.59,.44,'#ffe3a0',.83)}if(state.stars>=5&&!state.finished){let y=5.2+Math.sin(state.t*2)*.6;dynamic.rod([0,y-1.2,-33],[0,y+1.2,-33],.20,'#ffe9ab',1.9)}
+// Rounded armor is built as real directional-lit geometry, not a pasted character illustration.
+function renderArmorFinish(m){
+ const ang=state.heading,cs=Math.cos(ang),sn=Math.sin(ang),p=state.pos;
+ function append(B){for(let i=0;i<B.v.length;i+=10){const lx=B.v[i],ly=B.v[i+1],lz=B.v[i+2],nx=B.v[i+3],ny=B.v[i+4],nz=B.v[i+5];m.v.push(p.x+lx*cs+lz*sn,p.y+ly,p.z-lx*sn+lz*cs,nx*cs+nz*sn,ny,-nx*sn+nz*cs,...B.v.slice(i+6,i+10))}}
+ function shell(x,y,z,rx,ry,rz,col,glow=0){const B=new Mesh();B.ellipsoid(x,y,z,rx,ry,rz,col,glow,12,6);append(B)}
+ function fabric(a,b,c,d,col){const B=new Mesh();B.quad(a,b,c,d,col,.04);append(B)}
+ // Sculptural shoulders, curved helmet and layered metal sternum.
+ shell(0,2.37,.01,.31,.32,.30,'#28374b');
+ shell(0,2.37,-.292,.29,.11,.070,'#a6ecf7',1.1);
+ shell(0,2.65,0,.28,.07,.30,'#d3a55e',.23);
+ shell(0,1.57,-.05,.46,.54,.265,'#253448');
+ shell(0,1.68,-.271,.36,.37,.105,'#ba944e',.35);
+ shell(0,1.66,-.378,.15,.11,.06,'#e7cf87',.95);
+ for(const side of [-1,1]){
+  shell(side*.61,1.98,.01,.33,.24,.32,'#9da7a9',.12);
+  shell(side*.63,1.42,.08,.17,.42,.19,'#30445b');
+  shell(side*.22,.79,.03,.22,.41,.25,'#354b66');
+  shell(side*.23,.32,-.12,.23,.18,.30,'#9a773d',.22);
+ }
+ // Segmented back cape follows the character and billows slightly with movement.
+ const flutter=Math.sin(state.t*3.8)*.13;
+ fabric([-.39,2.02,.34],[.39,2.02,.34],[.60,1.17,.88+flutter],[-.60,1.17,.88+flutter],'#252d45');
+ fabric([-.60,1.17,.88+flutter],[.60,1.17,.88+flutter],[.80,.22,1.43+flutter*2],[-.80,.22,1.43+flutter*2],'#141c31');
+}
+function renderDynamic(){dynamic.v.length=0;renderHero(dynamic);renderArmorFinish(dynamic);sagaDraw3D(dynamic);for(let s of pickups){if(s.taken)continue;let a=state.t*1.7,y=s.y+Math.sin(state.t*3+s.x)*.20;for(let k=0;k<8;k++){let p=k/8*6.283,q=(k+1)/8*6.283;dynamic.rod([s.x+Math.cos(p)*.50,y+Math.sin(p)*.50,s.z],[s.x+Math.cos(q)*.50,y+Math.sin(q)*.50,s.z],.11,'#ffce6f',1.3)}dynamic.pyramid(s.x,y-.23,s.z,.44,.59,.44,'#ffe3a0',.83)}if(state.stars>=5&&!state.finished){let y=5.2+Math.sin(state.t*2)*.6;dynamic.rod([0,y-1.2,-33],[0,y+1.2,-33],.20,'#ffe9ab',1.9)}
 if(sky.active){dynamic.box(state.pos.x,state.pos.y+.75,state.pos.z+.8,.44,1.5,.22,'#33dff1',1.6);dynamic.pyramid(state.pos.x,state.pos.y+.15,state.pos.z+1.0,.54,-1.8,.52,'#46d9ff',1.8)}
 for(let e of sky.enemies){if(e.dead)continue;let flap=Math.sin(state.t*15+e.phase)*.9;dynamic.box(e.x,e.y,e.z,2.45,1.5,1.75,'#4d336f',.2);dynamic.box(e.x,e.y+.18,e.z-.86,1.4,.70,.32,'#aa63d6',.53);for(let xx of [-.7,.7]){dynamic.box(e.x+xx,e.y+.22,e.z-1.06,.37,.25,.12,'#80f5ff',1.6);for(let j=0;j<3;j++){dynamic.rod([e.x+xx*1.4,e.y+.3,e.z+(j-1)*.48],[e.x+xx*1.95,e.y-1.15,e.z+(j-1)*.57],.12,'#9a8cce',.2)}}for(let sign of [-1,1]){dynamic.pyramid(e.x+sign*1.35,e.y+.3+flap*.1,e.z,1.1,.75+Math.abs(flap),1.1,'#7043af',.40)}}
 for(let s of sky.enemyShots){dynamic.box(s.x,s.y,s.z,.56,.56,.56,'#ee69ff',2.1)}for(let s of sky.shots){dynamic.rod([s.x,s.y,s.z],[s.x-s.vx*.038,s.y-s.vy*.038,s.z-s.vz*.038],.22,'#6cefff',2.2)}for(let b of sky.bursts){let rr=(.45-b.life)*5;for(let j=0;j<6;j++){let a=j*Math.PI/3;dynamic.rod([b.x,b.y,b.z],[b.x+Math.cos(a)*rr,b.y+Math.sin(a)*rr,b.z],.13,'#ffd889',2.0)}}
