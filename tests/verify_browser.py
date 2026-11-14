@@ -43,6 +43,7 @@ def verify(page, url, require_webgl, require_hardware):
         page.set_content(html, wait_until="domcontentloaded")
     page.wait_for_function("typeof window.__steelCityDebug === 'function'", timeout=10000)
     before = page.evaluate("window.__steelCityDebug()")
+    assert before.get("neighborhoodDetail") == "mount-washington-homes-v1", before
     assert before.get("campaignStage") == 0 and before.get("started") is False, before
     # Visual-to-code gate: key art belongs to the title, not the rendered world.
     title_art = page.evaluate("""() => getComputedStyle(document.querySelector('#titlecover')).backgroundImage""")
@@ -59,6 +60,9 @@ def verify(page, url, require_webgl, require_hardware):
                style.pointerEvents === 'none';
     }""", timeout=3000)
     assert page.locator("#hud").is_visible(), "Gameplay HUD missing after play"
+    proof = ROOT / "proof" / "steel-city"
+    proof.mkdir(parents=True, exist_ok=True)
+    page.screenshot(path=str(proof / f"fallback-{page.viewport_size['width']}px.png"))
     page.locator("#storyOpen").click()
     assert page.locator(".storyAct").count() == 7, "Expected seven acts in journal"
     page.locator("#storyClose").click()
