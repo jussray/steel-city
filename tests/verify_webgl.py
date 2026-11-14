@@ -43,6 +43,7 @@ with sync_playwright() as p:
             before = page.evaluate("window.__steelCityDebug()")
             assert before.get("webgl") is True, f"WebGL fallback in {label}: {before}"
             assert before.get("graphicsRevision") == "cinematic-geometry-v2", before
+            assert before.get("neighborhoodDetail") == "mount-washington-homes-v1", before
             info = page.evaluate("""() => {
                 const c = document.getElementById('game'), gl = c.getContext('webgl');
                 return {context:!!gl,version:gl?.getParameter(gl.VERSION)||null,
