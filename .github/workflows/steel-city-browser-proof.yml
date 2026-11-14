@@ -31,6 +31,8 @@ jobs:
         run: python tests/verify_joystick.py
       - name: Verify 3D scene WebGL rendering (software GPU, not production proof)
         run: xvfb-run -a python tests/verify_webgl.py
+      - name: Cross-check approved art and playable 3D graphics lanes
+        run: python scripts/verify_graphics_lanes.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

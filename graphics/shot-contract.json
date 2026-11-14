@@ -1,0 +1,34 @@
+{
+  "schema": "steel-city.graphics-lanes.v1",
+  "shot_id": "pittsburgh-night-exploration-v1",
+  "goal": "Approved cinematic Pittsburgh nighttime look implemented as playable 3D, without confusing key art with rendered gameplay",
+  "lanes": {
+    "art": {
+      "id": "art",
+      "source": "index.html embedded approved JPEG",
+      "asset": "assets/pittsburgh-night-skyline.jpg",
+      "peer_lane": "runtime",
+      "requires_runtime_graphics_revision": "cinematic-geometry-v2"
+    },
+    "runtime": {
+      "id": "runtime",
+      "source": "index.html WebGL scene",
+      "graphics_revision": "cinematic-geometry-v2",
+      "neighborhood_detail": "mount-washington-homes-v1",
+      "peer_lane": "art",
+      "requires_art_asset": "assets/pittsburgh-night-skyline.jpg",
+      "receipt": "proof/steel-city/webgl-receipt.json",
+      "screenshots": {
+        "desktop": "proof/steel-city/webgl-desktop.png",
+        "mobile_emulated": "proof/steel-city/webgl-mobile_emulated.png"
+      }
+    }
+  },
+  "release_gates": {
+    "source_art_bytes": "automated: byte identical",
+    "software_webgl_gameplay": "automated: existing Playwright verification",
+    "approved_frame_visual_parity": "manual comparison pending: source art is not a full 3D scene reference",
+    "physical_gpu": "not verified",
+    "live_route": "not verified"
+  }
+}

@@ -27,3 +27,10 @@ Return **REALITY / FIX / PROOF / RISK / ROLLBACK / NEXT GATE** with main SHA, br
 - Generated art may be a reference, title screen, skybox, cutscene or decal. Character mesh, textures, physics, camera, movement and combat must exist as game code/assets separately. Compare title **and active gameplay** to reference screenshots; never advertise the illustrated reference as live gameplay.
 - Focused browser proof: `python tests/verify_browser.py`; in the existing graphics/joystick branch also `python tests/verify_joystick.py`. For real device proof, run the documented deployed-route/hardware gate. Source screenshots and emulator output alone cannot verify hardware WebGL or Meta glasses.
 - Keep art export SHA, Playwright screenshots and exact-head CI separate. Do not alter main, Games Hub deployment or Cloudflare route without release approval.
+
+## Two mutually aware graphics lanes (Steel City)
+
+- Art lane: approved embedded JPEG and exported skyline, checked for byte identity. It declares the runtime revision expected.
+- Playable lane: existing WebGL renderer, geometry and desktop/mobile Playwright screenshots. It declares the approved art asset expected.
+- Both lanes use the same graphics/shot-contract.json shot ID, acknowledge their peer, and produce linked hashes/screenshots through scripts/verify_graphics_lanes.py. Run it after export and WebGL capture, and review proof/steel-city/graphics-comparison.html.
+- Passing synchronization proves source bytes and recorded software-rendered gameplay; it does not prove pixel similarity to complete concept art. Human frame review, physical GPU and live-domain gates remain separate.
