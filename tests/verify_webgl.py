@@ -57,10 +57,21 @@ with sync_playwright() as p:
             x, y = pad["x"] + pad["width"] * .83, pad["y"] + pad["height"] * .50
             page.mouse.move(x, y)
             page.mouse.down()
-            page.wait_for_timeout(700)
+            # Software WebGL frames vary in speed on shared CI runners.
+            # Await REAL displacement, camera follow and gait instead of assuming
+            # 700 ms always yields enough rendered frames. Do not lower thresholds.
+            page.wait_for_function("""before => {
+                const now = window.__steelCityDebug();
+                return now.x > before.x + 0.5 &&
+                       Math.abs(now.cameraYaw - before.cameraYaw) > 0.2 &&
+                       now.motionBlend > 0.2 &&
+                       now.gaitPhase > before.gaitPhase + 0.2;
+            }""", arg=before, timeout=8000)
             moved = page.evaluate("window.__steelCityDebug()")
             page.mouse.up()
-            page.wait_for_timeout(450)
+            page.wait_for_function(
+                "blend => window.__steelCityDebug().motionBlend < blend - 0.2",
+                arg=moved["motionBlend"], timeout=8000)
             released = page.evaluate("window.__steelCityDebug()")
             assert moved["x"] > before["x"] + 0.5, (label, "WebGL joystick failed to move", {"before":before,"pressed":moved,"released":released})
             assert abs(moved["cameraYaw"] - before["cameraYaw"]) > 0.2, "WebGL camera did not follow"
