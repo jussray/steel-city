@@ -49,17 +49,23 @@ with sync_playwright() as p:
                     width:c.width,height:c.height};
             }""")
             assert info["context"] and info["width"] >= 350, (label, info)
-            if label == "mobile_emulated":
-                pad = page.locator("#moveJoystick").bounding_box()
-                assert pad and pad["width"] >= 100, "Joystick touch target unavailable"
-                x, y = pad["x"] + pad["width"] * .83, pad["y"] + pad["height"] * .50
-                page.mouse.move(x, y)
-                page.mouse.down()
-                page.wait_for_timeout(600)
-                moved = page.evaluate("window.__steelCityDebug()")
-                page.mouse.up()
-                assert moved["x"] > before["x"] + 0.5, "WebGL joystick failed to move"
-                assert abs(moved["cameraYaw"] - before["cameraYaw"]) > 0.2, "WebGL camera did not follow"
+            if label == "desktop":
+                page.add_style_tag(content="#controls{display:block!important}")
+            pad = page.locator("#moveJoystick").bounding_box()
+            assert pad and pad["width"] >= 100, "Joystick touch target unavailable"
+            x, y = pad["x"] + pad["width"] * .83, pad["y"] + pad["height"] * .50
+            page.mouse.move(x, y)
+            page.mouse.down()
+            page.wait_for_timeout(700)
+            moved = page.evaluate("window.__steelCityDebug()")
+            page.mouse.up()
+            page.wait_for_timeout(450)
+            released = page.evaluate("window.__steelCityDebug()")
+            assert moved["x"] > before["x"] + 0.5, "WebGL joystick failed to move"
+            assert abs(moved["cameraYaw"] - before["cameraYaw"]) > 0.2, "WebGL camera did not follow"
+            assert moved["motionBlend"] > 0.2, "3D gait stayed idle during movement"
+            assert moved["gaitPhase"] > before["gaitPhase"] + 0.2, "3D gait phase did not advance"
+            assert released["motionBlend"] < moved["motionBlend"] - 0.2, "Gait did not return to idle on release"
             page.wait_for_timeout(150)
             page.screenshot(path=str(proof / f"webgl-{label}.png"))
             assert not errors, (label, errors)
