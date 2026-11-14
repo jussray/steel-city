@@ -62,7 +62,7 @@ with sync_playwright() as p:
             page.mouse.up()
             page.wait_for_timeout(450)
             released = page.evaluate("window.__steelCityDebug()")
-            assert moved["x"] > before["x"] + 0.5, "WebGL joystick failed to move"
+            assert moved["x"] > before["x"] + 0.5, (label, "WebGL joystick failed to move", {"before":before,"pressed":moved,"released":released})
             assert abs(moved["cameraYaw"] - before["cameraYaw"]) > 0.2, "WebGL camera did not follow"
             assert moved["motionBlend"] > 0.2, "3D gait stayed idle during movement"
             assert moved["gaitPhase"] > before["gaitPhase"] + 0.2, "3D gait phase did not advance"
