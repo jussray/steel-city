@@ -8,14 +8,14 @@
       "source": "index.html embedded approved JPEG",
       "asset": "assets/pittsburgh-night-skyline.jpg",
       "peer_lane": "runtime",
-      "requires_runtime_graphics_revision": "cinematic-geometry-v2",
+      "requires_runtime_graphics_revision": "cinematic-geometry-v3",
       "requires_runtime_lighting_revision": "rain-slick-neon-v2"
     },
     "runtime": {
       "id": "runtime",
       "source": "index.html WebGL scene",
-      "graphics_revision": "cinematic-geometry-v2",
-      "neighborhood_detail": "mount-washington-homes-v1",
+      "graphics_revision": "cinematic-geometry-v3",
+      "neighborhood_detail": "mount-washington-homes-v2",
       "peer_lane": "art",
       "requires_art_asset": "assets/pittsburgh-night-skyline.jpg",
       "receipt": "proof/steel-city/webgl-receipt.json",
