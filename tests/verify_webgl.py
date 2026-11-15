@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 GAME = (ROOT / "index.html").read_text(encoding="utf-8")
 SKYLINE = ROOT / "assets" / "pittsburgh-night-skyline.jpg"
 assert SKYLINE.is_file(), "Missing exported skyline"
-assert "cinematic-geometry-v2" in GAME, "Cinematic geometry revision missing"
+assert "cinematic-geometry-v3" in GAME, "Cinematic geometry revision missing"
 assert "function renderArmorFinish(m)" in GAME, "Rounded 3D armor geometry missing"
 
 proof = ROOT / "proof" / "steel-city"
@@ -42,9 +42,12 @@ with sync_playwright() as p:
             page.locator("#playMuted").click()
             before = page.evaluate("window.__steelCityDebug()")
             assert before.get("webgl") is True, f"WebGL fallback in {label}: {before}"
-            assert before.get("graphicsRevision") == "cinematic-geometry-v2", before
+            assert before.get("graphicsRevision") == "cinematic-geometry-v3", before
             assert before.get("lightingRevision") == "rain-slick-neon-v2", before
-            assert before.get("neighborhoodDetail") == "mount-washington-homes-v1", before
+            assert before.get("neighborhoodDetail") == "mount-washington-homes-v2", before
+            assert before.get("hillsideHomeCount") == 11, before
+            assert before.get("hillsideSolidCount") == 11, before
+            assert page.evaluate("window.__steelHillsideSmoke().passed"), "Hillside geometry smoke failed"
             info = page.evaluate("""() => {
                 const c = document.getElementById('game'), gl = c.getContext('webgl');
                 return {context:!!gl,version:gl?.getParameter(gl.VERSION)||null,
