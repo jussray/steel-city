@@ -53,6 +53,7 @@ def inspect(browser, label, width, height, force_fallback):
     assert state["bridgeTrussSegments"] == 120, (label, mode, state)
     assert state["hillsideHomeCount"] == 11, (label, mode, state)
     assert state["hillsideSolidCount"] == 11, (label, mode, state)
+    assert state["hillsideWalkMinZ"] == -83, (label, mode, state)
 
     homes = state["hillsideHomeFootprints"]
     expected_xs = [-82 + i * 6.5 for i in range(2, 24, 2)]
@@ -77,6 +78,60 @@ def inspect(browser, label, width, height, force_fallback):
     page.wait_for_timeout(450)
     image = PROOF / f"hillside-{label}-{mode}.png"
     page.screenshot(path=str(image))
+
+    approach = None
+    if label == "desktop":
+        # Exercise the REAL input path, starting from the normal spawn.
+        # No teleport, mocked hero state or fake renderer success.
+        def drive(key, js_condition, timeout):
+            page.keyboard.down(key)
+            try:
+                page.wait_for_function(js_condition, timeout=timeout)
+            except Exception as exc:
+                raise AssertionError(
+                    f"{mode} movement blocked on {key}: "
+                    f"{page.evaluate('window.__steelCityDebug()')}") from exc
+            finally:
+                page.keyboard.up(key)
+
+        page.keyboard.down("ShiftLeft")
+        try:
+            drive("KeyW", "window.__steelCityDebug().z < -65", 90000)
+            crossed = page.evaluate("window.__steelCityDebug()")
+            assert "MOUNT WASHINGTON" in page.locator("#place").inner_text(), (
+                mode, crossed)
+            drive("KeyA", "window.__steelCityDebug().x < -29.8", 60000)
+            # At x ~= -30, the house sits at z=-75.5. Its closest
+            # collision face is about -73.25; continuing to press W
+            # must NOT take the player through its foundation.
+            page.keyboard.down("KeyW")
+            try:
+                page.wait_for_function(
+                    "window.__steelCityDebug().z < -72.6", timeout=30000)
+                before_block = page.evaluate("window.__steelCityDebug()")
+                page.wait_for_timeout(1400)
+                after_block = page.evaluate("window.__steelCityDebug()")
+            finally:
+                page.keyboard.up("KeyW")
+            assert -73.6 < after_block["z"] < -72.4, (
+                mode, "home collision missing", before_block, after_block)
+            assert abs(after_block["z"] - before_block["z"]) < .6, (
+                mode, "walked through home", before_block, after_block)
+            assert -32 < after_block["x"] < -28, (
+                mode, "wrong house route", after_block)
+            approach_image = PROOF / f"hillside-approach-{mode}.png"
+            page.screenshot(path=str(approach_image))
+            approach = {
+                "bridgeCrossedAtZ": crossed["z"],
+                "collisionAt": {
+                    "x": after_block["x"], "z": after_block["z"],
+                    "y": after_block["y"]},
+                "screenshot": str(approach_image.relative_to(ROOT)),
+                "realKeyboardTraversal": True,
+            }
+        finally:
+            page.keyboard.up("ShiftLeft")
+
     assert not errors, (label, mode, errors)
     page.close()
     return {
@@ -84,7 +139,7 @@ def inspect(browser, label, width, height, force_fallback):
         "count": state["hillsideHomeCount"], "solids": state["hillsideSolidCount"],
         "bridgeDetail": state["bridgeDetail"],
         "bridgeTrussSegments": state["bridgeTrussSegments"],
-        "footprints": homes, "minimapPixel": [201, 159, 107],
+        "approach": approach, "footprints": homes, "minimapPixel": [201, 159, 107],
         "screenshot": str(image.relative_to(ROOT)), "jsErrors": errors,
     }
 
@@ -121,5 +176,6 @@ receipt = {
 print(json.dumps({
     "status": "PASS", "renderers": 2, "viewports": 2,
     "homesPerRenderer": 11, "minimap": "verified colored footprints",
+    "groundRoute": "bridge crossing and elevated-home foundation collision",
     "realDeviceOrProduction": "not verified",
 }, indent=2))
