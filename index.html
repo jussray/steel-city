@@ -450,6 +450,8 @@ window.__steelCityDebug=()=>({graphicsRevision:'cinematic-geometry-v3',lightingR
 (()=>{
 if(window.__steelCityDebug)return;
 const $=id=>document.getElementById(id),cv=$('game'),g=cv.getContext('2d');if(!g)return;$('error').classList.remove('show');
+const STEEL_BRIDGE=window.__steelBridgeContract;
+let bridgeTrussSegments=STEEL_BRIDGE.panels.length*STEEL_BRIDGE.sides.length*3;
 const state={started:false,x:0,z:27,y:0,vy:0,yaw:0,pitch:.22,stars:0,sound:false,t:0,finished:false},keys=new Set(),touch=new Set();let last=0,ctx,interval;
 
 const sky={active:false,hp:100,kills:0,shots:[],enemyShots:[],bursts:[],cooldown:0,invincible:0,combatTick:0,plasmaTimer:1.1,enemies:[
@@ -553,8 +555,8 @@ let tiles=[];for(let x=-81;x<=81;x+=9)for(let z=-90;z<=55;z+=9){let dist=Math.hy
 // Road centerlines and bridge deck.
 for(let z=-32;z<52;z+=9){quad([-.14,.01,z], [.14,.01,z],[.14,.01,z+3.3],[-.14,.01,z+3.3],'#af9464')}cube(0,-.06,-47,12,.45,29,'#a18a53');for(let k=0;k<2;k++)for(let i=0;i<19;i++){let z=-61+i*1.56,y=1.2+7.9*Math.sin(i/18*Math.PI);rod([(k?6:-6),.4,z],[(k?6:-6),y,z],.12,'#edb854');if(i)rod([(k?6:-6),1.2+7.9*Math.sin((i-1)/18*Math.PI),z-1.56],[(k?6:-6),y,z],.28,'#ffd274')}
 // Fallback uses the exact same steel-lattice control points as WebGL.
-const STEEL_BRIDGE=window.__steelBridgeContract;
-let bridgeTrussSegments=0;
+// Reset per-frame count so receipts do not accumulate across renders.
+bridgeTrussSegments=0;
 for(const x of STEEL_BRIDGE.sides){
  for(const panel of STEEL_BRIDGE.panels){
   const a=panel.a,b=panel.b,y=STEEL_BRIDGE.deckY;
