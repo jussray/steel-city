@@ -9,7 +9,7 @@
       "asset": "assets/pittsburgh-night-skyline.jpg",
       "peer_lane": "runtime",
       "requires_runtime_graphics_revision": "cinematic-geometry-v2",
-      "requires_runtime_lighting_revision": "rain-slick-neon-v1"
+      "requires_runtime_lighting_revision": "rain-slick-neon-v2"
     },
     "runtime": {
       "id": "runtime",
@@ -23,7 +23,7 @@
         "desktop": "proof/steel-city/webgl-desktop.png",
         "mobile_emulated": "proof/steel-city/webgl-mobile_emulated.png"
       },
-      "lighting_revision": "rain-slick-neon-v1"
+      "lighting_revision": "rain-slick-neon-v2"
     }
   },
   "release_gates": {
