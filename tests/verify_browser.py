@@ -61,6 +61,14 @@ def verify(page, url, require_webgl, require_hardware):
                style.pointerEvents === 'none';
     }""", timeout=3000)
     assert page.locator("#hud").is_visible(), "Gameplay HUD missing after play"
+    # Clear the opening gameplay image, and keep the portrait HUD controls apart.
+    assert not page.locator("#toast").evaluate("(el) => el.classList.contains('show')"), "Startup toast obscures 3D gameplay"
+    if page.viewport_size["width"] <= 430:
+        mission = page.locator("#storyHud").bounding_box()
+        menu = page.locator("#hud .buttons").bounding_box()
+        assert mission and menu, "Portrait mission controls are not measurable"
+        assert mission["y"] < 110, f"Mission panel obscures the camera center: {mission}"
+        assert mission["x"] + mission["width"] + 6 <= menu["x"], f"Mission overlaps the menu controls: {mission} / {menu}"
     proof = ROOT / "proof" / "steel-city"
     proof.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(proof / f"fallback-{page.viewport_size['width']}px.png"))
