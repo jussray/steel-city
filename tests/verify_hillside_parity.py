@@ -49,6 +49,8 @@ def inspect(browser, label, width, height, force_fallback):
     assert state["graphicsRevision"] == "cinematic-geometry-v3", state
     assert state["neighborhoodDetail"] == "mount-washington-homes-v2", state
     assert state["lightingRevision"] == "rain-slick-neon-v2", state
+    assert state["bridgeDetail"] == "three-rivers-lattice-v1", state
+    assert state["bridgeTrussSegments"] == 120, (label, mode, state)
     assert state["hillsideHomeCount"] == 11, (label, mode, state)
     assert state["hillsideSolidCount"] == 11, (label, mode, state)
 
@@ -80,6 +82,8 @@ def inspect(browser, label, width, height, force_fallback):
     return {
         "viewport": label, "mode": mode, "webgl": not force_fallback,
         "count": state["hillsideHomeCount"], "solids": state["hillsideSolidCount"],
+        "bridgeDetail": state["bridgeDetail"],
+        "bridgeTrussSegments": state["bridgeTrussSegments"],
         "footprints": homes, "minimapPixel": [201, 159, 107],
         "screenshot": str(image.relative_to(ROOT)), "jsErrors": errors,
     }
@@ -102,6 +106,8 @@ with sync_playwright() as play:
 for label in ("desktop", "mobile-emulated"):
     pair = [r for r in results if r["viewport"] == label]
     assert len(pair) == 2
+    assert pair[0]["bridgeTrussSegments"] == pair[1]["bridgeTrussSegments"] == 120, (
+        label, "WebGL/fallback steel bridge truss drift", pair)
     assert pair[0]["footprints"] == pair[1]["footprints"], (
         label, "WebGL/fallback hillside layout drift", pair)
 

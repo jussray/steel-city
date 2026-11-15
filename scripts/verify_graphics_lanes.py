@@ -34,6 +34,8 @@ def main():
     require(runtime["requires_art_asset"] == art["asset"], "renderer targets a different art asset")
     require(art["requires_runtime_lighting_revision"] == runtime["lighting_revision"],
             "art and playable lanes disagree on night lighting")
+    require(art["requires_runtime_bridge_detail"] == runtime["bridge_detail"],
+            "art and playable lanes disagree on bridge geometry")
     require(art["asset"] == "assets/pittsburgh-night-skyline.jpg", "unexpected art path")
     approved = source_bytes()
     asset_path = ROOT / art["asset"]
@@ -44,6 +46,9 @@ def main():
     game = (ROOT / "index.html").read_text(encoding="utf-8")
     require("graphicsRevision:'" + runtime["graphics_revision"] + "'" in game, "renderer revision drift")
     require("lightingRevision:'" + runtime["lighting_revision"] + "'" in game, "lighting revision drift")
+    require("bridgeDetail:STEEL_BRIDGE.revision" in game,
+            "shared bridge revision absent from playable renderers")
+    require("three-rivers-lattice-v1" == runtime["bridge_detail"], "unrecognized bridge revision")
     require("neighborhoodDetail:'" + runtime["neighborhood_detail"] + "'" in game, "scene detail drift")
     receipt_path = ROOT / runtime["receipt"]
     require(receipt_path.is_file(), "WebGL Playwright receipt absent")
@@ -59,7 +64,8 @@ def main():
         require(check is not None, "missing gameplay viewport: " + label)
         require(check.get("webgl") is True and
                 check.get("graphicsRevision") == runtime["graphics_revision"] and
-                check.get("lightingRevision") == runtime["lighting_revision"],
+                check.get("lightingRevision") == runtime["lighting_revision"] and
+                check.get("bridgeDetail") == runtime["bridge_detail"],
                 "gameplay renderer version drift: " + label)
         require(check.get("GL", {}).get("context") is True and not check.get("browserErrors"),
                 "gameplay WebGL or JavaScript error: " + label)
@@ -77,10 +83,12 @@ def main():
                 "asset": art["asset"], "assetSha256": art_sha,
                 "exactlyMatchesEmbeddedArt": True,
                 "expectedRuntimeRevision": runtime["graphics_revision"],
-                "expectedLightingRevision": runtime["lighting_revision"]},
+                "expectedLightingRevision": runtime["lighting_revision"],
+                "expectedBridgeDetail": runtime["bridge_detail"]},
         "runtime": {"id": "runtime", "peerLane": "art", "shotId": shot_id,
                     "graphicsRevision": runtime["graphics_revision"],
                     "lightingRevision": runtime["lighting_revision"],
+                    "bridgeDetail": runtime["bridge_detail"],
                     "expectedArtSha256": art_sha,
                     "softwareWebglScreenshots": images, "softwareWebglVerified": True},
         "releaseGates": {"visualSimilarityToApprovedFullFrame": "UNKNOWN",

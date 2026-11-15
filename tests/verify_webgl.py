@@ -45,6 +45,8 @@ with sync_playwright() as p:
             assert before.get("graphicsRevision") == "cinematic-geometry-v3", before
             assert before.get("lightingRevision") == "rain-slick-neon-v2", before
             assert before.get("neighborhoodDetail") == "mount-washington-homes-v2", before
+            assert before.get("bridgeDetail") == "three-rivers-lattice-v1", before
+            assert before.get("bridgeTrussSegments") == 120, before
             assert before.get("hillsideHomeCount") == 11, before
             assert before.get("hillsideSolidCount") == 11, before
             assert page.evaluate("window.__steelHillsideSmoke().passed"), "Hillside geometry smoke failed"
@@ -88,6 +90,8 @@ with sync_playwright() as p:
             checks.append({"viewport": label, "webgl": True,
                            "graphicsRevision": before["graphicsRevision"],
                            "lightingRevision": before["lightingRevision"],
+                           "bridgeDetail": before["bridgeDetail"],
+                           "bridgeTrussSegments": before["bridgeTrussSegments"],
                            "GL": info, "browserErrors": errors})
             page.close()
     finally:

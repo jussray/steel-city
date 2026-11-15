@@ -116,6 +116,20 @@ canvas#game{z-index:1;background:transparent;}
  }
 })();
 </script>
+<script id="steel-bridge-contract">
+/* Shared procedural bridge silhouette, identical in WebGL and fallback. */
+(() => {
+ const startZ=-61,endZ=-33,segments=20,deckY=1.2;
+ const sides=Object.freeze([-6,6]);
+ const panels=Object.freeze(Array.from({length:segments},(_,i)=>{
+  const position=t=>Object.freeze({z:startZ+(endZ-startZ)*t,y:deckY+8*Math.sin(Math.PI*t)});
+  return Object.freeze({a:position(i/segments),b:position((i+1)/segments)});
+ }));
+ window.__steelBridgeContract=Object.freeze({
+  revision:'three-rivers-lattice-v1',sides,panels,deckY
+ });
+})();
+</script>
 <script>
 'use strict';
 (()=>{
@@ -183,6 +197,23 @@ for(let x of [-8,8]){world.box(x,-.07,1,2,.13,98,'#515b62');for(let z=-38;z<45;z
 // Dark river with a gold bridge, embankment, and a second skyline across it.
 world.box(0,-.36,-48,160,.12,27,'#0b2943');for(let j=0;j<125;j++){let x=R(-78,78),z=R(-60,-36);world.box(x,-.29,z,R(.12,1.4),.008,.045,rand()>.55?'#1d5765':'#a68f50',.16)}
 world.box(0,.15,-47,12,.36,29,'#4c4a42');world.box(0,.39,-47,11.7,.11,29,'#313c44');for(let side of [-1,1]){let x=side*6;for(let j=0;j<=20;j++){let q=j/20,z=-61+q*28,y=1.2+8*Math.sin(Math.PI*q);if(j) {let p=(j-1)/20,pz=-61+p*28,py=1.2+8*Math.sin(Math.PI*p);world.rod([x,py,pz],[x,y,z],.29,'#e5ae38',.9)}world.rod([x,.4,z],[x,y,z],.09,'#ddaf52',.38)}world.rod([x,1.16,-61],[x,1.16,-33],.13,'#f1b95a',.7);for(let zz=-59;zz<-32;zz+=3.1)world.box(x,.85,zz,.18,1.3,.17,'#dbaa4d',.4)}
+// Bridge identity upgrade: real triangular steel-lattice geometry along the same walkable span.
+const STEEL_BRIDGE=window.__steelBridgeContract;
+let bridgeTrussSegments=0;
+for(const x of STEEL_BRIDGE.sides){
+ for(const panel of STEEL_BRIDGE.panels){
+  const a=panel.a,b=panel.b,y=STEEL_BRIDGE.deckY;
+  world.rod([x,a.y-.52,a.z],[x,b.y-.52,b.z],.12,'#b87d32',.35);
+  world.rod([x,y,a.z],[x,b.y,b.z],.095,'#ffd074',.65);
+  world.rod([x,a.y,a.z],[x,y,b.z],.09,'#e7a741',.55);
+  bridgeTrussSegments+=3;
+ }
+ // Original stone-and-bronze end pylons stay outside the playable deck.
+ for(const z of [-60.65,-33.35]){
+  world.box(x,2.15,z,.72,3.0,.72,'#66534a');
+  world.box(x,3.83,z,.82,.36,.82,'#ffd176',.85);
+ }
+}
 // Hillside silhouette and Mount Washington-inspired incline at the far left.
 const hillsideRise=STEEL_HILL.heights;
 for(let i=0;i<26;i++){
@@ -413,7 +444,7 @@ function look(eye,at){const z=unit(sub(eye,at)),x=unit(cross([0,1,0],z)),y=cross
 function resize(){let d=Math.min(1.35,window.devicePixelRatio||1),w=Math.floor(innerWidth*d),h=Math.floor(innerHeight*d);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h)}}
 function map(){const cc=el('map').getContext('2d'),w=300;cc.clearRect(0,0,w,w);cc.fillStyle='#0d1d30';cc.fillRect(0,0,w,w);const X=x=>150+x*1.72,Z=z=>159+z*1.72;cc.fillStyle='#0b3a4e';cc.fillRect(0,Z(-63),w,Z(-36)-Z(-63));cc.fillStyle='#5e5037';cc.fillRect(X(-7),0,14*1.72,w);for(let z of [-17,2,26])cc.fillRect(0,Z(z)-5,w,10);cc.strokeStyle='#edbc54';cc.lineWidth=5;cc.beginPath();cc.moveTo(X(0),Z(-63));cc.lineTo(X(0),Z(-34));cc.stroke();for(let b of buildings){cc.fillStyle=b.kind==='hillside-home'?'#c99f6b':'#324357';cc.fillRect(X(b.x-b.w/2),Z(b.z-b.d/2),b.w*1.72,b.d*1.72)}for(let s of pickups)if(!s.taken){cc.fillStyle='#ffe08d';cc.beginPath();cc.arc(X(s.x),Z(s.z),3.6,0,6.283);cc.fill()}cc.fillStyle='#8cf7e5';cc.beginPath();cc.arc(X(state.pos.x),Z(state.pos.z),5.5,0,6.283);cc.fill();cc.strokeStyle='#8cf7e5';cc.lineWidth=2.1;cc.beginPath();cc.moveTo(X(state.pos.x),Z(state.pos.z));cc.lineTo(X(state.pos.x)-Math.sin(state.yaw)*15,Z(state.pos.z)-Math.cos(state.yaw)*15);cc.stroke()}
 let prev=0;function loop(ts){let dt=Math.min(.05,(ts-prev)/1000||0);prev=ts;resize();tick(dt);let p=state.pos,ey=[p.x+Math.sin(state.yaw)*11,p.y+(sky.active?7.2:3.7)+state.pitch*4,p.z+Math.cos(state.yaw)*11];for(let i=0;i<3;i++)state.cam[i]+=(ey[i]-state.cam[i])*.14;gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.026,.038,.080,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(loc.proj,false,perspective(Math.PI*.37,canvas.width/canvas.height,.1,220));gl.uniformMatrix4fv(loc.view,false,look(state.cam,[p.x,p.y+1.4,p.z]));gl.uniform3fv(loc.cam,new Float32Array(state.cam));gl.uniform1f(loc.time,state.t);drawBuffer(sbuf,worldBuf.length/10);renderDynamic();drawBuffer(dbuf,dynamic.v.length/10);map();requestAnimationFrame(loop)}resize();state.cam=[0,10,40];requestAnimationFrame(loop);
-window.__steelCityDebug=()=>({graphicsRevision:'cinematic-geometry-v3',lightingRevision:'rain-slick-neon-v2',neighborhoodDetail:'mount-washington-homes-v2',hillsideHomeCount:hillsideHomes.length,hillsideSolidCount:buildings.filter(b=>b.kind==='hillside-home').length,hillsideHomeFootprints:buildings.filter(b=>b.kind==='hillside-home').map(b=>({x:b.x,z:b.z,w:b.w,d:b.d,h:b.h,baseY:b.baseY})),campaignStage:sagaStage,campaignComplete:sagaCompleted,campaignBeacon:sagaBeacon,campaignCrewAlive:sagaFoes.filter(x=>x.hp>0).length,campaignJackalHp:sagaJackal.hp,campaignQueenHp:sagaQueen.hp,started:state.started,x:+state.pos.x.toFixed(2),y:+state.pos.y.toFixed(2),z:+state.pos.z.toFixed(2),stars:state.stars,total:pickups.length,worldTriangles:worldBuf.length/30,webgl:true,freeRoam:true,motionBlend:+state.moveBlend.toFixed(3),gaitPhase:+state.gaitPhase.toFixed(3),sound:state.sound,finished:state.finished,cameraYaw:state.yaw,joystickX:+(window.__steelJoystick?.x||0).toFixed(3),joystickY:+(window.__steelJoystick?.y||0).toFixed(3),skyMode:sky.active,health:sky.hp,bugsDefeated:sky.kills,bugsAlive:sky.enemies.filter(e=>!e.dead).length,shots:sky.shots.length,enemyShots:sky.enemyShots.length});
+window.__steelCityDebug=()=>({graphicsRevision:'cinematic-geometry-v3',lightingRevision:'rain-slick-neon-v2',neighborhoodDetail:'mount-washington-homes-v2',bridgeDetail:STEEL_BRIDGE.revision,bridgeTrussSegments,hillsideHomeCount:hillsideHomes.length,hillsideSolidCount:buildings.filter(b=>b.kind==='hillside-home').length,hillsideHomeFootprints:buildings.filter(b=>b.kind==='hillside-home').map(b=>({x:b.x,z:b.z,w:b.w,d:b.d,h:b.h,baseY:b.baseY})),campaignStage:sagaStage,campaignComplete:sagaCompleted,campaignBeacon:sagaBeacon,campaignCrewAlive:sagaFoes.filter(x=>x.hp>0).length,campaignJackalHp:sagaJackal.hp,campaignQueenHp:sagaQueen.hp,started:state.started,x:+state.pos.x.toFixed(2),y:+state.pos.y.toFixed(2),z:+state.pos.z.toFixed(2),stars:state.stars,total:pickups.length,worldTriangles:worldBuf.length/30,webgl:true,freeRoam:true,motionBlend:+state.moveBlend.toFixed(3),gaitPhase:+state.gaitPhase.toFixed(3),sound:state.sound,finished:state.finished,cameraYaw:state.yaw,joystickX:+(window.__steelJoystick?.x||0).toFixed(3),joystickY:+(window.__steelJoystick?.y||0).toFixed(3),skyMode:sky.active,health:sky.hp,bugsDefeated:sky.kills,bugsAlive:sky.enemies.filter(e=>!e.dead).length,shots:sky.shots.length,enemyShots:sky.enemyShots.length});
 })();
 </script><script>// Portable perspective renderer: used only when WebGL is disabled by device or policy.
 (()=>{
@@ -521,6 +552,22 @@ function render(){let d=Math.min(1.1,window.devicePixelRatio||1),rw=Math.round(i
 let tiles=[];for(let x=-81;x<=81;x+=9)for(let z=-90;z<=55;z+=9){let dist=Math.hypot(x-state.x,z-state.z);if(dist>93)continue;tiles.push({x,z,dist})}tiles.sort((a,b)=>b.dist-a.dist);for(let q of tiles){let x=q.x,z=q.z,river=z<-36&&z>-64,road=Math.abs(x)<8||[-17,2,26].some(q=>Math.abs(z-q)<5),col=river?'#13405b':road?'#242d3a':'#263746';if(river)col='#12415b';quad([x-.02,-.08,z-.02],[x+9,-.08,z-.02],[x+9,-.08,z+9],[x-.02,-.08,z+9],col)}
 // Road centerlines and bridge deck.
 for(let z=-32;z<52;z+=9){quad([-.14,.01,z], [.14,.01,z],[.14,.01,z+3.3],[-.14,.01,z+3.3],'#af9464')}cube(0,-.06,-47,12,.45,29,'#a18a53');for(let k=0;k<2;k++)for(let i=0;i<19;i++){let z=-61+i*1.56,y=1.2+7.9*Math.sin(i/18*Math.PI);rod([(k?6:-6),.4,z],[(k?6:-6),y,z],.12,'#edb854');if(i)rod([(k?6:-6),1.2+7.9*Math.sin((i-1)/18*Math.PI),z-1.56],[(k?6:-6),y,z],.28,'#ffd274')}
+// Fallback uses the exact same steel-lattice control points as WebGL.
+const STEEL_BRIDGE=window.__steelBridgeContract;
+let bridgeTrussSegments=0;
+for(const x of STEEL_BRIDGE.sides){
+ for(const panel of STEEL_BRIDGE.panels){
+  const a=panel.a,b=panel.b,y=STEEL_BRIDGE.deckY;
+  rod([x,a.y-.52,a.z],[x,b.y-.52,b.z],.12,'#b87d32');
+  rod([x,y,a.z],[x,b.y,b.z],.095,'#ffd074');
+  rod([x,a.y,a.z],[x,y,b.z],.09,'#e7a741');
+  bridgeTrussSegments+=3;
+ }
+ for(const z of [-60.65,-33.35]){
+  cube(x,.65,z,.72,3.0,.72,'#66534a');
+  cube(x,3.65,z,.82,.36,.82,'#ffd176');
+ }
+}
 // WebGL and canvas share exactly the same hillside geometry.
 for(let i=0;i<26;i++){
  const x=-82+i*6.5,h=STEEL_HILL.heights[i];cube(x,-1.5,-79,7,h,21,'#142c32');
@@ -581,6 +628,6 @@ if(sky.active){g.shadowColor='#45ecff';g.shadowBlur=25;g.fillStyle='#65eaff';g.b
 const mm=$('map').getContext('2d'),W=300;mm.clearRect(0,0,W,W);mm.fillStyle='#0e2636';mm.fillRect(0,0,W,W);const X=x=>150+x*1.7,Z=z=>158+z*1.7;mm.fillStyle='#184457';mm.fillRect(0,Z(-64),300,Z(-36)-Z(-64));mm.fillStyle='#8f814f';mm.fillRect(X(-7),0,14*1.7,300);mm.fillRect(0,Z(-17)-4,300,8);mm.fillRect(0,Z(2)-4,300,8);mm.fillRect(0,Z(26)-4,300,8);mm.strokeStyle='#edbf59';mm.lineWidth=5;mm.beginPath();mm.moveTo(X(0),Z(-63));mm.lineTo(X(0),Z(-34));mm.stroke();for(const h of hillsideHomes){mm.fillStyle='#c99f6b';mm.fillRect(X(h.x-h.w/2),Z(h.z-h.d/2),h.w*1.7,h.d*1.7)}mm.fillStyle='#b7edeb';mm.beginPath();mm.arc(X(state.x),Z(state.z),5,0,6.283);mm.fill();for(let s of stars){if(s.taken)continue;mm.fillStyle='#ffd77e';mm.beginPath();mm.arc(X(s.x),Z(s.z),3,0,6.283);mm.fill()}
 }
 function frame(t){let dt=Math.min(.05,(t-last)/1000||0);last=t;tick(dt);render();requestAnimationFrame(frame)}requestAnimationFrame(frame);
-window.__steelCityDebug=()=>({graphicsRevision:'cinematic-geometry-v3',lightingRevision:'rain-slick-neon-v2',neighborhoodDetail:'mount-washington-homes-v2',hillsideHomeCount:hillsideHomes.length,hillsideSolidCount:buildings.filter(b=>b.kind==='hillside-home').length,hillsideHomeFootprints:buildings.filter(b=>b.kind==='hillside-home').map(b=>({x:b[0],z:b[1],w:b[2],d:b[3],h:b[4],baseY:b.baseY})),campaignStage:sagaStage,campaignComplete:sagaCompleted,campaignBeacon:sagaBeacon,campaignCrewAlive:sagaFoes.filter(x=>x.hp>0).length,campaignJackalHp:sagaJackal.hp,campaignQueenHp:sagaQueen.hp,started:state.started,x:+state.x.toFixed(2),y:+state.y.toFixed(2),z:+state.z.toFixed(2),stars:state.stars,total:stars.length,webgl:false,fallback:true,freeRoam:true,sound:state.sound,finished:state.finished,cameraYaw:state.yaw,joystickX:+(window.__steelJoystick?.x||0).toFixed(3),joystickY:+(window.__steelJoystick?.y||0).toFixed(3),skyMode:sky.active,health:sky.hp,bugsDefeated:sky.kills,bugsAlive:sky.enemies.filter(e=>!e.dead).length,shots:sky.shots.length,enemyShots:sky.enemyShots.length});
+window.__steelCityDebug=()=>({graphicsRevision:'cinematic-geometry-v3',lightingRevision:'rain-slick-neon-v2',neighborhoodDetail:'mount-washington-homes-v2',bridgeDetail:STEEL_BRIDGE.revision,bridgeTrussSegments,hillsideHomeCount:hillsideHomes.length,hillsideSolidCount:buildings.filter(b=>b.kind==='hillside-home').length,hillsideHomeFootprints:buildings.filter(b=>b.kind==='hillside-home').map(b=>({x:b[0],z:b[1],w:b[2],d:b[3],h:b[4],baseY:b.baseY})),campaignStage:sagaStage,campaignComplete:sagaCompleted,campaignBeacon:sagaBeacon,campaignCrewAlive:sagaFoes.filter(x=>x.hp>0).length,campaignJackalHp:sagaJackal.hp,campaignQueenHp:sagaQueen.hp,started:state.started,x:+state.x.toFixed(2),y:+state.y.toFixed(2),z:+state.z.toFixed(2),stars:state.stars,total:stars.length,webgl:false,fallback:true,freeRoam:true,sound:state.sound,finished:state.finished,cameraYaw:state.yaw,joystickX:+(window.__steelJoystick?.x||0).toFixed(3),joystickY:+(window.__steelJoystick?.y||0).toFixed(3),skyMode:sky.active,health:sky.hp,bugsDefeated:sky.kills,bugsAlive:sky.enemies.filter(e=>!e.dead).length,shots:sky.shots.length,enemyShots:sky.enemyShots.length});
 })();
 </script></body></html>
