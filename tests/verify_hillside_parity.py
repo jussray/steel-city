@@ -169,8 +169,11 @@ def inspect(browser, label, width, height, force_fallback):
             try:
                 page.wait_for_function(
                     "window.__steelCityDebug().z > -64.8", timeout=35000)
-                water_edge = page.evaluate("window.__steelCityDebug()")
+                # Allow the last legal 0.6-unit movement step to complete.
+                # Then sample twice while S remains held to prove the bank blocks it.
                 page.wait_for_timeout(1000)
+                water_edge = page.evaluate("window.__steelCityDebug()")
+                page.wait_for_timeout(700)
                 water_block = page.evaluate("window.__steelCityDebug()")
             finally:
                 page.keyboard.up("KeyS")
