@@ -38,6 +38,8 @@ def main():
             "art and playable lanes disagree on material revision")
     require(art["requires_runtime_bridge_detail"] == runtime["bridge_detail"],
             "art and playable lanes disagree on bridge geometry")
+    require(art["requires_runtime_bridge_finish_revision"] == runtime["bridge_finish_revision"],
+            "art and playable lanes disagree on bridge materials")
     require(art["asset"] == "assets/pittsburgh-night-skyline.jpg", "unexpected art path")
     approved = source_bytes()
     asset_path = ROOT / art["asset"]
@@ -49,6 +51,8 @@ def main():
     require("graphicsRevision:'" + runtime["graphics_revision"] + "'" in game, "renderer revision drift")
     require("lightingRevision:'" + runtime["lighting_revision"] + "'" in game, "lighting revision drift")
     require("materialRevision:'" + runtime["material_revision"] + "'" in game, "material revision drift")
+    require("bridgeFinishRevision:STEEL_BRIDGE.finish.revision" in game,
+            "shared bridge finish revision absent from renderers")
     require("bridgeDetail:STEEL_BRIDGE.revision" in game,
             "shared bridge revision absent from playable renderers")
     require("three-rivers-lattice-v1" == runtime["bridge_detail"], "unrecognized bridge revision")
@@ -69,7 +73,9 @@ def main():
                 check.get("graphicsRevision") == runtime["graphics_revision"] and
                 check.get("lightingRevision") == runtime["lighting_revision"] and
                 check.get("materialRevision") == runtime["material_revision"] and
-                check.get("bridgeDetail") == runtime["bridge_detail"],
+                check.get("bridgeDetail") == runtime["bridge_detail"] and
+                check.get("bridgeFinishRevision") == runtime["bridge_finish_revision"] and
+                check.get("bridgeFinishPieces") == 49,
                 "gameplay renderer version drift: " + label)
         require(check.get("GL", {}).get("context") is True and not check.get("browserErrors"),
                 "gameplay WebGL or JavaScript error: " + label)
@@ -111,6 +117,10 @@ def main():
             data = path.read_bytes()
             require(len(data) > 4096 and data[:8] == b"\x89PNG\r\n\x1a\n",
                     "invalid bridge gameplay PNG: " + relative)
+            if shot == "bridgeMidspan":
+                require(info.get("bridgeFinishRevision") == runtime["bridge_finish_revision"]
+                        and info.get("bridgeFinishPieces") == 49,
+                        "played bridge finish mismatch: " + mode)
             bridge_frames[mode + "_" + shot] = {
                 "path": relative, "sha256": sha256(data), "z": info["z"],
                 "source": "real Playwright keyboard traversal"
@@ -124,12 +134,14 @@ def main():
                 "expectedRuntimeRevision": runtime["graphics_revision"],
                 "expectedLightingRevision": runtime["lighting_revision"],
                 "expectedMaterialRevision": runtime["material_revision"],
-                "expectedBridgeDetail": runtime["bridge_detail"]},
+                "expectedBridgeDetail": runtime["bridge_detail"],
+                "expectedBridgeFinishRevision": runtime["bridge_finish_revision"]},
         "runtime": {"id": "runtime", "peerLane": "art", "shotId": shot_id,
                     "graphicsRevision": runtime["graphics_revision"],
                     "lightingRevision": runtime["lighting_revision"],
                     "materialRevision": runtime["material_revision"],
                     "bridgeDetail": runtime["bridge_detail"],
+                    "bridgeFinishRevision": runtime["bridge_finish_revision"],
                     "expectedArtSha256": art_sha,
                     "softwareWebglScreenshots": images, "softwareWebglVerified": True,
                     "bridgeApproachEvidence": bridge_frames},

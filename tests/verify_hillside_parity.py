@@ -54,6 +54,7 @@ def inspect(browser, label, width, height, force_fallback):
     assert state["lightingRevision"] == "rain-slick-neon-v2", state
     assert state["bridgeDetail"] == "three-rivers-lattice-v1", state
     assert state["bridgeTrussSegments"] == 120, (label, mode, state)
+    assert state["bridgeFinishRevision"] == "riveted-wet-deck-v1", (label, mode, state)
     assert state["hillsideHomeCount"] == 11, (label, mode, state)
     assert state["hillsideSolidCount"] == 11, (label, mode, state)
     assert state["hillsideWalkMinZ"] == -83, (label, mode, state)
@@ -112,6 +113,7 @@ def inspect(browser, label, width, height, force_fallback):
             bridge_midspan = page.evaluate("window.__steelCityDebug()")
             assert -51 < bridge_midspan["z"] < -45, (mode, bridge_midspan)
             assert abs(bridge_midspan["x"]) < 1.5, (mode, bridge_midspan)
+            assert bridge_midspan["bridgeFinishPieces"] == 49, (mode, bridge_midspan)
             midspan_image = PROOF / f"bridge-midspan-desktop-{mode}.png"
             page.screenshot(path=str(midspan_image))
             # The canvas fallback previously dropped its whole long deck
@@ -161,6 +163,8 @@ def inspect(browser, label, width, height, force_fallback):
                 },
                 "bridgeMidspan": {
                     "x": bridge_midspan["x"], "z": bridge_midspan["z"],
+                    "bridgeFinishRevision": bridge_midspan["bridgeFinishRevision"],
+                    "bridgeFinishPieces": bridge_midspan["bridgeFinishPieces"],
                     "screenshot": str(midspan_image.relative_to(ROOT)),
                     "input": "ShiftLeft + KeyW"
                 },
@@ -237,6 +241,7 @@ def inspect(browser, label, width, height, force_fallback):
         "count": state["hillsideHomeCount"], "solids": state["hillsideSolidCount"],
         "bridgeDetail": state["bridgeDetail"],
         "bridgeTrussSegments": state["bridgeTrussSegments"],
+        "bridgeFinishRevision": state["bridgeFinishRevision"],
         "approach": approach, "footprints": homes, "minimapPixel": [201, 159, 107],
         "screenshot": str(image.relative_to(ROOT)), "jsErrors": errors,
     }

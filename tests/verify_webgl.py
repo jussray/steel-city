@@ -49,6 +49,8 @@ with sync_playwright() as p:
             assert before.get("neighborhoodDetail") == "mount-washington-homes-v2", before
             assert before.get("bridgeDetail") == "three-rivers-lattice-v1", before
             assert before.get("bridgeTrussSegments") == 120, before
+            assert before.get("bridgeFinishRevision") == "riveted-wet-deck-v1", before
+            assert before.get("bridgeFinishPieces") == 49, before
             assert before.get("hillsideHomeCount") == 11, before
             assert before.get("hillsideSolidCount") == 11, before
             assert page.evaluate("window.__steelHillsideSmoke().passed"), "Hillside geometry smoke failed"
@@ -95,6 +97,8 @@ with sync_playwright() as p:
                            "materialRevision": before["materialRevision"],
                            "bridgeDetail": before["bridgeDetail"],
                            "bridgeTrussSegments": before["bridgeTrussSegments"],
+                           "bridgeFinishRevision": before["bridgeFinishRevision"],
+                           "bridgeFinishPieces": before["bridgeFinishPieces"],
                            "GL": info, "browserErrors": errors})
             page.close()
     finally:
