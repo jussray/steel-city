@@ -155,6 +155,60 @@ def inspect(browser, label, width, height, force_fallback):
                 "screenshot": str(approach_image.relative_to(ROOT)),
                 "realKeyboardTraversal": True,
             }
+
+            # From the real hillside approach, attempt to walk back into the
+            # river outside the bridge. This used to traverse the water.
+            assert not page.evaluate(
+                "window.__steelHillsideContract.canTraverseGround(-30,-50)"
+            ), "Off-bridge river incorrectly marked walkable"
+            assert page.evaluate(
+                "window.__steelHillsideContract.canTraverseGround(0,-50)"
+            ), "Central bridge incorrectly blocked"
+
+            page.keyboard.down("KeyS")
+            try:
+                page.wait_for_function(
+                    "window.__steelCityDebug().z > -64.8", timeout=35000)
+                water_edge = page.evaluate("window.__steelCityDebug()")
+                page.wait_for_timeout(1000)
+                water_block = page.evaluate("window.__steelCityDebug()")
+            finally:
+                page.keyboard.up("KeyS")
+            assert -64.8 < water_block["z"] <= -64.0, (
+                mode, "Walked into the river off-bridge", water_edge, water_block)
+            assert abs(water_block["z"] - water_edge["z"]) < .6, (
+                mode, "Character continued into water", water_edge, water_block)
+            assert -32 < water_block["x"] < -28, (mode, water_block)
+            river_image = PROOF / f"river-bank-ground-{mode}.png"
+            page.screenshot(path=str(river_image))
+
+            # Flying across open water is intentionally supported, but LAND
+            # may only succeed on solid shore or the bridge, never mid-river.
+            page.keyboard.press("f")
+            assert page.evaluate("window.__steelCityDebug().skyMode") is True
+            drive("KeyS", "window.__steelCityDebug().z > -59", 35000)
+            airborne = page.evaluate("window.__steelCityDebug()")
+            assert -64 < airborne["z"] < -36 and airborne["skyMode"], airborne
+            page.keyboard.press("f")
+            assert page.evaluate("window.__steelCityDebug().skyMode") is True, (
+                mode, "Landed on open water")
+            sky_image = PROOF / f"river-sky-landing-refused-{mode}.png"
+            page.screenshot(path=str(sky_image))
+            drive("KeyW", "window.__steelCityDebug().z < -64.8", 35000)
+            page.keyboard.press("f")
+            assert page.evaluate("window.__steelCityDebug().skyMode") is False, (
+                mode, "Cannot land on the shore")
+
+            approach["riverBoundary"] = {
+                "blockedOffBridge": True,
+                "groundStoppedAtZ": water_block["z"],
+                "skyCrossingAllowed": True,
+                "unsafeLandingRefused": True,
+                "shoreLandingAllowed": True,
+                "groundScreenshot": str(river_image.relative_to(ROOT)),
+                "flightScreenshot": str(sky_image.relative_to(ROOT)),
+                "input": "real keyboard from normal spawn",
+            }
         finally:
             page.keyboard.up("ShiftLeft")
 
