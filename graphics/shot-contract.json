@@ -10,7 +10,8 @@
       "peer_lane": "runtime",
       "requires_runtime_graphics_revision": "cinematic-geometry-v3",
       "requires_runtime_lighting_revision": "rain-slick-neon-v2",
-      "requires_runtime_bridge_detail": "three-rivers-lattice-v1"
+      "requires_runtime_bridge_detail": "three-rivers-lattice-v1",
+      "requires_runtime_material_revision": "masonry-glass-puddles-v1"
     },
     "runtime": {
       "id": "runtime",
@@ -25,7 +26,8 @@
         "mobile_emulated": "proof/steel-city/webgl-mobile_emulated.png"
       },
       "lighting_revision": "rain-slick-neon-v2",
-      "bridge_detail": "three-rivers-lattice-v1"
+      "bridge_detail": "three-rivers-lattice-v1",
+      "material_revision": "masonry-glass-puddles-v1"
     }
   },
   "release_gates": {

@@ -15,6 +15,7 @@ SKYLINE = ROOT / "assets" / "pittsburgh-night-skyline.jpg"
 assert SKYLINE.is_file(), "Missing exported skyline"
 assert "cinematic-geometry-v3" in GAME, "Cinematic geometry revision missing"
 assert "function renderArmorFinish(m)" in GAME, "Rounded 3D armor geometry missing"
+assert "uniform float uStaticScene;" in GAME, "World-only material shader gate missing"
 
 proof = ROOT / "proof" / "steel-city"
 proof.mkdir(parents=True, exist_ok=True)
@@ -44,6 +45,7 @@ with sync_playwright() as p:
             assert before.get("webgl") is True, f"WebGL fallback in {label}: {before}"
             assert before.get("graphicsRevision") == "cinematic-geometry-v3", before
             assert before.get("lightingRevision") == "rain-slick-neon-v2", before
+            assert before.get("materialRevision") == "masonry-glass-puddles-v1", before
             assert before.get("neighborhoodDetail") == "mount-washington-homes-v2", before
             assert before.get("bridgeDetail") == "three-rivers-lattice-v1", before
             assert before.get("bridgeTrussSegments") == 120, before
@@ -90,6 +92,7 @@ with sync_playwright() as p:
             checks.append({"viewport": label, "webgl": True,
                            "graphicsRevision": before["graphicsRevision"],
                            "lightingRevision": before["lightingRevision"],
+                           "materialRevision": before["materialRevision"],
                            "bridgeDetail": before["bridgeDetail"],
                            "bridgeTrussSegments": before["bridgeTrussSegments"],
                            "GL": info, "browserErrors": errors})
