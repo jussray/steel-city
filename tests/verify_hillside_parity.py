@@ -26,18 +26,21 @@ def inspect(browser, label, width, height, force_fallback):
                lambda route: route.fulfill(path=str(ASSET), content_type="image/jpeg"))
 
     if force_fallback:
-        # Patch the browser's existing realm BEFORE set_content executes game JS.
-        page.evaluate("""() => {
+        # An init script survives navigation and intercepts WebGL before game JS.
+        page.add_init_script("""(() => {
           const original = HTMLCanvasElement.prototype.getContext;
           HTMLCanvasElement.prototype.getContext = function(type, ...args) {
             if (/webgl/i.test(type)) return null;
             return original.call(this, type, ...args);
           };
-        }""")
+        })();""")
 
-    page.set_content(
-        HTML.replace("<head>", '<head><base href="https://steel-city.local/">', 1),
-        wait_until="domcontentloaded")
+    # Give the document and skyline the SAME offline origin. set_content()
+    # runs at about:blank; its externally based image taints canvas readback.
+    # Preserve the visual pixel assertion instead of disabling browser security.
+    page.route("https://steel-city.local/",
+               lambda route: route.fulfill(body=HTML, content_type="text/html"))
+    page.goto("https://steel-city.local/", wait_until="domcontentloaded")
     page.wait_for_function("typeof window.__steelCityDebug === 'function'",
                            timeout=20000)
     page.wait_for_function(
