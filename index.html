@@ -232,7 +232,7 @@ for(let z of [-17,2,26]){world.box(0,-.11,z,116,.13,8,'#1f2838');for(let x=-53;x
 for(let x of [-8,8]){world.box(x,-.07,1,2,.13,98,'#515b62');for(let z=-38;z<45;z+=3.1)world.box(x*.93,-.001,z,.11,.035,1.3,'#b9aa8a',.15)}
 // Dark river with a gold bridge, embankment, and a second skyline across it.
 world.box(0,-.36,-48,160,.12,27,'#0b2943');for(let j=0;j<125;j++){let x=R(-78,78),z=R(-60,-36);world.box(x,-.29,z,R(.12,1.4),.008,.045,rand()>.55?'#1d5765':'#a68f50',.16)}
-world.box(0,.15,-47,12,.36,29,'#4c4a42');world.box(0,.39,-47,11.7,.11,29,'#313c44');for(let side of [-1,1]){let x=side*6;for(let j=0;j<=20;j++){let q=j/20,z=-61+q*28,y=1.2+8*Math.sin(Math.PI*q);if(j) {let p=(j-1)/20,pz=-61+p*28,py=1.2+8*Math.sin(Math.PI*p);world.rod([x,py,pz],[x,y,z],.29,'#e5ae38',.9)}world.rod([x,.4,z],[x,y,z],.09,'#ddaf52',.38)}world.rod([x,1.16,-61],[x,1.16,-33],.13,'#f1b95a',.7);for(let zz=-59;zz<-32;zz+=3.1)world.box(x,.85,zz,.18,1.3,.17,'#dbaa4d',.4)}
+world.box(0,.15,-47,12,.36,29,'#4c4a42');world.box(0,.39,-47,11.7,.11,29,'#313c44');for(let side of [-1,1]){let x=side*6;for(let j=0;j<=20;j++){let q=j/20,z=-61+q*28,y=1.2+8*Math.sin(Math.PI*q);if(j) {let p=(j-1)/20,pz=-61+p*28,py=1.2+8*Math.sin(Math.PI*p);world.rod([x,py,pz],[x,y,z],.29,'#e5ae38',.55)}world.rod([x,.4,z],[x,y,z],.09,'#ddaf52',.38)}world.rod([x,1.16,-61],[x,1.16,-33],.13,'#f1b95a',.7);for(let zz=-59;zz<-32;zz+=3.1)world.box(x,.85,zz,.18,1.3,.17,'#dbaa4d',.4)}
 // Bridge identity upgrade: real triangular steel-lattice geometry along the same walkable span.
 const STEEL_BRIDGE=window.__steelBridgeContract;
 let bridgeTrussSegments=0;
@@ -240,8 +240,8 @@ for(const x of STEEL_BRIDGE.sides){
  for(const panel of STEEL_BRIDGE.panels){
   const a=panel.a,b=panel.b,y=STEEL_BRIDGE.deckY;
   world.rod([x,a.y-.52,a.z],[x,b.y-.52,b.z],.12,'#b87d32',.35);
-  world.rod([x,y,a.z],[x,b.y,b.z],.095,'#ffd074',.65);
-  world.rod([x,a.y,a.z],[x,y,b.z],.09,'#e7a741',.55);
+  world.rod([x,y,a.z],[x,b.y,b.z],.095,'#ffd074',.34);
+  world.rod([x,a.y,a.z],[x,y,b.z],.09,'#e7a741',.30);
   bridgeTrussSegments+=3;
  }
  // Original stone-and-bronze end pylons stay outside the playable deck.
@@ -642,6 +642,16 @@ for(let [x,z,w,dep,h] of [[8,15,3.4,3.4,1.15],[11,11,3.5,3.8,2.4],[14,7,3.5,4,3.
  }
  // Landmark fountain, glowing lamp line and collectibles.
 let fp=put(18,0,-30);if(fp){rod([18,0,-30],[18,8,-30],.34,'#aeeaff');for(let i=0;i<14;i++){let a=i/14*6.283,b=(i+1)/14*6.283;rod([18+Math.cos(a)*5,.2,-30+Math.sin(a)*5],[18+Math.cos(b)*5,.2,-30+Math.sin(b)*5],.13,'#beeaff')}}for(let zz=-28;zz<49;zz+=10)for(let xx of [-9.5,9.5]){rod([xx,0,zz],[xx,5,zz],.14,'#98aab2');let p=put(xx,5,zz);if(p){g.fillStyle='#ffe0a1';g.shadowBlur=15;g.shadowColor='#ffd083';g.beginPath();g.arc(p.x,p.y,Math.max(2,cv.height*.025/p.depth),0,6.283);g.fill();g.shadowBlur=0}}
+// Painter's fallback cannot near-plane clip a single 29-unit bridge top.
+// Draw small overlapping top quads AFTER distant buildings, before pickups/hero.
+// This restores the physical deck when crossing its middle without a teleport.
+if(state.z < -31 && state.z > -64 && Math.abs(state.x) < 8.5){
+ for(let zz=-61,i=0;zz<-33;zz+=1,i++){
+  const far=Math.min(-33,zz+1.025);
+  const col=i%5===0?'#4a5260':'#3d4552';
+  quad([-5.83,.405,zz],[5.83,.405,zz],[5.83,.405,far],[-5.83,.405,far],col);
+ }
+}
 for(let s of stars){if(s.taken)continue;let p=put(s.x,s.y+Math.sin(state.t*3)*.18,s.z);if(!p)continue;let r=Math.max(2,cv.height*.32/p.depth);g.save();g.translate(p.x,p.y);g.rotate(state.t*.8);g.shadowColor='#ffcb66';g.shadowBlur=20;g.fillStyle='#ffda7e';g.beginPath();for(let j=0;j<10;j++){let a=j/10*6.283-Math.PI/2,rr=j%2?r*.44:r;let x=Math.cos(a)*rr,y=Math.sin(a)*rr;if(!j)g.moveTo(x,y);else g.lineTo(x,y)}g.closePath();g.fill();g.restore()}
 
 sagaDraw2D(put,g,cv.height);

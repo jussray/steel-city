@@ -111,6 +111,19 @@ def inspect(browser, label, width, height, force_fallback):
             assert abs(bridge_midspan["x"]) < 1.5, (mode, bridge_midspan)
             midspan_image = PROOF / f"bridge-midspan-desktop-{mode}.png"
             page.screenshot(path=str(midspan_image))
+            # The canvas fallback previously dropped its whole long deck
+            # near the camera; the center-bottom pixel became river blue.
+            # Assert the *rendered* on-bridge ground is slate, not water.
+            if force_fallback:
+                deck_rgb = page.evaluate("""() => {
+                    const c = document.querySelector('#game');
+                    const rgba = c.getContext('2d').getImageData(
+                        Math.floor(c.width*.5), Math.floor(c.height*.78), 1, 1).data;
+                    return Array.from(rgba).slice(0,3);
+                }""")
+                assert deck_rgb[0] >= 45 and deck_rgb[2]-deck_rgb[0] < 65, (
+                    mode, "bridge deck clipped or covered by river", deck_rgb)
+
 
             drive("KeyW", "window.__steelCityDebug().z < -65", 90000)
             crossed = page.evaluate("window.__steelCityDebug()")

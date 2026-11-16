@@ -81,6 +81,41 @@ def main():
         require(width >= 350 and height >= 600, "undersized gameplay screenshot: " + relative)
         images[label] = {"path": relative, "sha256": sha256(data), "width": width, "height": height}
 
+    # Bind actual keyboard-driven bridge approach/midspan frames to both lanes.
+    # A reference image is not gameplay and a screenshot is not hardware proof.
+    parity_path = PROOF / "hillside-parity-receipt.json"
+    require(parity_path.is_file(), "cross-renderer traversal receipt missing")
+    parity = json.loads(parity_path.read_text(encoding="utf-8"))
+    require(parity.get("status") == "PASS" and
+            parity.get("hardwareGpuVerified") is False and
+            parity.get("liveDeploymentVerified") is False,
+            "bridge screenshots have no valid software-only proof")
+    bridge_frames = {}
+    for mode in ("webgl", "fallback"):
+        check = next((c for c in parity["checks"]
+                      if c["viewport"] == "desktop" and c["mode"] == mode), None)
+        require(check is not None and not check.get("jsErrors"),
+                "bridge approach missing for renderer " + mode)
+        approach = check.get("approach") or {}
+        require(approach.get("realKeyboardTraversal") is True,
+                "bridge approach did not use real controls for " + mode)
+        for shot in ("bridgeEntrance", "bridgeMidspan"):
+            info = approach.get(shot) or {}
+            require(info.get("input") == "ShiftLeft + KeyW",
+                    "bridge frame input mismatch")
+            relative = info.get("screenshot", "")
+            require(relative.startswith("proof/steel-city/"),
+                    "bridge frame path outside proof directory")
+            path = ROOT / relative
+            require(path.is_file(), "bridge screenshot missing: " + relative)
+            data = path.read_bytes()
+            require(len(data) > 4096 and data[:8] == b"\\x89PNG\\r\\n\\x1a\\n",
+                    "invalid bridge gameplay PNG: " + relative)
+            bridge_frames[mode + "_" + shot] = {
+                "path": relative, "sha256": sha256(data), "z": info["z"],
+                "source": "real Playwright keyboard traversal"
+            }
+
     proof = {
         "status": "PASS_LANE_SYNC_ONLY", "shotId": shot_id, "goal": doc["goal"],
         "art": {"id": "art", "peerLane": "runtime", "shotId": shot_id,
@@ -96,7 +131,8 @@ def main():
                     "materialRevision": runtime["material_revision"],
                     "bridgeDetail": runtime["bridge_detail"],
                     "expectedArtSha256": art_sha,
-                    "softwareWebglScreenshots": images, "softwareWebglVerified": True},
+                    "softwareWebglScreenshots": images, "softwareWebglVerified": True,
+                    "bridgeApproachEvidence": bridge_frames},
         "releaseGates": {"visualSimilarityToApprovedFullFrame": "UNKNOWN",
                          "physicalGPU": "UNKNOWN", "productionRoute": "UNKNOWN"}
     }
@@ -106,6 +142,8 @@ def main():
     cards = [("Art lane · approved 2D skyline", "approved-reference.jpg"),
              ("Runtime lane · desktop software WebGL", Path(images["desktop"]["path"]).name),
              ("Runtime lane · mobile-emulated software WebGL", Path(images["mobile_emulated"]["path"]).name)]
+    for key, frame in bridge_frames.items():
+        cards.append(("Real gameplay · "+key.replace("_", " "), Path(frame["path"]).name))
     figures = "\n".join('<figure><img src="' + escape(path, quote=True) + '" alt="' +
                         escape(label, quote=True) + '"><figcaption>' + escape(label) +
                         '</figcaption></figure>' for label, path in cards)
