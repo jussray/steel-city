@@ -109,7 +109,7 @@ def main():
             path = ROOT / relative
             require(path.is_file(), "bridge screenshot missing: " + relative)
             data = path.read_bytes()
-            require(len(data) > 4096 and data[:8] == b"\\x89PNG\\r\\n\\x1a\\n",
+            require(len(data) > 4096 and data[:8] == b"\x89PNG\r\n\x1a\n",
                     "invalid bridge gameplay PNG: " + relative)
             bridge_frames[mode + "_" + shot] = {
                 "path": relative, "sha256": sha256(data), "z": info["z"],
