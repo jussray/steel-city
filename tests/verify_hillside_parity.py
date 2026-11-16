@@ -96,6 +96,22 @@ def inspect(browser, label, width, height, force_fallback):
 
         page.keyboard.down("ShiftLeft")
         try:
+            # Capture the existing real-input route at two distinct viewpoints.
+            # These frames are WebGL/fallback captures, not the approved key art.
+            drive("KeyW", "window.__steelCityDebug().z < -26", 90000)
+            bridge_entrance = page.evaluate("window.__steelCityDebug()")
+            assert -31.5 < bridge_entrance["z"] < -26, (mode, bridge_entrance)
+            assert abs(bridge_entrance["x"]) < 1.5, (mode, bridge_entrance)
+            entrance_image = PROOF / f"bridge-entrance-desktop-{mode}.png"
+            page.screenshot(path=str(entrance_image))
+
+            drive("KeyW", "window.__steelCityDebug().z < -45", 90000)
+            bridge_midspan = page.evaluate("window.__steelCityDebug()")
+            assert -51 < bridge_midspan["z"] < -45, (mode, bridge_midspan)
+            assert abs(bridge_midspan["x"]) < 1.5, (mode, bridge_midspan)
+            midspan_image = PROOF / f"bridge-midspan-desktop-{mode}.png"
+            page.screenshot(path=str(midspan_image))
+
             drive("KeyW", "window.__steelCityDebug().z < -65", 90000)
             crossed = page.evaluate("window.__steelCityDebug()")
             assert "MOUNT WASHINGTON" in page.locator("#place").inner_text(), (
@@ -122,6 +138,16 @@ def inspect(browser, label, width, height, force_fallback):
             approach_image = PROOF / f"hillside-approach-{mode}.png"
             page.screenshot(path=str(approach_image))
             approach = {
+                "bridgeEntrance": {
+                    "x": bridge_entrance["x"], "z": bridge_entrance["z"],
+                    "screenshot": str(entrance_image.relative_to(ROOT)),
+                    "input": "ShiftLeft + KeyW"
+                },
+                "bridgeMidspan": {
+                    "x": bridge_midspan["x"], "z": bridge_midspan["z"],
+                    "screenshot": str(midspan_image.relative_to(ROOT)),
+                    "input": "ShiftLeft + KeyW"
+                },
                 "bridgeCrossedAtZ": crossed["z"],
                 "collisionAt": {
                     "x": after_block["x"], "z": after_block["z"],
@@ -161,6 +187,16 @@ with sync_playwright() as play:
 for label in ("desktop", "mobile-emulated"):
     pair = [r for r in results if r["viewport"] == label]
     assert len(pair) == 2
+    if label == "desktop":
+        assert pair[0]["approach"] and pair[1]["approach"], "Bridge approach evidence absent"
+        for view in ("bridgeEntrance", "bridgeMidspan"):
+            for renderer in pair:
+                point = renderer["approach"][view]
+                assert Path(ROOT / point["screenshot"]).is_file(), point
+                assert point["input"] == "ShiftLeft + KeyW", point
+        for renderer in pair:
+            assert renderer["approach"]["bridgeEntrance"]["z"] > -31.5
+            assert renderer["approach"]["bridgeMidspan"]["z"] < -45
     assert pair[0]["bridgeTrussSegments"] == pair[1]["bridgeTrussSegments"] == 120, (
         label, "WebGL/fallback steel bridge truss drift", pair)
     assert pair[0]["footprints"] == pair[1]["footprints"], (
