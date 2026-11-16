@@ -5,6 +5,7 @@ on:
       - main
       - build/restore-steel-city-saga
       - fix/steel-city-hillside-parity-20261115
+      - fix/steel-city-river-ground-corridor-20261116
   workflow_dispatch:
 permissions:
   contents: read
