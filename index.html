@@ -122,14 +122,13 @@ canvas#game{z-index:1;background:transparent;}
 #storyVictory button#storyContinue:hover,#storyVictory button#storyContinue:focus-visible{background:linear-gradient(180deg,#16284a,#081224);outline:2px solid #ffe3a0;outline-offset:3px}
 @media(max-height:500px){#storyVictory .sb-crest{width:min(330px,60vh*1.6)}#storyVictory .sb-victory p{margin:4px auto 8px;font-size:12px}#storyVictory button#storyContinue{padding:9px 20px}}
 /* Chapter card: panel 02 "ACT I / VII — THE FIRST SIGNAL". Display-only, never hit-testable. */
-#sbChapterCard{position:absolute;left:50%;bottom:clamp(150px,27vh,260px);z-index:23;transform:translateX(-50%);pointer-events:none;user-select:none;min-width:min(330px,82vw);max-width:92vw;padding:10px 30px 12px 26px;text-align:left;background:linear-gradient(100deg,#050b16f2 0%,#0a1629e6 70%,#0a162900 100%);border-left:4px solid #f0c25a;clip-path:polygon(0 0,100% 0,calc(100% - 18px) 100%,0 100%);box-shadow:0 10px 30px #0008;animation:sbChapterIn 2.6s ease both}
+#sbChapterCard{position:absolute;left:50%;bottom:clamp(150px,27vh,260px);z-index:23;transform:translateX(-50%);pointer-events:none;user-select:none;min-width:min(330px,82vw);max-width:92vw;padding:10px 30px 12px 26px;text-align:left;background:linear-gradient(100deg,#050b16f2 0%,#0a1629e6 70%,#0a162900 100%);border-left:4px solid #f0c25a;clip-path:polygon(0 0,100% 0,calc(100% - 18px) 100%,0 100%);box-shadow:0 10px 30px #0008;opacity:0;will-change:opacity,transform}
 #sbChapterCard[hidden]{display:none!important}
 #sbChapterCard .sb-cc-act{font-family:'Inter','Segoe UI',system-ui,sans-serif;font-weight:900;font-size:13px;letter-spacing:.28em;color:#ffd469}
 #sbChapterCard .sb-cc-act b{font-weight:900}#sbChapterCard .sb-cc-act i{font-style:normal;color:#ffffff80}
 #sbChapterCard .sb-cc-title{margin-top:3px;font-family:Impact,'Arial Black','Inter Display','Inter',system-ui,sans-serif;font-style:italic;font-weight:900;font-size:clamp(20px,3vw,30px);letter-spacing:.03em;line-height:1.02;color:#fff;text-transform:uppercase;text-shadow:0 2px 8px #000}
-@keyframes sbChapterIn{0%{opacity:0;transform:translateX(calc(-50% - 26px))}12%{opacity:1;transform:translateX(-50%)}82%{opacity:1;transform:translateX(-50%)}100%{opacity:0;transform:translateX(calc(-50% + 14px))}}
+@media(orientation:portrait) and (max-width:760px){#sbChapterCard{bottom:auto;top:clamp(160px,26vh,240px)}}
 @media(orientation:landscape) and (max-height:500px){#sbChapterCard{top:auto;bottom:max(16px,env(safe-area-inset-bottom));padding:7px 24px 8px 18px;min-width:0}#sbChapterCard .sb-cc-act{font-size:10px}#sbChapterCard .sb-cc-title{font-size:18px}}
-@media(prefers-reduced-motion:reduce){#sbChapterCard{animation:none}}
 </style>
 <style id="steel-touch-layout">
 /* Touch play on every screen shape. Controls follow the input device, not the width, and short
@@ -248,16 +247,23 @@ canvas#game{z-index:1;background:transparent;}
   const ROMAN=['I','II','III','IV','V','VI','VII'];let shown=null,timer=0;
   const started=()=>cover.classList.contains('hidden');
   function current(){const m=/ACT\s+(\d+)\s*\/\s*7/.exec(label.textContent||'');return m?{act:+m[1],title:(title.textContent||'').trim()}:null}
+  // Animated per painted frame with a capped step, so a long first-frame stall (shader compile,
+  // slow phone) cannot eat the ~2.5s the card is meant to be readable.
+  const DUR=2600,still=matchMedia('(prefers-reduced-motion: reduce)');let t=0,last=0;
+  function frame(now){t+=Math.min(50,last?now-last:16);last=now;const p=t/DUR;
+    const a=p<.12?p/.12:p>.82?Math.max(0,(1-p)/.18):1,dx=still.matches?0:p<.12?-26*(1-a):p>.82?14*(1-a):0;
+    card.style.opacity=a.toFixed(3);card.style.transform=`translateX(calc(-50% + ${dx.toFixed(1)}px))`;
+    if(p>=1){card.hidden=true;timer=0;return}timer=requestAnimationFrame(frame)}
   function show(c){shown=c.act+'|'+c.title;num.textContent=ROMAN[c.act-1]||c.act;name.textContent=c.title;
-    clearTimeout(timer);card.hidden=true;void card.offsetWidth;card.hidden=false;card.dataset.act=c.act;
-    timer=setTimeout(()=>{card.hidden=true},2600)}
+    cancelAnimationFrame(timer);t=0;last=0;card.style.opacity='0';card.hidden=false;card.dataset.act=c.act;
+    timer=requestAnimationFrame(frame)}
   function check(){if(!started())return;const c=current();if(!c){shown=null;return}if(c.act+'|'+c.title!==shown)show(c)}
   // Renderers rewrite the same text many times a second; act on real changes only.
   const watch=new MutationObserver(check);
   watch.observe(label,{childList:true,characterData:true,subtree:true});
   watch.observe(title,{childList:true,characterData:true,subtree:true});
   watch.observe(cover,{attributes:true,attributeFilter:['class']});
-  window.__steelChapterCard=()=>({hidden:card.hidden,act:card.dataset.act||null,title:name.textContent});
+  window.__steelChapterCard=()=>({hidden:card.hidden,act:card.dataset.act||null,title:name.textContent,shownMs:Math.round(t)});
 })();
 </script>
 <script id="steel-bridge-contract">
