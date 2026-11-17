@@ -51,6 +51,10 @@ with sync_playwright() as p:
             assert before.get("bridgeTrussSegments") == 120, before
             assert before.get("bridgeFinishRevision") == "riveted-wet-deck-v1", before
             assert before.get("bridgeFinishPieces") == 49, before
+            assert before.get("bridgeLightingRevision") == "burnished-bronze-night-v1", before
+            assert before.get("bridgePortalMasonry") == 8, before
+            lighting = page.evaluate("window.__steelBridgeContract.lighting")
+            assert lighting["archEmission"] <= .15 and lighting["railEmission"] <= .15, lighting
             assert before.get("hillsideHomeCount") == 11, before
             assert before.get("hillsideSolidCount") == 11, before
             assert page.evaluate("window.__steelHillsideSmoke().passed"), "Hillside geometry smoke failed"
@@ -99,6 +103,8 @@ with sync_playwright() as p:
                            "bridgeTrussSegments": before["bridgeTrussSegments"],
                            "bridgeFinishRevision": before["bridgeFinishRevision"],
                            "bridgeFinishPieces": before["bridgeFinishPieces"],
+                           "bridgeLightingRevision": before["bridgeLightingRevision"],
+                           "bridgePortalMasonry": before["bridgePortalMasonry"],
                            "GL": info, "browserErrors": errors})
             page.close()
     finally:

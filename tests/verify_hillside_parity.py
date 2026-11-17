@@ -55,6 +55,8 @@ def inspect(browser, label, width, height, force_fallback):
     assert state["bridgeDetail"] == "three-rivers-lattice-v1", state
     assert state["bridgeTrussSegments"] == 120, (label, mode, state)
     assert state["bridgeFinishRevision"] == "riveted-wet-deck-v1", (label, mode, state)
+    assert state["bridgeLightingRevision"] == "burnished-bronze-night-v1", (label, mode, state)
+    assert state["bridgePortalMasonry"] == 8, (label, mode, state)
     assert state["hillsideHomeCount"] == 11, (label, mode, state)
     assert state["hillsideSolidCount"] == 11, (label, mode, state)
     assert state["hillsideWalkMinZ"] == -83, (label, mode, state)
@@ -242,6 +244,8 @@ def inspect(browser, label, width, height, force_fallback):
         "bridgeDetail": state["bridgeDetail"],
         "bridgeTrussSegments": state["bridgeTrussSegments"],
         "bridgeFinishRevision": state["bridgeFinishRevision"],
+        "bridgeLightingRevision": state["bridgeLightingRevision"],
+        "bridgePortalMasonry": state["bridgePortalMasonry"],
         "approach": approach, "footprints": homes, "minimapPixel": [201, 159, 107],
         "screenshot": str(image.relative_to(ROOT)), "jsErrors": errors,
     }

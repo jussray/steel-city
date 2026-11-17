@@ -40,6 +40,8 @@ def main():
             "art and playable lanes disagree on bridge geometry")
     require(art["requires_runtime_bridge_finish_revision"] == runtime["bridge_finish_revision"],
             "art and playable lanes disagree on bridge materials")
+    require(art["requires_runtime_bridge_lighting_revision"] == runtime["bridge_lighting_revision"],
+            "art and playable lanes disagree on bridge night exposure")
     require(art["asset"] == "assets/pittsburgh-night-skyline.jpg", "unexpected art path")
     approved = source_bytes()
     asset_path = ROOT / art["asset"]
@@ -51,6 +53,10 @@ def main():
     require("graphicsRevision:'" + runtime["graphics_revision"] + "'" in game, "renderer revision drift")
     require("lightingRevision:'" + runtime["lighting_revision"] + "'" in game, "lighting revision drift")
     require("materialRevision:'" + runtime["material_revision"] + "'" in game, "material revision drift")
+    require("bridgeLightingRevision:BRIDGE_LIGHT.revision" in game,
+            "shared bridge lighting revision absent from renderers")
+    require("burnished-bronze-night-v1" == runtime["bridge_lighting_revision"],
+            "unknown bridge lighting revision")
     require("bridgeFinishRevision:STEEL_BRIDGE.finish.revision" in game,
             "shared bridge finish revision absent from renderers")
     require("bridgeDetail:STEEL_BRIDGE.revision" in game,
@@ -75,6 +81,8 @@ def main():
                 check.get("materialRevision") == runtime["material_revision"] and
                 check.get("bridgeDetail") == runtime["bridge_detail"] and
                 check.get("bridgeFinishRevision") == runtime["bridge_finish_revision"] and
+                check.get("bridgeLightingRevision") == runtime["bridge_lighting_revision"] and
+                check.get("bridgePortalMasonry") == 8 and
                 check.get("bridgeFinishPieces") == 49,
                 "gameplay renderer version drift: " + label)
         require(check.get("GL", {}).get("context") is True and not check.get("browserErrors"),
@@ -135,13 +143,16 @@ def main():
                 "expectedLightingRevision": runtime["lighting_revision"],
                 "expectedMaterialRevision": runtime["material_revision"],
                 "expectedBridgeDetail": runtime["bridge_detail"],
-                "expectedBridgeFinishRevision": runtime["bridge_finish_revision"]},
+                "expectedBridgeFinishRevision": runtime["bridge_finish_revision"],
+                "expectedBridgeLightingRevision": runtime["bridge_lighting_revision"]},
         "runtime": {"id": "runtime", "peerLane": "art", "shotId": shot_id,
                     "graphicsRevision": runtime["graphics_revision"],
                     "lightingRevision": runtime["lighting_revision"],
                     "materialRevision": runtime["material_revision"],
                     "bridgeDetail": runtime["bridge_detail"],
                     "bridgeFinishRevision": runtime["bridge_finish_revision"],
+                    "bridgeLightingRevision": runtime["bridge_lighting_revision"],
+                    "bridgePortalMasonry": 8,
                     "expectedArtSha256": art_sha,
                     "softwareWebglScreenshots": images, "softwareWebglVerified": True,
                     "bridgeApproachEvidence": bridge_frames},
