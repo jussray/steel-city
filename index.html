@@ -240,6 +240,15 @@ body.sky-active #controls #jump2::after{content:none}
 #titlecover .sup{justify-content:flex-end}
 #titlecover .subhead,#titlecover .features{display:none}
 #titlecover .sb-cta{justify-content:flex-end}
+#titlecover .intro,#titlecover .sb-head,#titlecover .bigtitle,#titlecover .sb-cta{align-items:flex-end}
+#titlecover #play{text-align:right}
+@media (min-width:801px) and (min-height:501px){#titlecover{align-items:flex-end}#titlecover .intro{margin-bottom:2vh}}
+@media (min-width:801px){
+ /* Panel 01: skyline open on the left, legibility scrim behind the right-hand CTA. Layer 1 (left-dark
+    gradient) is sized to 0; the approved JPEG layer keeps cover. */
+ #titlecover{background-size:0 0,auto,cover}
+ #titlecover::after{background:linear-gradient(270deg,#020611e0 0%,#020815b3 32%,#02081500 60%),linear-gradient(0deg,#020611b0 0%,transparent 30%)}
+}
 @media (max-width:900px){
  .mapwrap{left:max(12px,env(safe-area-inset-left));top:10px;width:108px;height:108px}
  .counter{top:10px;right:max(12px,env(safe-area-inset-right))}
