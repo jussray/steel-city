@@ -195,6 +195,77 @@ canvas#game{z-index:1;background:transparent;}
  });
 })();
 </script>
+<script id="steel-cinematic-view-js">
+/* Storyboard city look (storyboard-city-v1), shared by the WebGL and canvas renderers:
+   over-the-shoulder camera, far Golden Triangle skyline, gold-lit river bridges and
+   reflections, Point fountain plume, and a steel blue / bridge gold / cyan grade.
+   The founder storyboard is a painted target; this is procedural box geometry. */
+(() => {
+ const hash=(i,s)=>{const v=Math.sin(i*127.1+s*311.7)*43758.5453;return v-Math.floor(v)};
+ const freeze=Object.freeze;
+ // Low third-person framing: hero lower-left third, skyline over the right shoulder.
+ const camera=freeze({
+  mode:'over-shoulder', groundFov:Math.PI*.35, skyFov:Math.PI*.41, follow:6.5,
+  frame(p,yaw,pitch,skyMode,aspect,fov){
+   const fx=-Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=-Math.sin(yaw);
+   const back=skyMode?9.6:6.4,height=skyMode?3.0+pitch*4.2:1.55+pitch*4.1;
+   const ahead=skyMode?7.0:6.0,lift=skyMode?1.2:2.35;
+   const shoulder=Math.min(skyMode?2.5:1.9,Math.tan(fov/2)*aspect*back*.27);
+   return {shoulder,
+    eye:[p.x-fx*back+rx*shoulder,p.y+height,p.z-fz*back+rz*shoulder],
+    target:[p.x+fx*ahead+rx*shoulder,p.y+lift,p.z+fz*ahead+rz*shoulder]};
+  }
+ });
+ // Dense warm-lit towers across the river, behind the Mount Washington ridge.
+ const towerSpecs=[[-66,-108,8,8,30],[-55,-101,9,8,38],[-44,-112,8,9,50],[-33,-103,10,9,34],
+  [-22,-116,9,9,60,'#ffd36b'],[-11,-105,8,8,44],[0,-119,12,10,70,'#ffe08f'],[11,-104,9,8,48],
+  [22,-114,10,9,56,'#8fe9ff'],[33,-102,8,8,36],[44,-110,9,9,46],[55,-103,8,8,32],[66,-112,9,8,40],
+  [-28,-127,9,8,42],[16,-128,10,9,52],[49,-126,8,8,38]];
+ const warm=['#ffd789','#ffc865','#fff0c4','#ffdc94','#9fe6ff'];
+ const farTowers=freeze(towerSpecs.map(([x,z,w,d,tall,crown],i)=>{const h=Math.round(tall*.84);
+  const rows=[];
+  for(let j=0,y=3.2;y<h-3;j++,y+=2.05){
+   const lit=hash(i,j);if(lit<.16)continue;
+   const segs=[];
+   for(let s=0;s<3;s++){if(hash(i*7+s,j)<.18)continue;const a=x-w*.42+s*w*.29;segs.push(freeze({a,b:a+w*.24}))}
+   rows.push(freeze({y,h:.66,col:warm[Math.floor(hash(j,i)*warm.length)],glow:.78+.34*hash(i,j*3),segs:freeze(segs)}));
+  }
+  return freeze({x,z,w,d,h,base:-.3,body:i%3===0?'#1b2a3f':i%3===1?'#16223a':'#22324a',rows:freeze(rows),
+   crown:crown?freeze({h:Math.min(9,h*.16),col:crown,glow:1.25}):null});
+ }));
+ // Elevated, non-walkable rail bridges across the river, so the water reads as the Three Rivers.
+ const riverBridges=freeze([-44,44].map(x=>freeze({x,z0:-64,z1:-36,deckY:5.2,rise:7.4,width:7,segments:14,
+  piers:freeze([-62.5,-50,-37.5])})));
+ const bulbs=[];
+ const B=window.__steelBridgeContract;
+ for(const x of B.sides)for(let j=0;j<=20;j+=1){const t=j/20;bulbs.push(freeze([x,B.deckY+8*Math.sin(Math.PI*t)+.34,-61+28*t]))}
+ for(const b of riverBridges)for(const sx of [-1,1])for(let j=0;j<=b.segments;j++){const t=j/b.segments;
+  bulbs.push(freeze([b.x+sx*b.width/2,b.deckY+b.rise*Math.sin(Math.PI*t)+.3,b.z0+(b.z1-b.z0)*t]))}
+ // Broken, shimmering gold columns on the water under each lit bridge and tower.
+ const reflections=[];
+ const streak=(x,z0,z1,seed,col,w)=>{for(let z=z0,k=0;z<z1;k++){const len=.5+1.1*hash(seed,k),gap=.25+.7*hash(k,seed);
+  if(hash(seed+k,3)>.22)reflections.push(freeze({x:x+(hash(k,seed+9)-.5)*w*.7,z:z+len/2,len,w:w*(.55+.6*hash(seed,k+4)),col,glow:.55+.45*hash(k,seed*2)}));z+=len+gap}};
+ for(const x of [-6.7,6.7])streak(x,-63.5,-37,x>0?11:12,'#ffc457',.55);
+ for(const b of riverBridges)for(const sx of [-1,1])streak(b.x+sx*b.width/2,-63.5,-37,b.x+sx*3,'#ffcf6e',.5);
+ for(const [i,t] of farTowers.entries())streak(t.x,-63.6,-55.5,30+i,i%5===4?'#8fe9ff':'#ffd27a',.75);
+ // Point State Park: one tall luminous jet with a drooping spray cap, as in storyboard panel 01.
+ const fountain=freeze({x:18,z:-30,top:9.6,jets:10,crown:1.25,crownY:10.4,drop:2.4,dropY:6.6,basin:4.2,glow:'#86e8ff'});
+ const grade=freeze({shadow:'#2f5f95',gold:'#ffc45a',cyan:'#7fe6ff'});
+ window.__steelCinematicContract=freeze({revision:'storyboard-city-v1',camera,farTowers,riverBridges,
+  bulbs:freeze(bulbs),reflections:freeze(reflections),fountain,grade,
+  farRiver:freeze({z:-94,depth:6}),farShore:freeze({z:-114,depth:34})});
+ // Non-destructive screen grade: steel-blue sky wash and cloud bands over the approved
+ // backdrop, plus a vignette above the canvas. pointer-events stay on the game canvas.
+ const style=document.createElement('style');style.id='steel-cinematic-grade';
+ style.textContent=`#skyBackdrop::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,${grade.shadow} 0%,#27507f 34%,#27507f00 60%);mix-blend-mode:color;opacity:.7}
+#skyBackdrop::before{content:"";position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse 55% 7% at 27% 11%,#a9c4e62e,#0000 72%),radial-gradient(ellipse 48% 6% at 74% 21%,#9db8dc29,#0000 72%),radial-gradient(ellipse 70% 6% at 52% 4%,#86a6d024,#0000 70%),radial-gradient(ellipse 40% 5% at 12% 29%,#8eaed61f,#0000 70%)}
+#steelCinematicGrade{position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 88% 80% at 46% 44%,#0000 52%,#030814a6 100%),linear-gradient(180deg,#2c5c9214 0%,#0000 36%,#0000 72%,#ffb85c12 100%)}
+body.sky-active #steelCinematicGrade{background:radial-gradient(ellipse 92% 86% at 50% 46%,#0000 58%,#03081488 100%),linear-gradient(180deg,#3a6aa01a 0%,#0000 45%)}`;
+ document.head.appendChild(style);
+ const game=document.getElementById('game');
+ if(game&&!document.getElementById('steelCinematicGrade')){const v=document.createElement('div');v.id='steelCinematicGrade';v.setAttribute('aria-hidden','true');game.insertAdjacentElement('afterend',v)}
+})();
+</script>
 <script>
 'use strict';
 (()=>{
@@ -240,13 +311,15 @@ void main(){
                .17*sin(vPos.z*.53+2.1*sin(vPos.x*.31))+
                .12*sin(vPos.x*.83-vPos.z*.41+sin(vPos.z*.19));
  float puddle=smoothstep(.49,.71,pooling);
+ // storyboard-city-v1: warmer pools under the actual lamp heads (x=+-8.7, every 9.4 units).
+ float lampHeads=exp(-pow((abs(vPos.x)-8.0)*.30,2.0))*pow(.5+.5*cos((vPos.z+30.0)*.66842),5.0)*step(-34.0,vPos.z)*step(vPos.z,50.0);
  float lampPools=exp(-pow((abs(vPos.x)-6.9)*.29,2.0))*(.23+.77*pow(.5+.5*sin(vPos.z*.68+sin(vPos.x*.24)*1.1),6.0));
  float neonPools=exp(-pow((vPos.x+3.2)*.26,2.0))*(.18+.82*pow(.5+.5*sin(vPos.z*.37+sin(vPos.x*.31)*1.3+1.4),7.0));
  float goldBridge=(1.0-smoothstep(0.0,10.0,abs(vPos.x)))*(1.0-smoothstep(0.0,26.0,abs(vPos.z+47.0)));
  float grain=fract(sin(dot(floor(vPos.xz*2.0),vec2(127.1,311.7)))*43758.5453);
  float glints=pow(.5+.5*sin(vPos.x*2.9+2.1*sin(vPos.z*.67)+sin(vPos.x*.4)),16.0)*puddle*grain;
- vec3 reflection=vec3(.93,.50,.16)*(lampPools*.75+goldBridge*.12)+
-                 vec3(.45,.10,.78)*(neonPools*.80+puddle*.10)+
+ vec3 reflection=vec3(.93,.50,.16)*(lampPools*.75+goldBridge*.12)+vec3(1.0,.62,.22)*(lampHeads*.85+goldBridge*.16)+
+                 vec3(.30,.27,.80)*(neonPools*.80+puddle*.10)+
                  vec3(.14,.22,.31)*glints*.27;
  // Real WebGL wet-street glass reflections track perspective.
  float windowTrail=pow(.5+.5*sin(vPos.z*1.55+sin(vPos.x*.23)),18.0)*exp(-pow((abs(vPos.x)-11.2)*.22,2.0));
@@ -254,11 +327,15 @@ void main(){
  float wetFresnel=pow(1.0-max(dot(n,viewDir),0.0),3.0);
  vec3 wetSurface=lit*vec3(.40,.38,.51)+reflection*(.60+.36*puddle)+
                  vec3(.86,.56,.27)*windowTrail*(.10+.44*puddle)+
-                 vec3(.56,.30,.81)*wetSpec*(.11+.30*puddle+.26*wetFresnel);
+                 vec3(.40,.50,.86)*wetSpec*(.11+.30*puddle+.26*wetFresnel);
  lit=mix(lit,wetSurface,ground*.91);
  float fog=smoothstep(49.0,151.0,distance(vPos,uCam));
- vec3 sky=mix(vec3(.035,.023,.072),vec3(.13,.064,.20),clamp(vPos.y/62.0,0.0,1.0));
- lit=mix(lit,sky,fog*.75);
+ vec3 sky=mix(vec3(.022,.040,.080),vec3(.085,.135,.235),clamp(vPos.y/62.0,0.0,1.0));
+ lit=mix(lit,sky,fog*.75*(1.0-.6*smoothstep(.45,1.1,vE)));
+ // Storyboard grade: steel-blue shadows, bridge-gold highlights.
+ float gradeL=dot(lit,vec3(.299,.587,.114));
+ lit=mix(lit*vec3(.84,.97,1.18)+vec3(.0,.010,.026),lit,smoothstep(.10,.55,gradeL));
+ lit+=vec3(.085,.05,.0)*smoothstep(.55,1.2,gradeL);
  gl_FragColor=vec4(pow(max(lit,vec3(0.0)),vec3(.87)),1.0);
 }`;
 function sh(t,s){const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(x));return x}
@@ -387,6 +464,34 @@ for(let j=0;j<27;j++){const t=j/26,z=-61+t*28;for(const x of [-6.1,6.1]){world.r
 // bridge mission marker at entrance, always walkable.
 const gate={x:0,z:-35};world.rod([-2.6,.1,-33],[-2.6,5.3,-33],.21,'#f5be5f',.9);world.rod([2.6,.1,-33],[2.6,5.3,-33],.21,'#f5be5f',.9);world.rod([-2.7,5.3,-33],[2.7,5.3,-33],.21,'#f5be5f',.9);
 const starPts=[{x:0,z:15,y:1.5},{x:-4,z:2,y:1.5},{x:4,z:-14,y:1.5},{x:1,z:-29,y:1.5},{x:17,z:3,y:6.7},{x:-3,z:36,y:1.5},{x:11,z:11,y:3.7}];for(const s of starPts)pickups.push({...s,taken:false});
+// storyboard-city-v1: far skyline across the rivers, gold-lit river bridges, water reflections, Point plume.
+const CINE=window.__steelCinematicContract;let cinematicPieces=0;
+world.box(0,-.38,CINE.farRiver.z,176,.12,CINE.farRiver.depth,'#0b2943');world.box(0,-.62,CINE.farShore.z,176,.6,CINE.farShore.depth,'#0d1826');cinematicPieces+=2;
+for(const t of CINE.farTowers){
+ const a=t.x-t.w/2,b=t.x+t.w/2,f=t.z+t.d/2+.06,l=t.z-t.d*.36,r=t.z+t.d*.36;
+ world.box(t.x,t.base+t.h/2,t.z,t.w,t.h,t.d,t.body);cinematicPieces++;
+ for(const row of t.rows){const y=row.y,top=row.y+row.h;
+  for(const s of row.segs)world.quad([s.a,y,f],[s.b,y,f],[s.b,top,f],[s.a,top,f],row.col,row.glow);
+  world.quad([b+.06,y,r],[b+.06,y,l],[b+.06,top,l],[b+.06,top,r],row.col,row.glow*.8);
+  world.quad([a-.06,y,l],[a-.06,y,r],[a-.06,top,r],[a-.06,top,l],row.col,row.glow*.8);cinematicPieces++;
+ }
+ if(t.crown){world.pyramid(t.x,t.base+t.h,t.z,t.w*.72,t.crown.h,t.d*.72,t.crown.col,t.crown.glow);world.rod([t.x,t.base+t.h+t.crown.h*.9,t.z],[t.x,t.base+t.h+t.crown.h+2.6,t.z],.09,t.crown.col,1.4);cinematicPieces+=2}
+}
+for(const br of CINE.riverBridges){
+ const mid=(br.z0+br.z1)/2,span=br.z1-br.z0;
+ world.box(br.x,br.deckY-.3,mid,br.width,.55,span,'#2e3440');world.box(br.x,br.deckY+.05,mid,br.width*.9,.1,span,'#3a414c',.05);
+ for(const z of br.piers)world.box(br.x,(br.deckY-.55)/2-.2,z,br.width*.7,br.deckY-.15,1.6,'#4f4a45');
+ for(const sx of [-1,1]){const x=br.x+sx*br.width/2;
+  for(let j=1;j<=br.segments;j++){const t0=(j-1)/br.segments,t1=j/br.segments,z0=br.z0+span*t0,z1=br.z0+span*t1,y0=br.deckY+br.rise*Math.sin(Math.PI*t0),y1=br.deckY+br.rise*Math.sin(Math.PI*t1);
+   world.rod([x,y0,z0],[x,y1,z1],.26,'#c99a45',.42);world.rod([x,br.deckY,z1],[x,y1,z1],.07,'#b58c4a',.3)}
+  world.rod([x,br.deckY+.55,br.z0],[x,br.deckY+.55,br.z1],.1,'#d9ac5c',.5);cinematicPieces+=br.segments*2+1}
+ cinematicPieces+=2+br.piers.length;
+}
+for(const [x,y,z] of CINE.bulbs){world.box(x,y,z,.2,.2,.2,'#ffd77a',1.75);cinematicPieces++}
+for(const s of CINE.reflections){world.box(s.x,-.282,s.z,s.w,.012,s.len,s.col,s.glow);cinematicPieces++}
+{const F=CINE.fountain;world.disc(F.x,.27,F.z,F.basin,'#2c8fb3',.62);world.rod([F.x,.3,F.z],[F.x,F.top,F.z],.34,'#d9f8ff',1.35);world.pyramid(F.x,F.top-.4,F.z,.9,1.6,.9,'#eafcff',1.4);cinematicPieces+=3;
+ for(let j=0;j<F.jets;j++){const a=j/F.jets*Math.PI*2,c=Math.cos(a),s=Math.sin(a),mid=[F.x+c*F.crown,F.crownY,F.z+s*F.crown];
+  world.rod([F.x,F.top+.4,F.z],mid,.08,'#c9f6ff',1.2);world.rod(mid,[F.x+c*F.drop,F.dropY,F.z+s*F.drop],.06,'#a8ecff',1.0);cinematicPieces+=2}}
 const sbuf=gl.createBuffer(),dbuf=gl.createBuffer();function upload(buf,a,usage){gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,a,usage)}let worldBuf=new Float32Array(world.v);upload(sbuf,worldBuf,gl.STATIC_DRAW);
 function drawBuffer(buf,n){gl.bindBuffer(gl.ARRAY_BUFFER,buf);for(let [attr,offset,len] of [[loc.p,0,3],[loc.n,12,3],[loc.c,24,3],[loc.e,36,1]]){gl.enableVertexAttribArray(attr);gl.vertexAttribPointer(attr,len,gl.FLOAT,false,40,offset)}gl.drawArrays(gl.TRIANGLES,0,n)}
 const state={started:false,paused:false,finished:false,t:0,stars:0,pos:{x:0,y:0,z:27},vel:0,heading:0,yaw:0,pitch:.22,cam:[0,8,40],keys:new Set(),touch:new Set(),ground:true,sound:false,moveBlend:0,gaitPhase:0};let audioCtx,loopId;
@@ -552,8 +657,11 @@ function perspective(fov,aspect,n,far){let v=1/Math.tan(fov/2),nf=1/(n-far);retu
 function look(eye,at){const z=unit(sub(eye,at)),x=unit(cross([0,1,0],z)),y=cross(z,x);return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-(x[0]*eye[0]+x[1]*eye[1]+x[2]*eye[2]),-(y[0]*eye[0]+y[1]*eye[1]+y[2]*eye[2]),-(z[0]*eye[0]+z[1]*eye[1]+z[2]*eye[2]),1])}
 function resize(){let d=Math.min(1.35,window.devicePixelRatio||1),w=Math.floor(innerWidth*d),h=Math.floor(innerHeight*d);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h)}}
 function map(){const cc=el('map').getContext('2d'),w=300;cc.clearRect(0,0,w,w);cc.fillStyle='#0d1d30';cc.fillRect(0,0,w,w);const X=x=>150+x*1.72,Z=z=>159+z*1.72;cc.fillStyle='#0b3a4e';cc.fillRect(0,Z(-63),w,Z(-36)-Z(-63));cc.fillStyle='#5e5037';cc.fillRect(X(-7),0,14*1.72,w);for(let z of [-17,2,26])cc.fillRect(0,Z(z)-5,w,10);cc.strokeStyle='#edbc54';cc.lineWidth=5;cc.beginPath();cc.moveTo(X(0),Z(-63));cc.lineTo(X(0),Z(-34));cc.stroke();for(let b of buildings){cc.fillStyle=b.kind==='hillside-home'?'#c99f6b':'#324357';cc.fillRect(X(b.x-b.w/2),Z(b.z-b.d/2),b.w*1.72,b.d*1.72)}for(let s of pickups)if(!s.taken){cc.fillStyle='#ffe08d';cc.beginPath();cc.arc(X(s.x),Z(s.z),3.6,0,6.283);cc.fill()}cc.fillStyle='#8cf7e5';cc.beginPath();cc.arc(X(state.pos.x),Z(state.pos.z),5.5,0,6.283);cc.fill();cc.strokeStyle='#8cf7e5';cc.lineWidth=2.1;cc.beginPath();cc.moveTo(X(state.pos.x),Z(state.pos.z));cc.lineTo(X(state.pos.x)-Math.sin(state.yaw)*15,Z(state.pos.z)-Math.cos(state.yaw)*15);cc.stroke()}
-let prev=0;function loop(ts){let dt=Math.min(.05,(ts-prev)/1000||0);prev=ts;resize();tick(dt);let p=state.pos,ey=[p.x+Math.sin(state.yaw)*11,p.y+(sky.active?7.2:3.7)+state.pitch*4,p.z+Math.cos(state.yaw)*11];for(let i=0;i<3;i++)state.cam[i]+=(ey[i]-state.cam[i])*.14;gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.026,.038,.080,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(loc.proj,false,perspective(Math.PI*.37,canvas.width/canvas.height,.1,220));gl.uniformMatrix4fv(loc.view,false,look(state.cam,[p.x,p.y+1.4,p.z]));gl.uniform3fv(loc.cam,new Float32Array(state.cam));gl.uniform1f(loc.time,state.t);gl.uniform1f(loc.staticScene,1);drawBuffer(sbuf,worldBuf.length/10);renderDynamic();gl.uniform1f(loc.staticScene,0);drawBuffer(dbuf,dynamic.v.length/10);map();requestAnimationFrame(loop)}resize();state.cam=[0,10,40];requestAnimationFrame(loop);
+// Cinematic follow camera (storyboard-city-v1): low over-the-shoulder framing, frame-rate independent smoothing, wider Sky Mode lens.
+let cineAt=null,cineFov=CINE.camera.groundFov,cineShoulder=0;function cineFrame(p,dt){const k=1-Math.exp(-dt*CINE.camera.follow);cineFov+=((sky.active?CINE.camera.skyFov:CINE.camera.groundFov)-cineFov)*(1-Math.exp(-dt*4));const f=CINE.camera.frame(p,state.yaw,state.pitch,sky.active,canvas.width/Math.max(1,canvas.height),cineFov);cineShoulder=f.shoulder;if(!cineAt||Math.hypot(state.cam[0]-f.eye[0],state.cam[1]-f.eye[1],state.cam[2]-f.eye[2])>28){state.cam=f.eye.slice();cineAt=f.target.slice()}for(let i=0;i<3;i++)cineAt[i]+=(f.target[i]-cineAt[i])*Math.min(1,k*1.6);return {eye:f.eye,target:cineAt,fov:cineFov,k}}
+let prev=0;function loop(ts){let dt=Math.min(.05,(ts-prev)/1000||0);prev=ts;resize();tick(dt);let p=state.pos,cf=cineFrame(p,dt),ey=cf.eye;for(let i=0;i<3;i++)state.cam[i]+=(ey[i]-state.cam[i])*cf.k;gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.026,.038,.080,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(loc.proj,false,perspective(cf.fov,canvas.width/canvas.height,.1,220));gl.uniformMatrix4fv(loc.view,false,look(state.cam,cf.target));gl.uniform3fv(loc.cam,new Float32Array(state.cam));gl.uniform1f(loc.time,state.t);gl.uniform1f(loc.staticScene,1);drawBuffer(sbuf,worldBuf.length/10);renderDynamic();gl.uniform1f(loc.staticScene,0);drawBuffer(dbuf,dynamic.v.length/10);map();requestAnimationFrame(loop)}resize();state.cam=[0,10,40];requestAnimationFrame(loop);
 window.__steelCityDebug=()=>({graphicsRevision:'cinematic-geometry-v3',lightingRevision:'rain-slick-neon-v2',materialRevision:'masonry-glass-puddles-v1',neighborhoodDetail:'mount-washington-homes-v2',bridgeDetail:STEEL_BRIDGE.revision,bridgeTrussSegments,bridgeFinishRevision:STEEL_BRIDGE.finish.revision,bridgeFinishPieces,bridgeLightingRevision:BRIDGE_LIGHT.revision,bridgePortalMasonry,hillsideWalkMinZ:STEEL_HILL.ACCESS.groundMinZ,hillsideHomeCount:hillsideHomes.length,hillsideSolidCount:buildings.filter(b=>b.kind==='hillside-home').length,hillsideHomeFootprints:buildings.filter(b=>b.kind==='hillside-home').map(b=>({x:b.x,z:b.z,w:b.w,d:b.d,h:b.h,baseY:b.baseY})),campaignStage:sagaStage,campaignComplete:sagaCompleted,campaignBeacon:sagaBeacon,campaignCrewAlive:sagaFoes.filter(x=>x.hp>0).length,campaignJackalHp:sagaJackal.hp,campaignQueenHp:sagaQueen.hp,started:state.started,x:+state.pos.x.toFixed(2),y:+state.pos.y.toFixed(2),z:+state.pos.z.toFixed(2),stars:state.stars,total:pickups.length,worldTriangles:worldBuf.length/30,webgl:true,freeRoam:true,motionBlend:+state.moveBlend.toFixed(3),gaitPhase:+state.gaitPhase.toFixed(3),sound:state.sound,finished:state.finished,cameraYaw:state.yaw,joystickX:+(window.__steelJoystick?.x||0).toFixed(3),joystickY:+(window.__steelJoystick?.y||0).toFixed(3),skyMode:sky.active,health:sky.hp,bugsDefeated:sky.kills,bugsAlive:sky.enemies.filter(e=>!e.dead).length,shots:sky.shots.length,enemyShots:sky.enemyShots.length});
+{const base=window.__steelCityDebug;window.__steelCityDebug=()=>({...base(),cinematicRevision:CINE.revision,cinematicCamera:{mode:CINE.camera.mode,fovDeg:+(cineFov*180/Math.PI).toFixed(1),shoulder:+cineShoulder.toFixed(2)},cinematicPieces})}
 })();
 </script><script>// Portable perspective renderer: used only when WebGL is disabled by device or policy.
 (()=>{
@@ -656,15 +764,42 @@ const yfloor=(x,z)=>{for(let [a,b,w,d,h] of [[8,15,3.4,3.4,1.15],[11,11,3.5,3.8,
 function tick(dt){state.t+=dt;if(!state.started)return;let f=(on('KeyW')||on('ArrowUp')?1:0)-(on('KeyS')||on('ArrowDown')?1:0),s=(on('KeyD')||on('ArrowRight')?1:0)-(on('KeyA')||on('ArrowLeft')?1:0),mg=Math.hypot(f,s)||1;let speed=(on('ShiftLeft')?12:7)*dt;let dx=(-Math.sin(state.yaw)*f+Math.cos(state.yaw)*s)*speed/mg,dz=(-Math.cos(state.yaw)*f-Math.sin(state.yaw)*s)*speed/mg;const joy=window.__steelJoystick;if(joy?.active&&Math.hypot(joy.x,joy.y)>.11){f=-joy.y;s=joy.x;mg=1;dx=(-Math.sin(joy.baseYaw)*f+Math.cos(joy.baseYaw)*s)*speed;dz=(-Math.cos(joy.baseYaw)*f-Math.sin(joy.baseYaw)*s)*speed;const target=Math.atan2(dx,-dz),shortest=Math.atan2(Math.sin(target-state.yaw),Math.cos(target-state.yaw));state.yaw+=shortest*Math.min(1,dt*7);}function blocked(x,z){return buildings.some(b=>state.y<b[4]-.6+(b.baseY||0)&&(b.kind==='hillside-home'||b.baseY===undefined||state.y+2.2>b.baseY)&&Math.abs(x-b[0])<b[2]/2+.45&&Math.abs(z-b[1])<b[3]/2+.45)}if(sky.active||(!blocked(state.x+dx,state.z)&&STEEL_HILL.canTraverseGround(state.x+dx,state.z)))state.x=Math.min(73,Math.max(-73,state.x+dx));
  if(sky.active||(!blocked(state.x,state.z+dz)&&STEEL_HILL.canTraverseGround(state.x,state.z+dz)))state.z=Math.max(STEEL_HILL.ACCESS.groundMinZ,Math.min(STEEL_HILL.ACCESS.groundMaxZ,state.z+dz));if(sky.active){state.vy=0;skyTick(dt)}else state.vy-=19.8*dt;state.y+=state.vy*dt;let fl=yfloor(state.x,state.z);if(!sky.active&&state.y<fl){state.y=fl;state.vy=0}
 if(!sky.active)skyTick(dt);sagaTick(dt);for(let p of stars)if(!p.taken&&Math.hypot(state.x-p.x,state.z-p.z)<1.65&&Math.abs(state.y+1.5-p.y)<2){p.taken=true;state.stars++;note(850);toast('✦ STEEL STAR '+state.stars+' / 5');if(state.stars===5){$('objectiveTitle').textContent='Reach the Golden Bridge';$('objectiveDetail').textContent='Find bridge entrance · press E'}}if(state.stars>=5&&Math.hypot(state.x,state.z+35)<3.5&&!state.finished)interact();$('count').textContent=state.stars+'/5';$('compass').textContent=Math.round(((state.yaw%6.283+6.283)%6.283)*180/Math.PI)+'° ◇ '+(sky.active?'SKY PATROL':'FREE EXPLORE');$('place').textContent=state.z<-63?'MOUNT WASHINGTON · HILLSIDE HOMES':state.z<-22?'THE GOLDEN BRIDGE · THREE RIVERS':state.x>10?'MARKET DISTRICT · PARKOUR':'DOWNTOWN · GOLDEN TRIANGLE';}
-function put(x,y,z){let cy=state.y+(sky.active?7.2:3.8)+state.pitch*3,cp=[state.x+Math.sin(state.yaw)*9,cy,state.z+Math.cos(state.yaw)*9],tx=state.x,ty=state.y+1.45,tz=state.z;let f=[tx-cp[0],ty-cp[1],tz-cp[2]],fl=Math.hypot(...f);f=f.map(q=>q/fl);let r=[-f[2],0,f[0]],rl=Math.hypot(...r);r=r.map(q=>q/rl);let u=[r[1]*f[2]-r[2]*f[1],r[2]*f[0]-r[0]*f[2],r[0]*f[1]-r[1]*f[0]];let v=[x-cp[0],y-cp[1],z-cp[2]],depth=v[0]*f[0]+v[1]*f[1]+v[2]*f[2];if(depth<.35)return null;let xx=(v[0]*r[0]+v[1]*r[1]+v[2]*r[2])*cv.height*.95/depth+cv.width*.5,yy=cv.height*.49-(v[0]*u[0]+v[1]*u[1]+v[2]*u[2])*cv.height*.95/depth;return {x:xx,y:yy,depth}}
+// Cinematic camera + storyboard city for the canvas fallback (storyboard-city-v1), same contract as WebGL.
+const CINE=window.__steelCinematicContract;let FCAM={eye:[0,3,36],at:[0,2.3,21],focal:.95,fov:CINE.camera.groundFov,shoulder:0,lt:null};
+function cineFallbackCamera(){const C=CINE.camera,dt=FCAM.lt===null?1:Math.min(.25,Math.max(0,state.t-FCAM.lt));FCAM.lt=state.t;FCAM.fov+=((sky.active?C.skyFov:C.groundFov)-FCAM.fov)*(1-Math.exp(-dt*4));const f=C.frame(state,state.yaw,state.pitch,sky.active,cv.width/Math.max(1,cv.height),FCAM.fov),k=dt>=1||Math.hypot(FCAM.eye[0]-f.eye[0],FCAM.eye[1]-f.eye[1],FCAM.eye[2]-f.eye[2])>28?1:1-Math.exp(-dt*C.follow);for(let i=0;i<3;i++){FCAM.eye[i]+=(f.eye[i]-FCAM.eye[i])*k;FCAM.at[i]+=(f.target[i]-FCAM.at[i])*Math.min(1,k*1.6)}FCAM.focal=.5/Math.tan(FCAM.fov/2);FCAM.shoulder=f.shoulder}
+function cinePath(list,col,alpha=1){if(!list.length)return;g.globalAlpha=alpha;g.fillStyle=col;g.beginPath();for(const p of list){g.moveTo(p[0].x,p[0].y);for(let i=1;i<p.length;i++)g.lineTo(p[i].x,p[i].y);g.closePath()}g.fill();g.globalAlpha=1}
+function cineProject(pts){const out=pts.map(a=>put(...a));return out.some(x=>!x)?null:out}
+function drawCinematicSky(){const W=cv.width,H=cv.height;g.save();g.globalCompositeOperation='color';let wash=g.createLinearGradient(0,0,0,H*.6);wash.addColorStop(0,CINE.grade.shadow+'b3');wash.addColorStop(.56,'#27507fb3');wash.addColorStop(1,'#27507f00');g.fillStyle=wash;g.fillRect(0,0,W,H*.6);g.globalCompositeOperation='source-over';
+ for(const [cx,cy,rw,rh,col] of [[.27,.11,.55,.07,'#a9c4e62e'],[.74,.21,.48,.06,'#9db8dc29'],[.52,.04,.70,.06,'#86a6d024'],[.12,.29,.40,.05,'#8eaed61f']]){g.save();g.translate(cx*W,cy*H);g.scale(1,rh*H/(rw*W));let cl=g.createRadialGradient(0,0,0,0,0,rw*W);cl.addColorStop(0,col);cl.addColorStop(.72,'#0000');g.fillStyle=cl;g.fillRect(-rw*W,-rw*W,2*rw*W,2*rw*W);g.restore()}g.restore()}
+function drawCinematicFarCity(){const R=CINE.farRiver,S=CINE.farShore;polygon([[-88,-.3,S.z-S.depth/2],[88,-.3,S.z-S.depth/2],[88,-.3,S.z+S.depth/2],[-88,-.3,S.z+S.depth/2]],'#0d1826');polygon([[-88,-.32,R.z-R.depth/2],[88,-.32,R.z-R.depth/2],[88,-.32,R.z+R.depth/2],[-88,-.32,R.z+R.depth/2]],'#0f2f4a');
+ const towers=CINE.farTowers.slice().sort((a,b)=>Math.hypot(b.x-FCAM.eye[0],b.z-FCAM.eye[2])-Math.hypot(a.x-FCAM.eye[0],a.z-FCAM.eye[2]));
+ for(const t of towers){const a=t.x-t.w/2,b=t.x+t.w/2,f=t.z+t.d/2,bk=t.z-t.d/2,y0=t.base,y1=t.base+t.h,sx=FCAM.eye[0]>t.x?b:a;
+  polygon([[sx,y0,bk],[sx,y0,f],[sx,y1,f],[sx,y1,bk]],'#111b2d');polygon([[a,y0,f],[b,y0,f],[b,y1,f],[a,y1,f]],t.body);
+  const lit={};for(const row of t.rows)for(const s of row.segs){const p=cineProject([[s.a,row.y,f+.05],[s.b,row.y,f+.05],[s.b,row.y+row.h,f+.05],[s.a,row.y+row.h,f+.05]]);if(p)(lit[row.col]=lit[row.col]||[]).push(p)}
+  for(const col in lit)cinePath(lit[col],col,.92);
+  if(t.crown){polygon([[t.x-t.w*.36,y1,f-t.d*.14],[t.x+t.w*.36,y1,f-t.d*.14],[t.x,y1+t.crown.h,t.z]],t.crown.col);rod([t.x,y1+t.crown.h*.9,t.z],[t.x,y1+t.crown.h+2.6,t.z],.09,t.crown.col)}}}
+function drawCinematicWater(){const warm={},pools=[];
+ for(const s of CINE.reflections){const p=cineProject([[s.x-s.w/2,-.07,s.z-s.len/2],[s.x+s.w/2,-.07,s.z-s.len/2],[s.x+s.w/2,-.07,s.z+s.len/2],[s.x-s.w/2,-.07,s.z+s.len/2]]);if(p)(warm[s.col]=warm[s.col]||[]).push(p)}
+ for(const col in warm)cinePath(warm[col],col,.78);
+ for(let zz=-28;zz<49;zz+=10)for(const xx of [-8.4,8.4]){const p=put(xx,0,zz);if(!p||p.depth>70||p.depth<5)continue;const r=Math.min(cv.height*.32,cv.height*1.7/p.depth),gr=g.createRadialGradient(p.x,p.y,0,p.x,p.y,r);gr.addColorStop(0,'#ffc66a48');gr.addColorStop(1,'#ffc66a00');g.fillStyle=gr;g.beginPath();g.ellipse(p.x,p.y,r,r*Math.min(.6,Math.max(.12,(FCAM.eye[1]-state.y)/p.depth*1.4)),0,0,6.283);g.fill()}
+ for(const br of CINE.riverBridges){const mid=(br.z0+br.z1)/2,span=br.z1-br.z0;cube(br.x,br.deckY-.55,mid,br.width,.55,span,'#2e3440');for(const z of br.piers)cube(br.x,-.3,z,br.width*.7,br.deckY-.25,1.6,'#4f4a45');
+  for(const sx of [-1,1]){const x=br.x+sx*br.width/2;let last=null;g.lineCap='round';
+   for(let j=0;j<=br.segments;j++){const t=j/br.segments,pt=[x,br.deckY+br.rise*Math.sin(Math.PI*t),br.z0+span*t];if(last)rod(last,pt,.26,'#d6a54c');if(j)rod([x,br.deckY,pt[2]],pt,.07,'#b58c4a');last=pt}}}}
+function drawCinematicBulbs(){const core=[],halo=[];for(const [x,y,z] of CINE.bulbs){const p=put(x,y,z);if(!p||p.depth>150)continue;const r=Math.max(1.1,cv.height*.11/p.depth);core.push([p,r]);halo.push([p,r*3.2])}
+ for(const [list,col,al] of [[halo,'#ffc45a',.22],[core,'#ffe6a3',1]]){g.globalAlpha=al;g.fillStyle=col;g.beginPath();for(const [p,r] of list){g.moveTo(p.x+r,p.y);g.arc(p.x,p.y,r,0,6.283)}g.fill()}g.globalAlpha=1}
+function drawCinematicFountain(){const F=CINE.fountain,c=put(F.x,.3,F.z);if(!c)return;const r=Math.min(cv.height*.8,cv.height*F.basin*1.5/c.depth),gr=g.createRadialGradient(c.x,c.y,0,c.x,c.y,r);gr.addColorStop(0,'#86e8ff66');gr.addColorStop(1,'#86e8ff00');g.fillStyle=gr;g.beginPath();g.ellipse(c.x,c.y,r,r*.42,0,0,6.283);g.fill();
+ g.save();g.shadowColor=F.glow;g.shadowBlur=14;g.lineCap='round';rod([F.x,.3,F.z],[F.x,F.top,F.z],.34,'#d9f8ff');g.globalAlpha=.85;for(let j=0;j<F.jets;j++){const a=j/F.jets*Math.PI*2+Math.sin(state.t*.8)*.05,co=Math.cos(a),si=Math.sin(a),mid=[F.x+co*F.crown,F.crownY,F.z+si*F.crown];rod([F.x,F.top+.4,F.z],mid,.08,'#c9f6ff');rod(mid,[F.x+co*F.drop,F.dropY,F.z+si*F.drop],.06,'#a8ecff')}g.restore()}
+function put(x,y,z){const cp=FCAM.eye,tx=FCAM.at[0],ty=FCAM.at[1],tz=FCAM.at[2];let f=[tx-cp[0],ty-cp[1],tz-cp[2]],fl=Math.hypot(...f);f=f.map(q=>q/fl);let r=[-f[2],0,f[0]],rl=Math.hypot(...r);r=r.map(q=>q/rl);let u=[r[1]*f[2]-r[2]*f[1],r[2]*f[0]-r[0]*f[2],r[0]*f[1]-r[1]*f[0]];let v=[x-cp[0],y-cp[1],z-cp[2]],depth=v[0]*f[0]+v[1]*f[1]+v[2]*f[2];if(depth<.35)return null;let xx=(v[0]*r[0]+v[1]*r[1]+v[2]*r[2])*cv.height*FCAM.focal/depth+cv.width*.5,yy=cv.height*.49-(v[0]*u[0]+v[1]*u[1]+v[2]*u[2])*cv.height*FCAM.focal/depth;return {x:xx,y:yy,depth}}
 function polygon(pts,col,stroke=null){const p=pts.map(a=>put(...a));if(p.some(x=>!x))return;g.beginPath();g.moveTo(p[0].x,p[0].y);for(let i=1;i<p.length;i++)g.lineTo(p[i].x,p[i].y);g.closePath();g.fillStyle=col;g.fill();if(stroke){g.strokeStyle=stroke;g.lineWidth=1;g.stroke()}}
 function quad(a,b,c,d,col){polygon([a,b,c,d],col)}
 function cube(x,y,z,w,h,d,front='#344459'){let a=x-w/2,b=x+w/2,t=y+h,zz=z+d/2,bb=z-d/2;const side='#242f45',other='#1a2940';quad([a,y,zz],[b,y,zz],[b,t,zz],[a,t,zz],front);quad([b,y,bb],[a,y,bb],[a,t,bb],[b,t,bb],front);quad([a,y,bb],[a,y,zz],[a,t,zz],[a,t,bb],side);quad([b,y,zz],[b,y,bb],[b,t,bb],[b,t,zz],other);quad([a,t,zz],[b,t,zz],[b,t,bb],[a,t,bb],'#536577')}
 function rod(a,b,w,col){let p=put(...a),q=put(...b);if(!p||!q)return;g.lineWidth=Math.max(.7,w*cv.height*.6/((p.depth+q.depth)*.5));g.strokeStyle=col;g.beginPath();g.moveTo(p.x,p.y);g.lineTo(q.x,q.y);g.stroke()}
 function drawSky(){let grad=g.createLinearGradient(0,0,0,cv.height);grad.addColorStop(0,'#090f2a');grad.addColorStop(.46,'#263051');grad.addColorStop(.56,'#1b1f35');grad.addColorStop(1,'#080f1e');g.fillStyle=grad;g.fillRect(0,0,cv.width,cv.height);if(skylineReady){let sw=skyline.width,sh=skyline.height*.69,desH=cv.height*.56,srcW=Math.min(sw,sh*cv.width/desH),start=(sw-srcW)*.5;g.globalAlpha=.87;g.drawImage(skyline,start,0,srcW,sh,0,0,cv.width,desH);g.globalAlpha=1;let fog=g.createLinearGradient(0,cv.height*.26,0,cv.height*.63);fog.addColorStop(0,'#09122505');fog.addColorStop(1,'#111c30ea');g.fillStyle=fog;g.fillRect(0,cv.height*.26,cv.width,cv.height*.4)}g.fillStyle='#c8def2';for(let i=0;i<53;i++){let x=((i*317+19)%991)/991*cv.width,y=((i*149+18)%411)/900*cv.height;g.globalAlpha=(i%7+2)/30;g.fillRect(x,y,1.2,1.2)}g.globalAlpha=1;g.shadowColor='#dbe5ff';g.shadowBlur=35;g.fillStyle='#d8dfe9';g.beginPath();g.arc(cv.width*.78,cv.height*.16,cv.height*.036,0,6.283);g.fill();g.shadowBlur=0;}
 function render(){let d=Math.min(1.1,window.devicePixelRatio||1),rw=Math.round(innerWidth*d),rh=Math.round(innerHeight*d);if(cv.width!==rw)cv.width=rw;if(cv.height!==rh)cv.height=rh;drawSky();
+cineFallbackCamera();drawCinematicSky();drawCinematicFarCity();
 // Visible ground cells, rendered back to front; side lanes and rivers are navigable.
 let tiles=[];for(let x=-81;x<=81;x+=9)for(let z=-90;z<=55;z+=9){let dist=Math.hypot(x-state.x,z-state.z);if(dist>93)continue;tiles.push({x,z,dist})}tiles.sort((a,b)=>b.dist-a.dist);for(let q of tiles){let x=q.x,z=q.z,river=z<-36&&z>-64,road=Math.abs(x)<8||[-17,2,26].some(q=>Math.abs(z-q)<5),col=river?'#13405b':road?'#242d3a':'#263746';if(river)col='#12415b';quad([x-.02,-.08,z-.02],[x+9,-.08,z-.02],[x+9,-.08,z+9],[x-.02,-.08,z+9],col)}
+drawCinematicWater();
 // Road centerlines and bridge deck.
 for(let z=-32;z<52;z+=9){quad([-.14,.01,z], [.14,.01,z],[.14,.01,z+3.3],[-.14,.01,z+3.3],'#af9464')}cube(0,-.06,-47,12,.45,29,'#a18a53');for(let k=0;k<2;k++)for(let i=0;i<19;i++){let z=-61+i*1.56,y=1.2+7.9*Math.sin(i/18*Math.PI);rod([(k?6:-6),.4,z],[(k?6:-6),y,z],.12,BRIDGE_LIGHT.upright);if(i)rod([(k?6:-6),1.2+7.9*Math.sin((i-1)/18*Math.PI),z-1.56],[(k?6:-6),y,z],.28,BRIDGE_LIGHT.arch)}
 // Fallback uses the exact same steel-lattice control points as WebGL.
@@ -687,6 +822,7 @@ for(const x of STEEL_BRIDGE.sides){
   bridgePortalMasonry+=2;
  }
 }
+drawCinematicBulbs();
 // WebGL and canvas share exactly the same hillside geometry.
 for(let i=0;i<26;i++){
  const x=-82+i*6.5,h=STEEL_HILL.heights[i];cube(x,-1.5,-79,7,h,21,'#142c32');
@@ -723,6 +859,7 @@ for(let [x,z,w,dep,h] of [[8,15,3.4,3.4,1.15],[11,11,3.5,3.8,2.4],[14,7,3.5,4,3.
  }
  // Landmark fountain, glowing lamp line and collectibles.
 let fp=put(18,0,-30);if(fp){rod([18,0,-30],[18,8,-30],.34,'#aeeaff');for(let i=0;i<14;i++){let a=i/14*6.283,b=(i+1)/14*6.283;rod([18+Math.cos(a)*5,.2,-30+Math.sin(a)*5],[18+Math.cos(b)*5,.2,-30+Math.sin(b)*5],.13,'#beeaff')}}for(let zz=-28;zz<49;zz+=10)for(let xx of [-9.5,9.5]){rod([xx,0,zz],[xx,5,zz],.14,'#98aab2');let p=put(xx,5,zz);if(p){g.fillStyle='#ffe0a1';g.shadowBlur=15;g.shadowColor='#ffd083';g.beginPath();g.arc(p.x,p.y,Math.max(2,cv.height*.025/p.depth),0,6.283);g.fill();g.shadowBlur=0}}
+drawCinematicFountain();
 // Painter's fallback cannot near-plane clip a single 29-unit bridge top.
 bridgeFinishPieces=0;
 // Draw small overlapping top quads AFTER distant buildings, before pickups/hero.
@@ -769,5 +906,6 @@ const mm=$('map').getContext('2d'),W=300;mm.clearRect(0,0,W,W);mm.fillStyle='#0e
 }
 function frame(t){let dt=Math.min(.05,(t-last)/1000||0);last=t;tick(dt);render();requestAnimationFrame(frame)}requestAnimationFrame(frame);
 window.__steelCityDebug=()=>({graphicsRevision:'cinematic-geometry-v3',lightingRevision:'rain-slick-neon-v2',neighborhoodDetail:'mount-washington-homes-v2',bridgeDetail:STEEL_BRIDGE.revision,bridgeTrussSegments,bridgeFinishRevision:STEEL_BRIDGE.finish.revision,bridgeFinishPieces,bridgeLightingRevision:BRIDGE_LIGHT.revision,bridgePortalMasonry,hillsideWalkMinZ:STEEL_HILL.ACCESS.groundMinZ,hillsideHomeCount:hillsideHomes.length,hillsideSolidCount:buildings.filter(b=>b.kind==='hillside-home').length,hillsideHomeFootprints:buildings.filter(b=>b.kind==='hillside-home').map(b=>({x:b[0],z:b[1],w:b[2],d:b[3],h:b[4],baseY:b.baseY})),campaignStage:sagaStage,campaignComplete:sagaCompleted,campaignBeacon:sagaBeacon,campaignCrewAlive:sagaFoes.filter(x=>x.hp>0).length,campaignJackalHp:sagaJackal.hp,campaignQueenHp:sagaQueen.hp,started:state.started,x:+state.x.toFixed(2),y:+state.y.toFixed(2),z:+state.z.toFixed(2),stars:state.stars,total:stars.length,webgl:false,fallback:true,freeRoam:true,sound:state.sound,finished:state.finished,cameraYaw:state.yaw,joystickX:+(window.__steelJoystick?.x||0).toFixed(3),joystickY:+(window.__steelJoystick?.y||0).toFixed(3),skyMode:sky.active,health:sky.hp,bugsDefeated:sky.kills,bugsAlive:sky.enemies.filter(e=>!e.dead).length,shots:sky.shots.length,enemyShots:sky.enemyShots.length});
+{const base=window.__steelCityDebug;window.__steelCityDebug=()=>({...base(),cinematicRevision:CINE.revision,cinematicCamera:{mode:CINE.camera.mode,fovDeg:+(FCAM.fov*180/Math.PI).toFixed(1),shoulder:+FCAM.shoulder.toFixed(2)}})}
 })();
 </script></body></html>
