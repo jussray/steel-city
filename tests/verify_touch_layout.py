@@ -122,7 +122,7 @@ def verify(browser, label, options):
     layout = page.evaluate(LAYOUT_JS, ACTS)
     assert layout["scroll"] == [0, 0], (label, "document scrolled; HUD clipped", layout["scroll"])
     if touch:
-        assert {"moveJoystick", "jump2"} <= set(layout["targets"]), (label, "touch controls missing", layout["targets"])
+        assert {"moveJoystick", "jump2", "talkMobile"} <= set(layout["targets"]), (label, "touch controls missing", layout["targets"])
     else:
         assert not {"moveJoystick", "jump2"} & set(layout["targets"]), (label, "desktop should keep touch controls hidden", layout["targets"])
     page.screenshot(path=str(PROOF / f"touch-{label}-play.png"))
