@@ -479,7 +479,8 @@ function buildMarketClock(){const B=new Mesh();
  B.box(0,2.88,0,1.26,.035,.08,'#d9aa52',.8);B.box(0,2.22,0,1.26,.035,.08,'#d9aa52',.8);
  return B}
 function drawMarketClock(mesh){if(!marketClockMesh)marketClockMesh=buildMarketClock();castPose(mesh,marketClockMesh,MARKET_CLOCK.x,0,MARKET_CLOCK.z,-.35);castStats.clockParts=marketClockMesh.v.length/10}
-function drawMara(mesh,n,ys){const B=new Mesh();
+let maraMesh=null;
+function drawMara(mesh,n,ys){if(maraMesh){castPose(mesh,maraMesh,n.x,ys,n.z,Math.atan2(state.pos.x-n.x,state.pos.z-n.z)*.35);castStats.maraParts=maraMesh.v.length/10;return}const B=maraMesh=new Mesh();
  for(const sd of [-1,1]){B.box(sd*.13,.5,0,.2,.88,.24,'#1b2233');B.box(sd*.13,.09,.04,.22,.18,.32,'#2a1d16');B.box(sd*.40,1.44,0,.18,.82,.22,'#1f7468');B.box(sd*.40,.98,.02,.13,.13,.13,'#6b4430')}
  B.box(0,.98,0,.6,.18,.38,'#1f2433');
  B.box(0,1.44,0,.62,.92,.40,'#1f7468');B.ellipsoid(0,1.62,0,.33,.32,.22,'#22806f');
