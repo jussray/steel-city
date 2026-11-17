@@ -1,0 +1,50 @@
+{
+  "schema": "steel-city.graphics-lanes.v1",
+  "shot_id": "pittsburgh-night-exploration-v1",
+  "goal": "Approved cinematic Pittsburgh nighttime look implemented as playable 3D, without confusing key art with rendered gameplay",
+  "lanes": {
+    "art": {
+      "id": "art",
+      "source": "index.html embedded approved JPEG",
+      "asset": "assets/pittsburgh-night-skyline.jpg",
+      "peer_lane": "runtime",
+      "requires_runtime_graphics_revision": "cinematic-geometry-v3",
+      "requires_runtime_lighting_revision": "rain-slick-neon-v2",
+      "requires_runtime_bridge_detail": "three-rivers-lattice-v1",
+      "requires_runtime_material_revision": "masonry-glass-puddles-v1",
+      "requires_runtime_bridge_finish_revision": "riveted-wet-deck-v1",
+      "requires_runtime_bridge_lighting_revision": "burnished-bronze-night-v1",
+      "requires_runtime_cast_revision": "storyboard-cast-v1",
+      "requires_runtime_cinematic_revision": "storyboard-city-v1"
+    },
+    "runtime": {
+      "id": "runtime",
+      "source": "index.html WebGL scene",
+      "graphics_revision": "cinematic-geometry-v3",
+      "neighborhood_detail": "mount-washington-homes-v2",
+      "peer_lane": "art",
+      "requires_art_asset": "assets/pittsburgh-night-skyline.jpg",
+      "receipt": "proof/steel-city/webgl-receipt.json",
+      "screenshots": {
+        "desktop": "proof/steel-city/webgl-desktop.png",
+        "mobile_emulated": "proof/steel-city/webgl-mobile_emulated.png"
+      },
+      "lighting_revision": "rain-slick-neon-v2",
+      "bridge_detail": "three-rivers-lattice-v1",
+      "material_revision": "masonry-glass-puddles-v1",
+      "bridge_finish_revision": "riveted-wet-deck-v1",
+      "bridge_lighting_revision": "burnished-bronze-night-v1",
+      "cast_revision": "storyboard-cast-v1",
+      "cast_receipt": "proof/steel-city/storyboard-cast-receipt.json",
+      "cast_reference": "graphics/reference/three-rivers-storyboard-v1.webp",
+      "cinematic_revision": "storyboard-city-v1"
+    }
+  },
+  "release_gates": {
+    "source_art_bytes": "automated: byte identical",
+    "software_webgl_gameplay": "automated: existing Playwright verification",
+    "approved_frame_visual_parity": "manual comparison pending: source art is not a full 3D scene reference",
+    "physical_gpu": "not verified",
+    "live_route": "not verified"
+  }
+}
