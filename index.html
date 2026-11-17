@@ -257,7 +257,8 @@ canvas#game{z-index:1;background:transparent;}
  // Non-destructive screen grade: steel-blue sky wash and cloud bands over the approved
  // backdrop, plus a vignette above the canvas. pointer-events stay on the game canvas.
  const style=document.createElement('style');style.id='steel-cinematic-grade';
- style.textContent=`#skyBackdrop::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,${grade.shadow} 0%,#27507f 34%,#27507f00 60%);mix-blend-mode:color;opacity:.7}
+ style.textContent=`#skyBackdrop{isolation:isolate}
+#skyBackdrop::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,${grade.shadow} 0%,#27507f 34%,#27507f00 60%);mix-blend-mode:color;opacity:.7}
 #skyBackdrop::before{content:"";position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse 55% 7% at 27% 11%,#a9c4e62e,#0000 72%),radial-gradient(ellipse 48% 6% at 74% 21%,#9db8dc29,#0000 72%),radial-gradient(ellipse 70% 6% at 52% 4%,#86a6d024,#0000 70%),radial-gradient(ellipse 40% 5% at 12% 29%,#8eaed61f,#0000 70%)}
 #steelCinematicGrade{position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(ellipse 88% 80% at 46% 44%,#0000 52%,#030814a6 100%),linear-gradient(180deg,#2c5c9214 0%,#0000 36%,#0000 72%,#ffb85c12 100%)}
 body.sky-active #steelCinematicGrade{background:radial-gradient(ellipse 92% 86% at 50% 46%,#0000 58%,#03081488 100%),linear-gradient(180deg,#3a6aa01a 0%,#0000 45%)}`;
