@@ -25,6 +25,8 @@ jobs:
           python -m playwright install chromium
       - name: Desktop and mobile-emulated gameplay + cinematic gate
         run: python tests/verify_browser.py
+      - name: Touch layout on portrait, landscape, tablet and desktop screens
+        run: python tests/verify_touch_layout.py
       - name: Verify approved skyline export matches source
         run: python scripts/export_graphics.py
       - name: Desktop and mobile joystick, camera, and skyline proof

@@ -51,6 +51,44 @@ canvas#game{z-index:1;background:transparent;}
 #controls .joystick-caption{font-size:10px;letter-spacing:.18em;color:#dcefff;font-weight:950;text-shadow:0 2px 6px #000;pointer-events:none;}
 @media(max-width:430px){#controls .pad{left:max(6px,env(safe-area-inset-left));bottom:max(20px,env(safe-area-inset-bottom));width:129px;height:150px;}#controls #moveJoystick{width:112px;height:112px;}#controls .joystick-caption{font-size:9px}.actions-pad{right:6px;}}
 </style></head><body>
+<style id="steel-touch-layout">
+/* Touch play on every screen shape. Controls follow the input device, not the width, and short
+   landscape screens get a title and HUD that fit. Portrait phones and desktop keep their layout. */
+@media (pointer:coarse){#controls{display:block}}
+@media (pointer:coarse) and (min-width:901px){
+ #skyMobile,#fireMobile,#descendMobile{display:block!important;width:58px!important;height:52px!important;font-size:11px!important;letter-spacing:.02em}
+ .actions-pad{right:max(8px,env(safe-area-inset-right));bottom:max(15px,env(safe-area-inset-bottom));display:grid;grid-template-columns:58px 64px 74px;gap:6px;align-items:center}
+ .actions-pad #jump2{width:74px;height:74px;grid-row:1/3;grid-column:3}
+ .actions-pad #fireMobile{grid-column:2;grid-row:1}.actions-pad #skyMobile{grid-column:1;grid-row:1}
+ .actions-pad #descendMobile{grid-column:2;grid-row:2}
+ .actions-pad #sprint{grid-column:1;grid-row:2;width:58px!important;height:52px!important}
+ .mapwrap{bottom:150px}
+ .location{display:none}
+}
+@media (orientation:landscape) and (max-height:500px){
+ .titlecover{align-items:flex-start;overflow-y:auto;padding:12px max(24px,env(safe-area-inset-right)) 12px max(24px,env(safe-area-inset-left))}
+ .titlecover>.intro{margin-block:auto}
+ .titlecover .sup{margin-bottom:6px}
+ .titlecover .bigtitle{font-size:clamp(38px,15vh,64px)}
+ .titlecover .subhead{margin-top:8px;font-size:13px;max-width:520px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .titlecover .features,.titlecover .smallprint{display:none}
+ .titlecover .mainbtn,.titlecover .menu-sound{padding:11px 18px}
+ .bar{top:8px;left:max(12px,env(safe-area-inset-left))}
+ .bar .logo{font-size:15px}
+ .citytag,.location,.help,.sky-advice{display:none}
+ .counter{top:8px;right:max(12px,env(safe-area-inset-right));font-size:9px}.counter b{font-size:22px}
+ .buttons{top:58px;right:max(12px,env(safe-area-inset-right));flex-direction:row;flex-wrap:nowrap;max-width:none;gap:4px}
+ .buttons .mini{padding:6px 8px;font-size:9px}
+ #storyHud,#skyhud{top:50px;left:max(12px,env(safe-area-inset-left));width:min(250px,36vw);padding:7px 10px}
+ #storyHud h2{font-size:13px;margin:2px 0}#storyHud .eyebrow{font-size:8px}#storyHud p{font-size:9px;min-height:0}
+ #storyHud .actions{gap:4px;margin-top:6px}#storyHud button{padding:5px 3px;font-size:9px}#storyHud .progress{margin-top:5px}
+ #controls .pad{left:max(8px,env(safe-area-inset-left));bottom:max(8px,env(safe-area-inset-bottom));width:112px;height:126px}
+ #controls #moveJoystick{width:100px;height:100px}
+ #controls .joystick-caption{font-size:9px}
+ .actions-pad{right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom))}
+ .mapwrap{top:94px;bottom:auto;right:max(12px,env(safe-area-inset-right));width:96px;height:96px;opacity:.87}
+}
+</style>
 <div id="skyBackdrop" aria-hidden="true"></div>
 <canvas id="game" aria-label="Free-roaming third-person 3D Pittsburgh-inspired game world"></canvas>
 <div id="hud"><div class="bar"><div class="logo">STEEL CITY<br><b>OPEN WORLD</b></div><div class="citytag">PITTSBURGH, PA<br>THE THREE RIVERS</div></div><div class="objective"><small id="missionLabel">◆ MISSION 01 · THE GOLDEN ROUTE</small><strong id="objectiveTitle">Collect five Steel Stars</strong><span id="objectiveDetail">Explore the city and rooftops</span></div><div class="compass" id="compass">N  ◇  PITTSBURGH</div><div class="counter">STEEL STARS &nbsp;<b id="count">0/5</b><small id="mode">FREEROAM · NIGHT DISTRICT</small></div><div class="buttons"><button class="mini skylaunch" id="skyToggle" aria-label="Toggle Sky Mode">✦ SKY MODE · F</button><button class="mini" id="audio">♫ SOUND OFF</button><button class="mini" id="camReset">↺ CAMERA</button><button class="mini" id="restart">↻ RESET</button></div><div id="skyhud" aria-live="polite"><div class="sky-title">☄ SKY PATROL <span id="skyStatus">STANDBY</span></div><div class="healthline"><span>ARMOR</span><div class="meter"><i id="healthFill"></i></div><b id="healthText">100</b></div><div class="skyline"><span id="bugsCount">BUGS 0 / 6</span><span id="altitude">ALT 0 M</span></div><div class="sky-advice" id="skyAdvice">F: FLY · SPACE: RISE · C: DESCEND · J: BLAST</div></div><div id="reticle"><span>+</span><small id="targetLabel">TARGET ACQUIRED</small></div><div class="location" id="place">DOWNTOWN · GOLDEN TRIANGLE</div><div class="help">WASD MOVE · DRAG LOOK · F FLY/LAND · SPACE RISE · C DESCEND · J / CLICK FIRE · SHIFT BOOST</div><div class="mapwrap"><canvas id="map" width="300" height="300"></canvas><div class="maplabel">CITY DISTRICT</div></div><div class="toast" id="toast"></div></div>
