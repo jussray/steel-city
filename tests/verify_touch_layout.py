@@ -22,9 +22,9 @@ PROOF = ROOT / "proof" / "steel-city"
 # Every act's story text, so the HUD is checked at its tallest, not only at Act 1.
 ACTS = list(dict.fromkeys(re.findall(r"\{title:'([^']+)',goal:'([^']+)'", HTML)))
 assert len(ACTS) >= 7, f"Expected seven story acts, parsed {len(ACTS)}"
-# Pre-existing on every screen size, desktop included: in Sky Mode the story card sits over the
-# Sky HUD. Tracked as its own fix; reported on every run and removed from here once fixed.
-KNOWN_ISSUES = ("#storyHud overlaps #skyhud",)
+# Known, tolerated overlaps. Empty: the story card / Sky HUD overlap was fixed by the storyboard
+# layout (story card top-right, Sky HUD stacked below it), so it is enforced on every shape.
+KNOWN_ISSUES = ()
 
 TOUCH = {"has_touch": True, "is_mobile": True}
 PROFILES = {

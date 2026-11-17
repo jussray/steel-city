@@ -225,6 +225,44 @@ body.sky-active #controls #jump2::after{content:none}
  .counter small{margin-top:1px}
 }
 </style>
+<style id="steel-storyboard-layout">
+/* Storyboard HUD composition (graphics/reference panels 03/04/07): round minimap top-left,
+   Steel Stars + objective card top-right, Sky HUD stacked under the objective, utility buttons
+   under the minimap, joystick bottom-left, action tiles bottom-right. Title CTA on the right (panel 01). */
+.bar{display:none}
+.mapwrap{left:max(24px,env(safe-area-inset-left));top:20px;right:auto;bottom:auto;width:150px;height:150px}
+.counter{top:20px;right:max(24px,env(safe-area-inset-right))}
+#storyHud{left:auto;right:max(24px,env(safe-area-inset-right));top:86px;width:min(315px,32vw)}
+#skyhud{left:auto;right:max(24px,env(safe-area-inset-right));top:252px;width:min(300px,30vw)}
+.buttons{display:flex;left:max(24px,env(safe-area-inset-left));right:auto;top:186px;flex-direction:column;align-items:stretch;flex-wrap:nowrap;max-width:none;gap:6px}
+#titlecover{justify-content:flex-end}
+#titlecover .intro{margin-left:auto;text-align:right}
+#titlecover .sup{justify-content:flex-end}
+#titlecover .subhead,#titlecover .features{display:none}
+#titlecover .sb-cta{justify-content:flex-end}
+@media (max-width:900px){
+ .mapwrap{left:max(12px,env(safe-area-inset-left));top:10px;width:108px;height:108px}
+ .counter{top:10px;right:max(12px,env(safe-area-inset-right))}
+ #storyHud{right:max(12px,env(safe-area-inset-right));top:58px;width:min(240px,46vw)}
+ #skyhud{right:max(12px,env(safe-area-inset-right));top:184px;width:min(240px,46vw)}
+ .buttons{left:max(12px,env(safe-area-inset-left));top:128px;gap:4px}
+}
+@media (max-width:430px){
+ .mapwrap{left:10px;top:10px;width:96px;height:96px}
+ .counter{right:8px;top:8px}
+ #storyHud{right:8px;top:56px;width:min(214px,56vw)}
+ #skyhud{right:8px;top:182px;width:min(214px,56vw)}
+ .buttons{left:10px;top:116px}
+}
+@media (orientation:portrait) and (max-width:760px){#sbChapterCard{top:244px}}
+@media (orientation:landscape) and (max-height:500px){
+ .mapwrap{left:max(12px,env(safe-area-inset-left));top:8px;width:84px;height:84px}
+ .counter{top:8px;right:max(12px,env(safe-area-inset-right))}
+ #storyHud{left:auto;right:max(12px,env(safe-area-inset-right));top:52px;width:min(250px,36vw)}
+ #skyhud{left:max(104px,calc(env(safe-area-inset-left) + 92px));right:auto;top:8px;width:min(200px,calc(100vw - 340px))}
+ .buttons{left:max(12px,env(safe-area-inset-left));right:auto;top:112px;flex-direction:row;flex-wrap:wrap;max-width:200px;gap:4px}
+}
+</style>
 <div id="skyBackdrop" aria-hidden="true"></div>
 <canvas id="game" aria-label="Free-roaming third-person 3D Pittsburgh-inspired game world"></canvas>
 <div id="hud"><div class="bar"><div class="logo">STEEL CITY<br><b>OPEN WORLD</b></div><div class="citytag">PITTSBURGH, PA<br>THE THREE RIVERS</div></div><div class="objective"><small id="missionLabel">◆ MISSION 01 · THE GOLDEN ROUTE</small><strong id="objectiveTitle">Collect five Steel Stars</strong><span id="objectiveDetail">Explore the city and rooftops</span></div><div class="compass" id="compass">N  ◇  PITTSBURGH</div><div class="counter">STEEL STARS &nbsp;<b id="count">0/5</b><small id="mode">FREEROAM · NIGHT DISTRICT</small></div><div class="buttons"><button class="mini skylaunch" id="skyToggle" aria-label="Toggle Sky Mode">✦ SKY MODE · F</button><button class="mini" id="audio">♫ SOUND OFF</button><button class="mini" id="camReset">↺ CAMERA</button><button class="mini" id="restart">↻ RESET</button></div><div id="skyhud" aria-live="polite"><div class="sky-title">☄ SKY PATROL <span id="skyStatus">STANDBY</span></div><div class="healthline"><span>ARMOR</span><div class="meter"><i id="healthFill"></i></div><b id="healthText">100</b></div><div class="skyline"><span id="bugsCount">BUGS 0 / 6</span><span id="altitude">ALT 0 M</span></div><div class="sky-advice" id="skyAdvice">F: FLY · SPACE: RISE · C: DESCEND · J: BLAST</div></div><div id="reticle"><span>+</span><small id="targetLabel">TARGET ACQUIRED</small></div><div class="location" id="place">DOWNTOWN · GOLDEN TRIANGLE</div><div class="help">WASD MOVE · DRAG LOOK · F FLY/LAND · SPACE RISE · C DESCEND · J / CLICK FIRE · SHIFT BOOST</div><div class="mapwrap"><canvas id="map" width="300" height="300"></canvas><div class="maplabel">CITY DISTRICT</div><span class="map-north" aria-hidden="true">N</span><div class="map-district" aria-hidden="true"><i class="map-pin"></i><span id="mapDistrict">GOLDEN TRIANGLE</span></div></div><div class="toast" id="toast"></div></div>
@@ -393,7 +431,7 @@ body.sky-active #controls #jump2::after{content:none}
   mode:'over-shoulder', groundFov:Math.PI*.35, skyFov:Math.PI*.41, follow:6.5,
   frame(p,yaw,pitch,skyMode,aspect,fov){
    const fx=-Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=-Math.sin(yaw);
-   const back=skyMode?9.6:6.4,height=skyMode?3.0+pitch*4.2:1.55+pitch*4.1;
+   const back=skyMode?6.8:6.4,height=skyMode?3.0+pitch*4.2:1.55+pitch*4.1;
    const ahead=skyMode?7.0:6.0,lift=skyMode?1.2:2.35;
    const shoulder=Math.min(skyMode?2.5:1.9,Math.tan(fov/2)*aspect*back*.27);
    return {shoulder,
@@ -797,7 +835,7 @@ function drawHooded(mesh,e,boss){const B=new Mesh(),t=state.t,cy=boss?'#ff1fcf':
  B.ellipsoid(0,2.3,-.02,.34,.37,.34,'#121319');B.pyramid(0,2.55,-.12,.3,.3,.3,'#121319');
  B.box(0,2.24,.25,.40,.44,.06,'#05060a');B.box(0,2.30,.29,.34,.11,.03,cy,1.3);B.box(0,2.13,.29,.18,.04,.03,mg,1.1);
  B.box(0,2.48,.27,.44,.05,.03,mg,1.1);for(const sd of [-1,1])B.box(sd*.225,2.25,.27,.05,.46,.03,mg,1.1);
- const p=state.pos;castPose(mesh,B,e.x,0,e.z,Math.atan2(p.x-e.x,p.z-e.z),boss?1.15:1);castStats.crewHooded++}
+ const p=state.pos;castPose(mesh,B,e.x,0,e.z,Math.atan2(p.x-e.x,p.z-e.z),boss?1.5:1.3);castStats.crewHooded++}
 function drawAlienBug(mesh,e,sc,dark){const B=new Mesh(),t=state.t,flap=Math.sin(t*15+(e.phase||0))*.9;
  B.ellipsoid(0,0,0,1.0,.66,.9,dark,.12,8,5);
  B.ellipsoid(0,-.05,-1.15,.82,.62,1.15,'#1d0f2a',.2,8,5);
@@ -941,7 +979,7 @@ function renderArmorFinish(m){
 }
 function renderDynamic(){dynamic.v.length=0;for(const k in castStats)castStats[k]=0;renderHero(dynamic);renderArmorFinish(dynamic);sagaDraw3D(dynamic);for(let s of pickups){if(s.taken)continue;let y=s.y+Math.sin(state.t*3+s.x)*.20;drawSteelStar(dynamic,s,y)}if(state.stars>=5&&!state.finished){let y=5.2+Math.sin(state.t*2)*.6;dynamic.rod([0,y-1.2,-33],[0,y+1.2,-33],.20,'#ffe9ab',1.9)}
 if(sky.active){dynamic.box(state.pos.x,state.pos.y+.75,state.pos.z+.8,.44,1.5,.22,'#33dff1',1.6);dynamic.pyramid(state.pos.x,state.pos.y+.15,state.pos.z+1.0,.54,-1.8,.52,'#46d9ff',1.8)}
-for(let e of sky.enemies){if(e.dead||!(sky.active||sagaStage>=4))continue;drawAlienBug(dynamic,e,1,'#1a1024')}
+for(let e of sky.enemies){if(e.dead||!(sky.active||sagaStage>=4))continue;drawAlienBug(dynamic,e,1.5,'#1a1024')}
 for(let s of sky.enemyShots){dynamic.box(s.x,s.y,s.z,.56,.56,.56,'#ee69ff',2.1)}for(let s of sky.shots){dynamic.rod([s.x,s.y,s.z],[s.x-s.vx*.038,s.y-s.vy*.038,s.z-s.vz*.038],.22,'#6cefff',2.2)}for(let b of sky.bursts){let rr=(.45-b.life)*5;for(let j=0;j<6;j++){let a=j*Math.PI/3;dynamic.rod([b.x,b.y,b.z],[b.x+Math.cos(a)*rr,b.y+Math.sin(a)*rr,b.z],.13,'#ffd889',2.0)}}
 castStats.dynamicVertices=dynamic.v.length/10;let f=new Float32Array(dynamic.v);upload(dbuf,f,gl.DYNAMIC_DRAW);}
 function perspective(fov,aspect,n,far){let v=1/Math.tan(fov/2),nf=1/(n-far);return new Float32Array([v/aspect,0,0,0,0,v,0,0,0,0,(far+n)*nf,-1,0,0,2*far*n*nf,0])}
@@ -1051,7 +1089,7 @@ function castMara2D(project,g,n){const ft=project(n.x,0,n.z),hd=project(n.x,2.65
  g.fillStyle='#17100c';g.beginPath();g.ellipse(0,.28,.225,.15,0,Math.PI,6.283);g.fill();g.beginPath();g.ellipse(0,.1,.16,.14,0,0,6.283);g.fill();for(let k=0;k<8;k++){g.beginPath();g.arc(Math.cos(k/8*6.283)*.15,.06+Math.sin(k/8*6.283)*.07,.065,0,6.283);g.fill()}
  g.fillStyle='#120c09';g.fillRect(-.1,.4,.05,.025);g.fillRect(.05,.4,.05,.025);g.fillStyle='#7a3b35';g.fillRect(-.04,.55,.08,.025);
  g.strokeStyle='#ffd36b';g.shadowColor='#ffcf6b';g.shadowBlur=4;g.lineWidth=.025;for(const sd of [-1,1]){g.beginPath();g.arc(sd*.205,.6,.065,0,6.283);g.stroke()}g.restore();castStats.maraParts=18}
-function castHooded2D(project,g,e,boss){const lo=project(e.x,0,e.z),hi=project(e.x,2.9,e.z);if(!lo||!hi)return null;const r=Math.max(9,Math.min(75,lo.y-hi.y))*(boss?1.15:1),u=r/2.9,cy=boss?'#ff1fcf':'#00d8ff',mg=boss?'#00d8ff':'#ff1fcf';g.save();g.translate(lo.x,lo.y);
+function castHooded2D(project,g,e,boss){const lo=project(e.x,0,e.z),hi=project(e.x,2.9,e.z);if(!lo||!hi)return null;const r=Math.max(9,Math.min(98,lo.y-hi.y))*(boss?1.5:1.3),u=r/2.9,cy=boss?'#ff1fcf':'#00d8ff',mg=boss?'#00d8ff':'#ff1fcf';g.save();g.translate(lo.x,lo.y);
  g.fillStyle='#0e1016';g.fillRect(-u*.28,-u*.9,u*.22,u*.9);g.fillRect(u*.06,-u*.9,u*.22,u*.9);g.fillStyle='#13141c';g.beginPath();g.moveTo(-u*.44,-u*.53);g.lineTo(u*.44,-u*.53);g.lineTo(u*.4,-u*1.93);g.lineTo(-u*.4,-u*1.93);g.closePath();g.fill();g.fillRect(-u*.58,-u*1.78,u*.2,u*.92);g.fillRect(u*.38,-u*1.78,u*.2,u*.92);
  g.fillStyle='#121319';g.beginPath();g.ellipse(0,-u*2.3,u*.34,u*.37,0,0,6.283);g.fill();g.beginPath();g.moveTo(-u*.2,-u*2.5);g.lineTo(-u*.05,-u*2.86);g.lineTo(u*.2,-u*2.5);g.closePath();g.fill();g.fillStyle='#05060a';g.fillRect(-u*.2,-u*2.46,u*.4,u*.44);
  g.shadowBlur=14;g.shadowColor=cy;g.fillStyle=cy;g.fillRect(-u*.16,-u*2.34,u*.32,u*.085);g.fillRect(-u*.19,-u*1.83,u*.035,u*1.22);g.fillRect(u*.155,-u*1.83,u*.035,u*1.22);g.fillRect(-u*.58,-u*.89,u*.2,u*.06);g.fillRect(u*.38,-u*.89,u*.2,u*.06);g.strokeStyle=cy;g.lineWidth=Math.max(1,u*.035);g.strokeRect(-u*.11,-u*1.66,u*.22,u*.24);
@@ -1215,7 +1253,7 @@ for(let s of stars){if(s.taken)continue;let y=s.y+Math.sin(state.t*3+s.x)*.2,p=p
 
 sagaDraw2D(put,g,cv.height);
 // Alien hover-swarm: billboards are placed at projected 3D coordinates, preserving free camera movement.
-for(let e of sky.enemies){if(e.dead||!(sky.active||sagaStage>=4))continue;let p=put(e.x,e.y,e.z);if(!p||p.x<-100||p.x>cv.width+100)continue;let rr=Math.min(135,cv.height*1.4/p.depth),wing=Math.sin(state.t*15+e.phase)*rr*.3;g.save();g.translate(p.x,p.y);castBug2D(g,rr,wing,state.t+e.phase,false);g.restore()}
+for(let e of sky.enemies){if(e.dead||!(sky.active||sagaStage>=4))continue;let p=put(e.x,e.y,e.z);if(!p||p.x<-100||p.x>cv.width+100)continue;let rr=Math.min(200,cv.height*2.1/p.depth),wing=Math.sin(state.t*15+e.phase)*rr*.3;g.save();g.translate(p.x,p.y);castBug2D(g,rr,wing,state.t+e.phase,false);g.restore()}
 for(let s of sky.enemyShots){let p=put(s.x,s.y,s.z);if(!p)continue;let r=Math.max(3,cv.height*.36/p.depth);g.save();g.shadowColor='#c44bff';g.shadowBlur=25;g.fillStyle='#d68cff';g.beginPath();g.arc(p.x,p.y,r,0,6.283);g.fill();g.restore()}for(let s of sky.shots){let p=put(s.x,s.y,s.z);if(!p)continue;let rr=Math.max(3,cv.height*.3/p.depth);g.save();g.shadowColor='#67f7ff';g.shadowBlur=28;g.fillStyle='#b3ffff';g.beginPath();g.arc(p.x,p.y,rr,0,6.283);g.fill();g.restore()}
 for(let b of sky.bursts){let p=put(b.x,b.y,b.z);if(!p)continue;let rr=(.4-b.life)*60;g.strokeStyle='#ffe08b';g.lineWidth=5;g.shadowColor='#ffb970';g.shadowBlur=20;g.beginPath();g.arc(p.x,p.y,rr,0,6.283);g.stroke();g.shadowBlur=0}
 
