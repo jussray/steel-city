@@ -193,11 +193,12 @@ def inspect(browser, label, width, height, force_fallback):
             approach_image = PROOF / f"hillside-approach-{mode}.png"
             page.screenshot(path=str(approach_image), timeout=120000)
             # The frame must show the hillside scene, not be dominated by
-            # the hill colour (#142c32 fallback; lit ~#101e20 in WebGL).
+            # the hill colour (#142c32 fallback; lit ~#101e20 in WebGL). A
+            # tight tolerance keeps dark tower glass out of the hill count.
             frame = Image.open(approach_image).convert("RGB").resize((320, 190))
             px = list(frame.getdata())
             hill_share = sum(1 for p in px if any(
-                all(abs(p[c] - t[c]) <= 18 for c in range(3))
+                all(abs(p[c] - t[c]) <= 6 for c in range(3))
                 for t in ((0x14, 0x2c, 0x32), (16, 30, 32)))) / len(px)
             print(json.dumps({
                 "mode": mode, "x": ax, "y": ay, "z": az,
