@@ -492,16 +492,16 @@ function drawMara(mesh,n,ys){const B=new Mesh();
  // Gold hoop earrings.
  for(const sd of [-1,1])for(let k=0;k<6;k++){const a=k/6*6.283,b=(k+1)/6*6.283;B.rod([sd*.205,2.04+Math.cos(a)*.065,.02+Math.sin(a)*.065],[sd*.205,2.04+Math.cos(b)*.065,.02+Math.sin(b)*.065],.014,'#ffd36b',1.3)}
  const p=state.pos,face=Math.atan2(p.x-n.x,p.z-n.z)*.35;castPose(mesh,B,n.x,ys,n.z,face);castStats.maraParts=B.v.length/10}
-function drawHooded(mesh,e,boss){const B=new Mesh(),t=state.t,cy=boss?'#ff4fd8':'#46f0ff',mg=boss?'#46f0ff':'#ff4fd8',pulse=1.6+.5*Math.sin(t*6+e.x);
- for(const sd of [-1,1]){B.box(sd*.17,.45,0,.22,.9,.26,'#0e1016');B.box(sd*.17,.08,.04,.25,.16,.34,'#07080c');B.box(sd*.48,1.32,0,.2,.92,.24,'#14151d');B.box(sd*.48,.86,0,.23,.06,.27,cy,pulse);B.box(sd*.48,.76,.04,.16,.12,.16,'#0b0c11');B.box(sd*.48,.76,.13,.17,.03,.02,mg,1.6)}
+function drawHooded(mesh,e,boss){const B=new Mesh(),t=state.t,cy=boss?'#ff1fcf':'#00d8ff',mg=boss?'#00d8ff':'#ff1fcf',pulse=1.0+.25*Math.sin(t*6+e.x);
+ for(const sd of [-1,1]){B.box(sd*.17,.45,0,.22,.9,.26,'#0e1016');B.box(sd*.17,.08,.04,.25,.16,.34,'#07080c');B.box(sd*.48,1.32,0,.2,.92,.24,'#14151d');B.box(sd*.48,.86,0,.23,.07,.27,cy,pulse);B.box(sd*.48,.76,.04,.16,.12,.16,'#0b0c11');B.box(sd*.48,.76,.13,.17,.04,.02,mg,1.1)}
  B.box(0,1.28,0,.8,1.3,.5,'#13141c');B.box(0,.74,0,.88,.42,.56,'#101118');
- for(const sd of [-1,1])B.box(sd*.17,1.22,.258,.035,1.22,.02,cy,pulse);
- B.box(.09,1.5,.258,.2,.03,.02,mg,1.8);B.box(-.09,1.02,.258,.2,.03,.02,mg,1.8);B.box(0,.62,.29,.86,.035,.02,cy,1.4);
+ for(const sd of [-1,1])B.box(sd*.17,1.22,.258,.06,1.22,.02,cy,pulse);
+ B.box(.09,1.5,.258,.2,.05,.02,mg,1.1);B.box(-.09,1.02,.258,.2,.05,.02,mg,1.1);B.box(0,.62,.29,.86,.06,.02,cy,1.0);
  // Chest circuit ring emblem.
- B.box(0,1.66,.262,.22,.035,.02,cy,2);B.box(0,1.42,.262,.22,.035,.02,cy,2);B.box(-.11,1.54,.262,.035,.26,.02,cy,2);B.box(.11,1.54,.262,.035,.26,.02,cy,2);
+ B.box(0,1.66,.262,.22,.05,.02,cy,1.2);B.box(0,1.42,.262,.22,.05,.02,cy,1.2);B.box(-.11,1.54,.262,.05,.26,.02,cy,1.2);B.box(.11,1.54,.262,.05,.26,.02,cy,1.2);
  B.ellipsoid(0,2.3,-.02,.34,.37,.34,'#121319');B.pyramid(0,2.55,-.12,.3,.3,.3,'#121319');
- B.box(0,2.24,.25,.40,.44,.06,'#05060a');B.box(0,2.30,.29,.32,.085,.03,cy,2.4);B.box(0,2.13,.29,.18,.03,.03,mg,1.9);
- B.box(0,2.48,.27,.44,.03,.03,mg,1.6);for(const sd of [-1,1])B.box(sd*.225,2.25,.27,.03,.46,.03,mg,1.6);
+ B.box(0,2.24,.25,.40,.44,.06,'#05060a');B.box(0,2.30,.29,.34,.11,.03,cy,1.3);B.box(0,2.13,.29,.18,.04,.03,mg,1.1);
+ B.box(0,2.48,.27,.44,.05,.03,mg,1.1);for(const sd of [-1,1])B.box(sd*.225,2.25,.27,.05,.46,.03,mg,1.1);
  const p=state.pos;castPose(mesh,B,e.x,0,e.z,Math.atan2(p.x-e.x,p.z-e.z),boss?1.15:1);castStats.crewHooded++}
 function drawAlienBug(mesh,e,sc,dark){const B=new Mesh(),t=state.t,flap=Math.sin(t*15+(e.phase||0))*.9;
  B.ellipsoid(0,0,0,1.0,.66,.9,dark,.12,8,5);
@@ -753,7 +753,7 @@ function castMara2D(project,g,n){const ft=project(n.x,0,n.z),hd=project(n.x,2.65
  g.fillStyle='#17100c';g.beginPath();g.ellipse(0,.28,.225,.15,0,Math.PI,6.283);g.fill();g.beginPath();g.ellipse(0,.1,.16,.14,0,0,6.283);g.fill();for(let k=0;k<8;k++){g.beginPath();g.arc(Math.cos(k/8*6.283)*.15,.06+Math.sin(k/8*6.283)*.07,.065,0,6.283);g.fill()}
  g.fillStyle='#120c09';g.fillRect(-.1,.4,.05,.025);g.fillRect(.05,.4,.05,.025);g.fillStyle='#7a3b35';g.fillRect(-.04,.55,.08,.025);
  g.strokeStyle='#ffd36b';g.shadowColor='#ffcf6b';g.shadowBlur=4;g.lineWidth=.025;for(const sd of [-1,1]){g.beginPath();g.arc(sd*.205,.6,.065,0,6.283);g.stroke()}g.restore();castStats.maraParts=18}
-function castHooded2D(project,g,e,boss){const lo=project(e.x,0,e.z),hi=project(e.x,2.9,e.z);if(!lo||!hi)return null;const r=Math.max(9,Math.min(75,lo.y-hi.y))*(boss?1.15:1),u=r/2.9,cy=boss?'#ff4fd8':'#46f0ff',mg=boss?'#46f0ff':'#ff4fd8';g.save();g.translate(lo.x,lo.y);
+function castHooded2D(project,g,e,boss){const lo=project(e.x,0,e.z),hi=project(e.x,2.9,e.z);if(!lo||!hi)return null;const r=Math.max(9,Math.min(75,lo.y-hi.y))*(boss?1.15:1),u=r/2.9,cy=boss?'#ff1fcf':'#00d8ff',mg=boss?'#00d8ff':'#ff1fcf';g.save();g.translate(lo.x,lo.y);
  g.fillStyle='#0e1016';g.fillRect(-u*.28,-u*.9,u*.22,u*.9);g.fillRect(u*.06,-u*.9,u*.22,u*.9);g.fillStyle='#13141c';g.beginPath();g.moveTo(-u*.44,-u*.53);g.lineTo(u*.44,-u*.53);g.lineTo(u*.4,-u*1.93);g.lineTo(-u*.4,-u*1.93);g.closePath();g.fill();g.fillRect(-u*.58,-u*1.78,u*.2,u*.92);g.fillRect(u*.38,-u*1.78,u*.2,u*.92);
  g.fillStyle='#121319';g.beginPath();g.ellipse(0,-u*2.3,u*.34,u*.37,0,0,6.283);g.fill();g.beginPath();g.moveTo(-u*.2,-u*2.5);g.lineTo(-u*.05,-u*2.86);g.lineTo(u*.2,-u*2.5);g.closePath();g.fill();g.fillStyle='#05060a';g.fillRect(-u*.2,-u*2.46,u*.4,u*.44);
  g.shadowBlur=14;g.shadowColor=cy;g.fillStyle=cy;g.fillRect(-u*.16,-u*2.34,u*.32,u*.085);g.fillRect(-u*.19,-u*1.83,u*.035,u*1.22);g.fillRect(u*.155,-u*1.83,u*.035,u*1.22);g.fillRect(-u*.58,-u*.89,u*.2,u*.06);g.fillRect(u*.38,-u*.89,u*.2,u*.06);g.strokeStyle=cy;g.lineWidth=Math.max(1,u*.035);g.strokeRect(-u*.11,-u*1.66,u*.22,u*.24);
