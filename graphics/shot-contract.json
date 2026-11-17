@@ -13,7 +13,8 @@
       "requires_runtime_bridge_detail": "three-rivers-lattice-v1",
       "requires_runtime_material_revision": "masonry-glass-puddles-v1",
       "requires_runtime_bridge_finish_revision": "riveted-wet-deck-v1",
-      "requires_runtime_bridge_lighting_revision": "burnished-bronze-night-v1"
+      "requires_runtime_bridge_lighting_revision": "burnished-bronze-night-v1",
+      "requires_runtime_cinematic_revision": "storyboard-city-v1"
     },
     "runtime": {
       "id": "runtime",
@@ -31,7 +32,8 @@
       "bridge_detail": "three-rivers-lattice-v1",
       "material_revision": "masonry-glass-puddles-v1",
       "bridge_finish_revision": "riveted-wet-deck-v1",
-      "bridge_lighting_revision": "burnished-bronze-night-v1"
+      "bridge_lighting_revision": "burnished-bronze-night-v1",
+      "cinematic_revision": "storyboard-city-v1"
     }
   },
   "release_gates": {

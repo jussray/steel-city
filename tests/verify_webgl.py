@@ -53,6 +53,7 @@ with sync_playwright() as p:
             assert before.get("bridgeFinishPieces") == 49, before
             assert before.get("bridgeLightingRevision") == "burnished-bronze-night-v1", before
             assert before.get("bridgePortalMasonry") == 8, before
+            assert before.get("cinematicRevision") == "storyboard-city-v1", before
             lighting = page.evaluate("window.__steelBridgeContract.lighting")
             assert lighting["archEmission"] <= .15 and lighting["railEmission"] <= .15, lighting
             assert before.get("hillsideHomeCount") == 11, before
@@ -105,6 +106,7 @@ with sync_playwright() as p:
                            "bridgeFinishPieces": before["bridgeFinishPieces"],
                            "bridgeLightingRevision": before["bridgeLightingRevision"],
                            "bridgePortalMasonry": before["bridgePortalMasonry"],
+                           "cinematicRevision": before["cinematicRevision"],
                            "GL": info, "browserErrors": errors})
             page.close()
     finally:
