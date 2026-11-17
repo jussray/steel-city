@@ -42,6 +42,8 @@ def main():
             "art and playable lanes disagree on bridge materials")
     require(art["requires_runtime_bridge_lighting_revision"] == runtime["bridge_lighting_revision"],
             "art and playable lanes disagree on bridge night exposure")
+    require(art["requires_runtime_cast_revision"] == runtime["cast_revision"],
+            "art and playable lanes disagree on storyboard cast")
     require(art["asset"] == "assets/pittsburgh-night-skyline.jpg", "unexpected art path")
     approved = source_bytes()
     asset_path = ROOT / art["asset"]
@@ -63,6 +65,19 @@ def main():
             "shared bridge revision absent from playable renderers")
     require("three-rivers-lattice-v1" == runtime["bridge_detail"], "unrecognized bridge revision")
     require("neighborhoodDetail:'" + runtime["neighborhood_detail"] + "'" in game, "scene detail drift")
+    require(game.count("const CAST_REVISION='" + runtime["cast_revision"] + "'") == 2 and
+            game.count("castRevision:CAST_REVISION") == 2,
+            "storyboard cast revision drift between renderers")
+    require((ROOT / runtime["cast_reference"]).is_file(), "storyboard cast reference missing")
+    cast_path = ROOT / runtime["cast_receipt"]
+    require(cast_path.is_file(), "storyboard cast receipt absent")
+    cast = json.loads(cast_path.read_text(encoding="utf-8"))
+    require(cast.get("status") == "PASS" and cast.get("castRevision") == runtime["cast_revision"] and
+            cast.get("physicalGpuVerified") is False and cast.get("paintedArtParity") is False and
+            {c.get("mode") for c in cast.get("checks", [])} == {"webgl", "fallback"} and
+            all(c.get("castRevision") == runtime["cast_revision"] and not c.get("jsErrors")
+                for c in cast.get("checks", [])),
+            "storyboard cast proof missing, failing or mislabeled")
     receipt_path = ROOT / runtime["receipt"]
     require(receipt_path.is_file(), "WebGL Playwright receipt absent")
     receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
@@ -153,6 +168,7 @@ def main():
                     "bridgeFinishRevision": runtime["bridge_finish_revision"],
                     "bridgeLightingRevision": runtime["bridge_lighting_revision"],
                     "bridgePortalMasonry": 8,
+                    "castRevision": runtime["cast_revision"],
                     "expectedArtSha256": art_sha,
                     "softwareWebglScreenshots": images, "softwareWebglVerified": True,
                     "bridgeApproachEvidence": bridge_frames},
