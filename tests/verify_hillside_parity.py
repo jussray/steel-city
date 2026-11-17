@@ -5,9 +5,11 @@ Uses real Chromium Playwright with SwiftShader for WebGL. This is not physical
 GPU, real phone, deployed URL, or commercial-game visual-quality proof.
 """
 import json
+import math
 import os
 from pathlib import Path
 
+from PIL import Image
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,10 +18,13 @@ ASSET = ROOT / "assets" / "pittsburgh-night-skyline.jpg"
 PROOF = ROOT / "proof" / "steel-city"
 assert ASSET.is_file(), "Approved skyline export missing"
 PROOF.mkdir(parents=True, exist_ok=True)
+HILL_SHARE_MAX = 0.35
 
 def inspect(browser, label, width, height, force_fallback):
     page = browser.new_page(viewport={"width": width, "height": height},
                             device_scale_factor=1)
+    # SwiftShader frames are slow on a shared machine; allow slow screenshots.
+    page.set_default_timeout(120000)
     errors = []
     page.on("pageerror", lambda exc: errors.append(str(exc)))
     page.route("https://steel-city.local/assets/pittsburgh-night-skyline.jpg",
@@ -155,8 +160,52 @@ def inspect(browser, label, width, height, force_fallback):
                 mode, "walked through home", before_block, after_block)
             assert -32 < after_block["x"] < -28, (
                 mode, "wrong house route", after_block)
+            # Mount Washington is solid terrain. Hill columns (drawn identically
+            # by both renderers) span x=-82+i*6.5 +/-3.5, z=-89.5..-68.5 and
+            # y=-1.5..heights[i]-1.5. The hero must stand ON that terrain and
+            # the camera must stay outside every hill/home box. Previously the
+            # hero walked inside the hill at y=0 and the frame became a flat
+            # hill-coloured wall with floating window lights.
+            heights = page.evaluate("window.__steelHillsideContract.heights")
+            hill_boxes = [(-82 + i * 6.5 - 3.5, -82 + i * 6.5 + 3.5, -1.5, h - 1.5,
+                           -89.5, -68.5) for i, h in enumerate(heights)]
+            home_boxes = [(h["x"] - h["w"] / 2, h["x"] + h["w"] / 2, h["baseY"],
+                           h["baseY"] + h["h"] + 1.3, h["z"] - h["d"] / 2,
+                           h["z"] + h["d"] / 2) for h in homes]
+            def inside(box, x, y, z):
+                return (box[0] < x < box[1] and box[2] < y < box[3]
+                        and box[4] < z < box[5])
+            ax, ay, az = after_block["x"], after_block["y"], after_block["z"]
+            terrain = max([0.0] + [b[3] for b in hill_boxes
+                                   if b[0] <= ax <= b[1] and b[4] <= az <= b[5]])
+            assert terrain > 5, (mode, "route no longer on the ridge", terrain)
+            assert ay >= terrain - .05, (
+                mode, "hero inside hillside terrain", terrain, after_block)
+            for probe_y in (ay + .5, ay + 1.5):
+                assert not any(inside(b, ax, probe_y, az) for b in hill_boxes), (
+                    mode, "hero body inside a hill box", after_block)
+            # Steady-state follow camera (default pitch .22, see put()/loop()).
+            yaw = after_block["cameraYaw"]
+            back, lift = (9, 3.8 + .22 * 3) if force_fallback else (11, 3.7 + .22 * 4)
+            eye = (ax + math.sin(yaw) * back, ay + lift, az + math.cos(yaw) * back)
+            assert not any(inside(b, *eye) for b in hill_boxes + home_boxes), (
+                mode, "camera inside hillside geometry", eye, after_block)
             approach_image = PROOF / f"hillside-approach-{mode}.png"
-            page.screenshot(path=str(approach_image))
+            page.screenshot(path=str(approach_image), timeout=120000)
+            # The frame must show the hillside scene, not be dominated by
+            # the hill colour (#142c32 fallback; lit ~#101e20 in WebGL).
+            frame = Image.open(approach_image).convert("RGB").resize((320, 190))
+            px = list(frame.getdata())
+            hill_share = sum(1 for p in px if any(
+                all(abs(p[c] - t[c]) <= 18 for c in range(3))
+                for t in ((0x14, 0x2c, 0x32), (16, 30, 32)))) / len(px)
+            print(json.dumps({
+                "mode": mode, "x": ax, "y": ay, "z": az,
+                "terrain": round(terrain, 3),
+                "eye": [round(v, 2) for v in eye],
+                "hillColourShare": round(hill_share, 3)}), flush=True)
+            assert hill_share < HILL_SHARE_MAX, (
+                mode, "frame dominated by hill wall", hill_share, after_block)
             approach = {
                 "bridgeEntrance": {
                     "x": bridge_entrance["x"], "z": bridge_entrance["z"],
