@@ -39,7 +39,7 @@ body:has(#titlecover:not(.hidden)) #hud{visibility:hidden}
 @media(prefers-reduced-motion:reduce){.titlecover *{animation:none!important;transition:none!important}}
 
 /* Steel City analog movement & cinematic gameplay skyline, deliberately separate from menu art. */
-#skyBackdrop{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#0a0c2195 0%,#121b2b3d 43%,#0a172d 100%),url('assets/pittsburgh-night-skyline.jpg') center 22% / cover no-repeat;filter:saturate(1.18) contrast(1.09);z-index:0;}
+#skyBackdrop{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#0c071c42 0%,#1c10383a 43%,#09091bdf 100%),url('assets/pittsburgh-night-skyline.jpg') center 22% / cover no-repeat;filter:saturate(1.18) contrast(1.09);z-index:0;}
 canvas#game{z-index:1;background:transparent;}
 #hud,#controls{z-index:2;}
 #controls .pad{position:absolute;left:max(11px,env(safe-area-inset-left));bottom:max(17px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:8px;width:138px;height:158px;grid-template:none;grid-template-columns:none;grid-template-rows:none;z-index:7;pointer-events:none;}
@@ -50,6 +50,16 @@ canvas#game{z-index:1;background:transparent;}
 #moveJoystick #moveKnob{position:absolute;top:50%;left:50%;width:49px;height:49px;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%);background:radial-gradient(circle at 33% 23%,#fcfcdf,#80eaff 28%,#277b9e 73%,#174153);border:2px solid #d4f9ff;box-shadow:0 4px 15px #000a,0 0 16px #54dfff99;will-change:transform;}
 #controls .joystick-caption{font-size:10px;letter-spacing:.18em;color:#dcefff;font-weight:950;text-shadow:0 2px 6px #000;pointer-events:none;}
 @media(max-width:430px){#controls .pad{left:max(6px,env(safe-area-inset-left));bottom:max(20px,env(safe-area-inset-bottom));width:129px;height:150px;}#controls #moveJoystick{width:112px;height:112px;}#controls .joystick-caption{font-size:9px}.actions-pad{right:6px;}}
+
+/* Portrait gameplay: leave the camera center clear while keeping story controls reachable. */
+@media(max-width:430px){
+ #storyHud{top:max(59px,calc(env(safe-area-inset-top) + 49px));left:8px;width:min(214px,55vw);padding:7px 9px;box-shadow:0 9px 22px #0009}
+ #storyHud h2{margin:2px 0;font-size:12px}
+ #storyHud p{line-height:1.25}
+ #storyHud .progress{margin-top:4px}
+ #storyHud .actions{margin-top:5px}
+ #hud .toast{top:29%;width:min(290px,calc(100vw - 20px));padding:7px 9px;font-size:10px;letter-spacing:.04em;line-height:1.3}
+}
 </style></head><body>
 <style id="steel-touch-layout">
 /* Touch play on every screen shape. Controls follow the input device, not the width, and short
@@ -114,19 +124,161 @@ canvas#game{z-index:1;background:transparent;}
   window.__steelJoystickReset=reset;
 })();
 </script>
+<script id="steel-hillside-contract">
+/* Shared between the WebGL and canvas IIFEs. */
+(() => {
+ const HOME=Object.freeze({
+ w:4.2,h:2.7,d:3.5,z:-75.5,roofW:4.65,roofRise:1.3,roofD:3.9,
+ doorW:.85,doorH:1.6,doorD:.09,win:.68,winH:.91,winOff:1.05,winD:.09,
+ lampY:.92,lampW:.15,lampH:.16,lampD:.06,
+ facadeAlt:'#a36f63',facadeBase:'#738c8b',roofAlt:'#613642',roofBase:'#3d5666',
+ doorCol:'#253440',trimCol:'#33465d',lampCol:'#ffe1a2',winCol:'#f8d99c'
+ });
+ const heights=Object.freeze(Array.from({length:26},(_,i)=>8.5+6*Math.sin(i*.37)+2.5*Math.sin(i*2.41+.7)));
+ const homes=Object.freeze(Array.from({length:11},(_,j)=>{
+  const i=2+2*j;return Object.freeze({i,x:-82+i*6.5,z:HOME.z,baseY:heights[i]-1.5,w:HOME.w,h:HOME.h,d:HOME.d,
+  facade:i%4===0?HOME.facadeAlt:HOME.facadeBase,roof:i%4===0?HOME.roofAlt:HOME.roofBase});
+ }));
+ const ACCESS=Object.freeze({groundMinZ:-83,groundMaxZ:51,riverNorthZ:-64,riverSouthZ:-36,bridgeHalfWidth:5.6});
+ // Crossing open water is only permitted in Sky Mode; grounded travel uses the bridge.
+ const canTraverseGround=(x,z)=>z<=ACCESS.riverNorthZ||z>=ACCESS.riverSouthZ||Math.abs(x)<=ACCESS.bridgeHalfWidth;
+ window.__steelHillsideContract=Object.freeze({HOME,heights,homes,ACCESS,canTraverseGround});
+ window.__steelHillsideSmoke=()=>{
+  const d=window.__steelCityDebug?.(),hs=d?.hillsideHomeFootprints||[];
+  const checks=[
+   ['debug',!!d],
+   ['revision',d?.graphicsRevision==='cinematic-geometry-v3'],
+   ['neighborhood',d?.neighborhoodDetail==='mount-washington-homes-v2'],
+   ['count',d?.hillsideHomeCount===11],
+   ['solids',d?.hillsideSolidCount===11],
+   ['ground travel reaches hillside',d?.hillsideWalkMinZ===ACCESS.groundMinZ],
+   ['river only crossed on bridge',!canTraverseGround(-18,-50)&&!canTraverseGround(18,-50)&&canTraverseGround(0,-50)],
+   ['actual footprints',hs.length===11],
+   ['shape and elevation parity',hs.length===homes.length&&hs.every((b,i)=>{
+    const h=homes[i];return b.w===h.w&&b.h===h.h&&b.d===h.d&&
+     Math.abs(b.x-h.x)<1e-6&&Math.abs(b.z-h.z)<1e-6&&Math.abs(b.baseY-h.baseY)<1e-6;
+   })]
+  ];console.group('Steel City hillside smoke');
+  console.table(checks.map(([name,pass])=>({name,pass})));
+  if(checks.some(([,pass])=>!pass))console.error('Hillside smoke failed');console.groupEnd();
+  return {passed:checks.every(([,pass])=>pass),checks:checks.map(([name,pass])=>({name,pass}))};
+ };
+ if(new URLSearchParams(location.search).get('smoke')==='1'){
+  const run=()=>requestAnimationFrame(()=>window.__steelHillsideSmoke());
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
+ }
+})();
+</script>
+<script id="steel-bridge-contract">
+/* Shared procedural bridge silhouette, identical in WebGL and fallback. */
+(() => {
+ const startZ=-61,endZ=-33,segments=20,deckY=1.2;
+ const sides=Object.freeze([-6,6]);
+ const panels=Object.freeze(Array.from({length:segments},(_,i)=>{
+  const position=t=>Object.freeze({z:startZ+(endZ-startZ)*t,y:deckY+8*Math.sin(Math.PI*t)});
+  return Object.freeze({a:position(i/segments),b:position((i+1)/segments)});
+ }));
+ const finish=Object.freeze({
+  revision:'riveted-wet-deck-v1',
+  panels:Object.freeze(Array.from({length:14},(_,i)=>
+   Object.freeze({z:-60.5+i*2,marker:i%2===0})))
+ });
+ const lighting=Object.freeze({
+  revision:'burnished-bronze-night-v1',
+  arch:'#987044', upright:'#91754f', rim:'#bd9564',
+  lattice:'#9d7748', cross:'#ac8755', diagonal:'#a47d4e',
+  cap:'#a7977d', accent:'#a37f4e',
+  archEmission:.12, uprightEmission:.09, railEmission:.13
+ });
+ window.__steelBridgeContract=Object.freeze({
+  revision:'three-rivers-lattice-v1',sides,panels,deckY,finish,lighting
+ });
+})();
+</script>
 <script>
 'use strict';
 (()=>{
 const canvas=document.getElementById('game'), gl=canvas.getContext('webgl',{alpha:true,antialias:true,depth:true,powerPreference:'high-performance'}) || canvas.getContext('experimental-webgl');
 const el=id=>document.getElementById(id);if(!gl){el('error').classList.add('show');return}
 const V=`attribute vec3 aP;attribute vec3 aN;attribute vec3 aC;attribute float aE;uniform mat4 uP,uV;varying vec3 vN,vC,vPos;varying float vE;void main(){vN=aN;vC=aC;vE=aE;vPos=aP;gl_Position=uP*uV*vec4(aP,1.0);}`;
-const F=`precision mediump float;varying vec3 vN,vC,vPos;varying float vE;uniform vec3 uCam;uniform float uTime;void main(){vec3 n=normalize(vN);float light=max(dot(n,normalize(vec3(-0.43,0.81,0.25))),0.0);float rim=max(dot(n,normalize(vec3(0.24,0.3,-0.86))),0.0);vec3 lit=vC*(0.30+0.70*light)+vC*rim*0.12;lit+=vC*vE*1.32;float fog=smoothstep(36.,130.,distance(vPos,uCam));vec3 sky=mix(vec3(.018,.034,.074),vec3(.075,.084,.15),clamp(vPos.y/62.,0.,1.));lit=mix(lit,sky,fog*.82);gl_FragColor=vec4(pow(max(lit,vec3(0.)),vec3(.87)),1.);}`;
+const F=`precision mediump float;
+varying vec3 vN,vC,vPos;
+varying float vE;
+uniform vec3 uCam;
+uniform float uTime;
+uniform float uStaticScene;
+void main(){
+ vec3 n=normalize(vN);
+ float key=max(dot(n,normalize(vec3(-0.43,0.81,0.25))),0.0);
+ float rim=pow(max(dot(n,normalize(vec3(0.24,0.3,-0.86))),0.0),1.4);
+ float fill=max(dot(n,normalize(vec3(0.7,0.26,0.35))),0.0);
+ float street=1.0-clamp(vPos.y/18.0,0.0,1.0);
+ vec3 lit=vC*(0.21+0.68*key+0.17*fill)+vec3(.08,.17,.27)*rim*.55+vC*rim*.14;
+ lit+=vC*vE*(1.21+.12*sin(uTime*.65));
+ lit+=vC*vec3(.09,.055,.018)*street;
+ // Material detail applies to static 3D buildings, not the animated hero.
+ vec3 viewDir=normalize(uCam-vPos);
+ vec3 halfLight=normalize(viewDir+normalize(vec3(-0.43,0.81,0.25)));
+ float upright=1.0-smoothstep(.12,.42,abs(n.y));
+ float facade=uStaticScene*upright*smoothstep(3.0,4.5,vPos.y)*(1.0-smoothstep(.10,.38,vE));
+ vec2 wallUv=abs(n.z)>abs(n.x)?vPos.xy:vec2(vPos.z,vPos.y);
+ float course=fract(wallUv.y*1.40);
+ float alternate=mod(floor(wallUv.y*1.40),2.0)*.5;
+ float joint=fract(wallUv.x*.88+alternate);
+ float grout=(1.0-smoothstep(.025,.085,min(course,1.0-course)))*.67+
+             (1.0-smoothstep(.025,.085,min(joint,1.0-joint)))*.30;
+ float patina=fract(sin(dot(floor(wallUv*2.3),vec2(91.17,67.32)))*43758.5453);
+ lit=mix(lit,lit*(.90+.11*patina-.20*clamp(grout,0.0,1.0)),facade*.75);
+ float windowGlass=uStaticScene*upright*smoothstep(.25,.53,vE)*(1.0-smoothstep(1.25,1.9,vE))*smoothstep(3.0,5.0,vPos.y);
+ float glassFresnel=pow(1.0-max(dot(n,viewDir),0.0),3.0);
+ float glassSpark=pow(max(dot(n,halfLight),0.0),36.0);
+ lit+=windowGlass*(vec3(.09,.19,.31)*glassFresnel+vec3(.61,.45,.25)*glassSpark*.75);
+ // Rain-slick street lighting: world-space amber/violet reflected glow.
+ // Only low horizontal surfaces change; buildings and character remain 3D.
+ float ground=smoothstep(.78,.97,n.y)*smoothstep(-.56,-.16,vPos.y)*(1.0-smoothstep(.10,.55,vPos.y));
+ float pooling=.50+.17*sin(vPos.x*.46+1.8*sin(vPos.z*.29))+
+               .17*sin(vPos.z*.53+2.1*sin(vPos.x*.31))+
+               .12*sin(vPos.x*.83-vPos.z*.41+sin(vPos.z*.19));
+ float puddle=smoothstep(.49,.71,pooling);
+ float lampPools=exp(-pow((abs(vPos.x)-6.9)*.29,2.0))*(.23+.77*pow(.5+.5*sin(vPos.z*.68+sin(vPos.x*.24)*1.1),6.0));
+ float neonPools=exp(-pow((vPos.x+3.2)*.26,2.0))*(.18+.82*pow(.5+.5*sin(vPos.z*.37+sin(vPos.x*.31)*1.3+1.4),7.0));
+ float goldBridge=(1.0-smoothstep(0.0,10.0,abs(vPos.x)))*(1.0-smoothstep(0.0,26.0,abs(vPos.z+47.0)));
+ float grain=fract(sin(dot(floor(vPos.xz*2.0),vec2(127.1,311.7)))*43758.5453);
+ float glints=pow(.5+.5*sin(vPos.x*2.9+2.1*sin(vPos.z*.67)+sin(vPos.x*.4)),16.0)*puddle*grain;
+ vec3 reflection=vec3(.93,.50,.16)*(lampPools*.75+goldBridge*.12)+
+                 vec3(.45,.10,.78)*(neonPools*.80+puddle*.10)+
+                 vec3(.14,.22,.31)*glints*.27;
+ // Real WebGL wet-street glass reflections track perspective.
+ float windowTrail=pow(.5+.5*sin(vPos.z*1.55+sin(vPos.x*.23)),18.0)*exp(-pow((abs(vPos.x)-11.2)*.22,2.0));
+ float wetSpec=pow(max(dot(n,halfLight),0.0),42.0);
+ float wetFresnel=pow(1.0-max(dot(n,viewDir),0.0),3.0);
+ vec3 wetSurface=lit*vec3(.40,.38,.51)+reflection*(.60+.36*puddle)+
+                 vec3(.86,.56,.27)*windowTrail*(.10+.44*puddle)+
+                 vec3(.56,.30,.81)*wetSpec*(.11+.30*puddle+.26*wetFresnel);
+ lit=mix(lit,wetSurface,ground*.91);
+ float fog=smoothstep(49.0,151.0,distance(vPos,uCam));
+ vec3 sky=mix(vec3(.035,.023,.072),vec3(.13,.064,.20),clamp(vPos.y/62.0,0.0,1.0));
+ lit=mix(lit,sky,fog*.75);
+ gl_FragColor=vec4(pow(max(lit,vec3(0.0)),vec3(.87)),1.0);
+}`;
 function sh(t,s){const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(x));return x}
 let pr;try{pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,V));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,F));gl.linkProgram(pr);if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(pr));}catch(e){el('error').textContent='Graphics setup failed: '+e.message;el('error').classList.add('show');return}gl.useProgram(pr);
-const loc={p:gl.getAttribLocation(pr,'aP'),n:gl.getAttribLocation(pr,'aN'),c:gl.getAttribLocation(pr,'aC'),e:gl.getAttribLocation(pr,'aE'),proj:gl.getUniformLocation(pr,'uP'),view:gl.getUniformLocation(pr,'uV'),cam:gl.getUniformLocation(pr,'uCam'),time:gl.getUniformLocation(pr,'uTime')};gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);
+const loc={p:gl.getAttribLocation(pr,'aP'),n:gl.getAttribLocation(pr,'aN'),c:gl.getAttribLocation(pr,'aC'),e:gl.getAttribLocation(pr,'aE'),proj:gl.getUniformLocation(pr,'uP'),view:gl.getUniformLocation(pr,'uV'),cam:gl.getUniformLocation(pr,'uCam'),time:gl.getUniformLocation(pr,'uTime'),staticScene:gl.getUniformLocation(pr,'uStaticScene')};gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.enable(gl.CULL_FACE);gl.cullFace(gl.BACK);
 const c=(h)=>{if(Array.isArray(h))return h;h=h.replace('#','');return [parseInt(h.slice(0,2),16)/255,parseInt(h.slice(2,4),16)/255,parseInt(h.slice(4,6),16)/255]},clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
 function sub(a,b){return [a[0]-b[0],a[1]-b[1],a[2]-b[2]]}function cross(a,b){return [a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}function unit(a){let l=Math.hypot(...a)||1;return a.map(x=>x/l)}
-class Mesh{constructor(){this.v=[]}vert(p,n,col,emi){this.v.push(...p,...n,...col,emi)}tri(a,b,d,col,emi=0){const n=unit(cross(sub(b,a),sub(d,a))),C=c(col);this.vert(a,n,C,emi);this.vert(b,n,C,emi);this.vert(d,n,C,emi)}quad(a,b,d,e,col,emi=0){this.tri(a,b,d,col,emi);this.tri(a,d,e,col,emi)}box(x,y,z,w,h,d,col,glow=0){const a=x-w/2,b=x+w/2,l=z-d/2,r=z+d/2,t=y+h/2,bot=y-h/2;this.quad([a,bot,r],[b,bot,r],[b,t,r],[a,t,r],col,glow);this.quad([b,bot,l],[a,bot,l],[a,t,l],[b,t,l],col,glow);this.quad([a,bot,l],[a,bot,r],[a,t,r],[a,t,l],col,glow);this.quad([b,bot,r],[b,bot,l],[b,t,l],[b,t,r],col,glow);this.quad([a,t,r],[b,t,r],[b,t,l],[a,t,l],col,glow);this.quad([a,bot,l],[b,bot,l],[b,bot,r],[a,bot,r],col,glow)}rod(a,b,r,col,emi=0){let axis=unit(sub(b,a)),ar=Math.abs(axis[1])<.9?[0,1,0]:[1,0,0],s=unit(cross(axis,ar)),t=unit(cross(s,axis));let pts=[];for(let v of [a,b]){pts.push([[v[0]+s[0]*r+t[0]*r,v[1]+s[1]*r+t[1]*r,v[2]+s[2]*r+t[2]*r],[v[0]-s[0]*r+t[0]*r,v[1]-s[1]*r+t[1]*r,v[2]-s[2]*r+t[2]*r],[v[0]-s[0]*r-t[0]*r,v[1]-s[1]*r-t[1]*r,v[2]-s[2]*r-t[2]*r],[v[0]+s[0]*r-t[0]*r,v[1]+s[1]*r-t[1]*r,v[2]+s[2]*r-t[2]*r]]);}for(let j=0;j<4;j++)this.quad(pts[0][j],pts[0][(j+1)%4],pts[1][(j+1)%4],pts[1][j],col,emi)}pyramid(x,y,z,w,h,d,col,emi=0){let a=[x-w/2,y,z-d/2],b=[x+w/2,y,z-d/2],cc=[x+w/2,y,z+d/2],dd=[x-w/2,y,z+d/2],tip=[x,y+h,z];this.tri(a,b,tip,col,emi);this.tri(b,cc,tip,col,emi);this.tri(cc,dd,tip,col,emi);this.tri(dd,a,tip,col,emi)}disc(x,y,z,r,color,emi=0,segments=20){for(let i=0;i<segments;i++){let t=i/segments*Math.PI*2,tt=(i+1)/segments*Math.PI*2;this.tri([x,y,z],[x+Math.sin(t)*r,y,z+Math.cos(t)*r],[x+Math.sin(tt)*r,y,z+Math.cos(tt)*r],color,emi)}}}
+class Mesh{constructor(){this.v=[]}vert(p,n,col,emi){this.v.push(...p,...n,...col,emi)}tri(a,b,d,col,emi=0){const n=unit(cross(sub(b,a),sub(d,a))),C=c(col);this.vert(a,n,C,emi);this.vert(b,n,C,emi);this.vert(d,n,C,emi)}quad(a,b,d,e,col,emi=0){this.tri(a,b,d,col,emi);this.tri(a,d,e,col,emi)}box(x,y,z,w,h,d,col,glow=0){const a=x-w/2,b=x+w/2,l=z-d/2,r=z+d/2,t=y+h/2,bot=y-h/2;this.quad([a,bot,r],[b,bot,r],[b,t,r],[a,t,r],col,glow);this.quad([b,bot,l],[a,bot,l],[a,t,l],[b,t,l],col,glow);this.quad([a,bot,l],[a,bot,r],[a,t,r],[a,t,l],col,glow);this.quad([b,bot,r],[b,bot,l],[b,t,l],[b,t,r],col,glow);this.quad([a,t,r],[b,t,r],[b,t,l],[a,t,l],col,glow);this.quad([a,bot,l],[b,bot,l],[b,bot,r],[a,bot,r],col,glow)}rod(a,b,r,col,emi=0){let axis=unit(sub(b,a)),ar=Math.abs(axis[1])<.9?[0,1,0]:[1,0,0],s=unit(cross(axis,ar)),t=unit(cross(s,axis));let pts=[];for(let v of [a,b]){pts.push([[v[0]+s[0]*r+t[0]*r,v[1]+s[1]*r+t[1]*r,v[2]+s[2]*r+t[2]*r],[v[0]-s[0]*r+t[0]*r,v[1]-s[1]*r+t[1]*r,v[2]-s[2]*r+t[2]*r],[v[0]-s[0]*r-t[0]*r,v[1]-s[1]*r-t[1]*r,v[2]-s[2]*r-t[2]*r],[v[0]+s[0]*r-t[0]*r,v[1]+s[1]*r-t[1]*r,v[2]+s[2]*r-t[2]*r]]);}for(let j=0;j<4;j++)this.quad(pts[0][j],pts[0][(j+1)%4],pts[1][(j+1)%4],pts[1][j],col,emi)}pyramid(x,y,z,w,h,d,col,emi=0){let a=[x-w/2,y,z-d/2],b=[x+w/2,y,z-d/2],cc=[x+w/2,y,z+d/2],dd=[x-w/2,y,z+d/2],tip=[x,y+h,z];this.tri(a,b,tip,col,emi);this.tri(b,cc,tip,col,emi);this.tri(cc,dd,tip,col,emi);this.tri(dd,a,tip,col,emi)}disc(x,y,z,r,color,emi=0,segments=20){for(let i=0;i<segments;i++){let t=i/segments*Math.PI*2,tt=(i+1)/segments*Math.PI*2;this.tri([x,y,z],[x+Math.sin(t)*r,y,z+Math.cos(t)*r],[x+Math.sin(tt)*r,y,z+Math.cos(tt)*r],color,emi)}}
+ellipsoid(x,y,z,rx,ry,rz,col,emi=0,segments=10,rings=6){
+ // Faceted original helmet/armor primitive, actual 3D triangles with lit normals.
+ for(let lat=0;lat<rings;lat++)for(let lon=0;lon<segments;lon++){
+  const a=lat/rings*Math.PI,b=(lat+1)/rings*Math.PI,c=lon/segments*2*Math.PI,d=(lon+1)/segments*2*Math.PI;
+  const p=(u,v)=>[x+rx*Math.sin(u)*Math.cos(v),y+ry*Math.cos(u),z+rz*Math.sin(u)*Math.sin(v)];
+  const p0=p(a,c),p1=p(b,c),p2=p(b,d),p3=p(a,d);
+  if(lat!==0)this.tri(p0,p1,p3,col,emi);
+  if(lat!==rings-1)this.tri(p1,p2,p3,col,emi);
+ }
+}}
+const STEEL_HILL=window.__steelHillsideContract;
+const BRIDGE_LIGHT=window.__steelBridgeContract.lighting;
 const world=new Mesh(),dynamic=new Mesh(),buildings=[],pickups=[],platforms=[];let rndSeed=9812;function rand(){rndSeed=(rndSeed*1664525+1013904223)>>>0;return rndSeed/4294967296}const R=(a,b)=>a+(b-a)*rand();
 // Wet streets and walkable open play spaces.
 world.box(0,-.8,0,160,1.3,180,'#152235');world.box(0,-.125,6,13,.12,105,'#1d2638');for(let z=-29;z<53;z+=8)world.box(0,-.045,z,.25,.025,3.3,'#d4ac63',.31);
@@ -134,12 +286,77 @@ for(let z of [-17,2,26]){world.box(0,-.11,z,116,.13,8,'#1f2838');for(let x=-53;x
 for(let x of [-8,8]){world.box(x,-.07,1,2,.13,98,'#515b62');for(let z=-38;z<45;z+=3.1)world.box(x*.93,-.001,z,.11,.035,1.3,'#b9aa8a',.15)}
 // Dark river with a gold bridge, embankment, and a second skyline across it.
 world.box(0,-.36,-48,160,.12,27,'#0b2943');for(let j=0;j<125;j++){let x=R(-78,78),z=R(-60,-36);world.box(x,-.29,z,R(.12,1.4),.008,.045,rand()>.55?'#1d5765':'#a68f50',.16)}
-world.box(0,.15,-47,12,.36,29,'#4c4a42');world.box(0,.39,-47,11.7,.11,29,'#313c44');for(let side of [-1,1]){let x=side*6;for(let j=0;j<=20;j++){let q=j/20,z=-61+q*28,y=1.2+8*Math.sin(Math.PI*q);if(j) {let p=(j-1)/20,pz=-61+p*28,py=1.2+8*Math.sin(Math.PI*p);world.rod([x,py,pz],[x,y,z],.29,'#e5ae38',.9)}world.rod([x,.4,z],[x,y,z],.09,'#ddaf52',.38)}world.rod([x,1.16,-61],[x,1.16,-33],.13,'#f1b95a',.7);for(let zz=-59;zz<-32;zz+=3.1)world.box(x,.85,zz,.18,1.3,.17,'#dbaa4d',.4)}
+world.box(0,.15,-47,12,.36,29,'#4c4a42');world.box(0,.39,-47,11.7,.11,29,'#313c44');for(let side of [-1,1]){let x=side*6;for(let j=0;j<=20;j++){let q=j/20,z=-61+q*28,y=1.2+8*Math.sin(Math.PI*q);if(j) {let p=(j-1)/20,pz=-61+p*28,py=1.2+8*Math.sin(Math.PI*p);world.rod([x,py,pz],[x,y,z],.29,BRIDGE_LIGHT.arch,BRIDGE_LIGHT.archEmission)}world.rod([x,.4,z],[x,y,z],.09,BRIDGE_LIGHT.upright,BRIDGE_LIGHT.uprightEmission)}world.rod([x,1.16,-61],[x,1.16,-33],.13,BRIDGE_LIGHT.rim,BRIDGE_LIGHT.railEmission);for(let zz=-59;zz<-32;zz+=3.1)world.box(x,.85,zz,.18,1.3,.17,BRIDGE_LIGHT.accent,.12)}
+// Bridge identity upgrade: real triangular steel-lattice geometry along the same walkable span.
+const STEEL_BRIDGE=window.__steelBridgeContract;
+let bridgeTrussSegments=0;
+let bridgePortalMasonry=0;
+for(const x of STEEL_BRIDGE.sides){
+ for(const panel of STEEL_BRIDGE.panels){
+  const a=panel.a,b=panel.b,y=STEEL_BRIDGE.deckY;
+  world.rod([x,a.y-.52,a.z],[x,b.y-.52,b.z],.12,BRIDGE_LIGHT.lattice,.08);
+  world.rod([x,y,a.z],[x,b.y,b.z],.095,BRIDGE_LIGHT.cross,.11);
+  world.rod([x,a.y,a.z],[x,y,b.z],.09,BRIDGE_LIGHT.diagonal,.09);
+  bridgeTrussSegments+=3;
+ }
+ // Original stone-and-bronze end pylons stay outside the playable deck.
+ for(const z of [-60.65,-33.35]){
+  world.box(x,2.15,z,.72,3.0,.72,'#66534a');
+  world.box(x,3.83,z,.82,.36,.82,BRIDGE_LIGHT.cap,.18);
+  // Stone banding gives each bridge portal a Pittsburgh masonry silhouette.
+  world.box(x,1.13,z,.96,.18,.96,'#495360',.02);
+  world.box(x,3.25,z,.90,.20,.90,'#877966',.03);
+  bridgePortalMasonry+=2;
+ }
+}
+// Bridge roadway finish: worn metal edge caps, expansion joints and gold reflectors.
+// Geometry stays outside the hero's walkable center path.
+let bridgeFinishPieces=0;
+for(const {z,marker} of STEEL_BRIDGE.finish.panels){
+ world.box(0,.47,z,11.12,.038,.055,'#6f7380',.055);
+ bridgeFinishPieces++;
+ for(const x of [-5.45,5.45]){
+  world.box(x,.52,z,.22,.17,1.58,marker?'#a78a55':'#756d59',.18);
+  bridgeFinishPieces++;
+ }
+ if(marker){world.box(0,.47,z,.20,.034,.64,'#d1b979',.19);bridgeFinishPieces++}
+}
 // Hillside silhouette and Mount Washington-inspired incline at the far left.
-for(let i=0;i<26;i++){let x=-82+i*6.5;let h=6+6*Math.sin(i*.37)+R(0,5);world.box(x,h/2-1.5,-79,7,h,21,'#142c32');for(let j=0;j<7;j++)world.box(x+R(-3,3),R(2,h),-68.45,.24,.24,.05,'#e3ad67',.8)}
+const hillsideRise=STEEL_HILL.heights;
+for(let i=0;i<26;i++){
+ const x=-82+i*6.5,h=hillsideRise[i];R(0,5); // Maintain the original downstream random sequence.
+ world.box(x,h/2-1.5,-79,7,h,21,'#142c32');
+ for(let j=0;j<7;j++)world.box(x+R(-3,3),R(2,h),-68.45,.24,.24,.05,'#e3ad67',.8);
+}
+const HOME=STEEL_HILL.HOME,hillsideHomes=STEEL_HILL.homes;
+for(const h of hillsideHomes){
+ const {x,z,baseY:y,facade,roof}=h;
+ world.box(x,y+HOME.h/2,z,HOME.w,HOME.h,HOME.d,facade);
+ world.pyramid(x,y+HOME.h,z,HOME.roofW,HOME.roofRise,HOME.roofD,roof,.18);
+ world.box(x,y+HOME.doorH/2,z+HOME.d/2+.04,HOME.doorW,HOME.doorH,HOME.doorD,HOME.doorCol);
+ world.box(x,y+HOME.lampY,z+HOME.d/2+.12,HOME.lampW,HOME.lampH,HOME.lampD,HOME.lampCol,.95);
+ for(const off of [-HOME.winOff,HOME.winOff]){
+  world.box(x+off,y+HOME.h*.68,z+HOME.d/2+.04,HOME.win,HOME.winH,HOME.winD,HOME.winCol,.7);
+  world.box(x+off,y+HOME.h*.68,z+HOME.d/2+.10,.10,HOME.winH,.05,HOME.trimCol);
+ }
+ buildings.push({...h,kind:'hillside-home'});
+}
 world.rod([-72,1,-72],[-47,15,-72],.22,'#b7a28b');world.box(-58,10,-71,4,2,2,'#9b3324');world.box(-58,11,-69.9,3.7,.5,.07,'#f3bf6a',.65);
 // Downtown towers: tailored shapes inspired by PPG Place, the Steel Tower and glass office towers.
-function tower(x,z,w,d,h,base,win,spacing=2.0){world.box(x,h/2,z,w,h,d,base);buildings.push({x,z,w,d,h});for(let yy=2;yy<h-1;yy+=spacing){for(let xx=-w/2+1;xx<w/2-.5;xx+=1.45){if(rand()>.18){let cc=rand()>.3?win:'#475c79';world.box(x+xx,yy,z+d/2+.025,.63,.42,.05,cc,rand()>.23?.65:.15);world.box(x+xx,yy,z-d/2-.025,.63,.42,.05,cc,.5)}}for(let zz=-d/2+1;zz<d/2-.5;zz+=1.7){if(rand()>.29)world.box(x+w/2+.025,yy,z+zz,.05,.45,.7,win,.5);if(rand()>.29)world.box(x-w/2-.025,yy,z+zz,.05,.45,.7,win,.5)}}world.box(x,h+.15,z,w+.16,.25,d+.16,'#869398',.12)}
+function tower(x,z,w,d,h,base,win,spacing=2.0){world.box(x,h/2,z,w,h,d,base);buildings.push({x,z,w,d,h});for(let yy=2;yy<h-1;yy+=spacing){for(let xx=-w/2+1;xx<w/2-.5;xx+=1.45){if(rand()>.18){let cc=rand()>.3?win:'#475c79';world.box(x+xx,yy,z+d/2+.025,.63,.42,.05,cc,rand()>.23?.65:.15);world.box(x+xx,yy,z-d/2-.025,.63,.42,.05,cc,.5)}}for(let zz=-d/2+1;zz<d/2-.5;zz+=1.7){if(rand()>.29)world.box(x+w/2+.025,yy,z+zz,.05,.45,.7,win,.5);if(rand()>.29)world.box(x-w/2-.025,yy,z+zz,.05,.45,.7,win,.5)}}world.box(x,h+.15,z,w+.16,.25,d+.16,'#869398',.12);
+ // Architectural silhouette: stepped masonry, recessed facade columns and shop-level awnings.
+ const masonry=h<22,accent=masonry?'#ad9472':'#8e9ead';
+ for(const sx of [-1,1]){
+   world.box(x+sx*(w/2+.07),h*.51,z,.14,h*.96,.18,masonry?'#5d6269':'#3b5167');
+   world.box(x+sx*(w*.27),h*.48,z+d/2+.095,.12,h*.91,.11,accent,.10);
+ }
+ world.box(x,h-.20,z+d/2+.12,w+.36,.20,.32,'#a3a0a1',.21);
+ world.box(x,.50,z+d/2+.18,w*.82,.72,.12,'#1e3047');
+ for(const sx of [-1,1])world.box(x+sx*w*.29,.62,z+d/2+.27,w*.17,.91,.08,'#77b4c1',.25);
+ world.box(x,1.68,z+d/2+.42,w*.83,.21,1.12,masonry?'#cb8a59':'#566d87',.12);
+ world.box(x,2.0,z+d/2+.24,w*.54,.43,.10,masonry?'#e6b86b':'#88cce4',.49);
+ if(h>19){world.box(x,h+.54,z,w*.37,.65,d*.3,'#2a3b51');for(const sx of [-1,1])world.rod([x+sx*w*.23,h+.34,z],[x+sx*w*.23,h+1.0,z],.05,'#f2ca83',.38)}
+ }
 const towers=[[-17,-28,9,9,24,'#27354c','#e0b86d'],[19,-24,11,12,40,'#1b2839','#ffc46f'],[-30,-20,10,9,32,'#222c42','#e8bd83'],[33,-22,12,13,47,'#202d41','#f2cd8f'],[-17,-7,9,11,16,'#38363e','#efca89'],[19,-6,11,13,29,'#24344b','#dbb671'],[-31,-38,11,11,29,'#253045','#dcae6d'],[3,-78,15,11,46,'#172331','#f5bd72'],[-21,-76,13,10,34,'#333443','#facb83'],[27,-80,12,11,52,'#243046','#ffd394'],[-39,-74,10,10,27,'#243245','#d6aa69'],[49,-77,14,12,32,'#253047','#f6cf85']];for(let b of towers)tower(...b);
 // PPG-inspired glass castle with eight golden mini spires.
 tower(-34,-52,11,11,37,'#35445c','#bdd2e8',2.15);for(let sx of [-1,1])for(let sz of [-1,1]){let xx=-34+sx*4.5,zz=-52+sz*4.5;world.box(xx,38.3,zz,1.45,3.1,1.45,'#707d8e');world.pyramid(xx,40,zz,2.1,5,2.1,'#d5b478',.35)}
@@ -154,12 +371,25 @@ world.box(18,-.02,-30,16,.13,11,'#2b4b44');world.disc(18,.15,-30,5,'#8e9ba1');wo
 const steps=[[8,15,3.4,3.4,1.15],[11,11,3.5,3.8,2.4],[14,7,3.5,4,3.8],[17,3,7.0,7.2,5.1]];for(let [x,z,w,d,h] of steps){world.box(x,h/2,z,w,h,d,'#515d69');world.box(x,h+.05,z,w+.13,.1,d+.13,'#d2b77e',.48);world.box(x,h/2,z-d/2-.01,w*.58,.75,.08,'#9fc1d8',.28);platforms.push({x,z,w,d,h})}
 // Street-level basketball-style arches and rooftop symbols, original look.
 for(let zz of [-12,34])world.box(-6.9,1.3,zz,1.1,2.5,.7,'#bd7f36',.25);
+// Curated, original street-level art: parked traffic, crosswalks, shop canopy silhouettes and lit rails.
+function vehicle(x,z,color){world.box(x,.63,z,1.85,1.06,3.85,color);world.box(x,1.28,z-.12,1.48,.62,2.15,'#273b54');for(const dx of [-.78,.78])for(const dz of [-1.17,1.17])world.box(x+dx,.32,z+dz,.33,.58,.60,'#101c2b');for(const dx of [-.52,.52]){world.box(x+dx,.85,z-1.93,.31,.24,.06,'#f7da98',1.6);world.box(x+dx,.83,z+1.94,.31,.20,.06,'#e74d65',.55)}}
+for(const v of [[-10.35,21,'#536477'],[10.45,-12,'#824e48'],[-10.35,-28,'#4f7d83'],[10.35,42,'#2f424f']])vehicle(...v);
+for(const z of [9,30])for(let i=-6;i<=6;i++)world.box(i*.87,.01,z,.50,.015,1.35,'#a6acaf',.24);
+for(const x of [-12,12])for(const z of [-26,-2,18,43]){
+ world.box(x,.72,z,.6,1.36,.6,'#424c5d');world.box(x,1.48,z,.66,.14,.64,'#cba66d',.41);
+ for(let side of [-1,1])world.box(x+side*.45,1.4,z,.10,1.6,.12,'#43515c');
+}
+for(const [x,z] of [[-13,13],[-13,35],[13,-32],[13,35]]){
+ world.box(x,.28,z,3.8,.40,.9,'#384e59');for(let k=0;k<5;k++)world.rod([x-1.65+k*.82,.5,z],[x-1.65+k*.82,1.0,z],.05,'#a7beca');
+}
+// Textured golden suspension accents. All assets are original procedural geometry, no third-party models.
+for(let j=0;j<27;j++){const t=j/26,z=-61+t*28;for(const x of [-6.1,6.1]){world.rod([x,2.2,z],[x,3.9+Math.sin(t*Math.PI)*7.0,z],.045,'#f8bf55',.79);if(j%2===0)world.box(x,1.15,z,.31,.18,.32,'#ffc876',1.0)}}
 // bridge mission marker at entrance, always walkable.
 const gate={x:0,z:-35};world.rod([-2.6,.1,-33],[-2.6,5.3,-33],.21,'#f5be5f',.9);world.rod([2.6,.1,-33],[2.6,5.3,-33],.21,'#f5be5f',.9);world.rod([-2.7,5.3,-33],[2.7,5.3,-33],.21,'#f5be5f',.9);
 const starPts=[{x:0,z:15,y:1.5},{x:-4,z:2,y:1.5},{x:4,z:-14,y:1.5},{x:1,z:-29,y:1.5},{x:17,z:3,y:6.7},{x:-3,z:36,y:1.5},{x:11,z:11,y:3.7}];for(const s of starPts)pickups.push({...s,taken:false});
 const sbuf=gl.createBuffer(),dbuf=gl.createBuffer();function upload(buf,a,usage){gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,a,usage)}let worldBuf=new Float32Array(world.v);upload(sbuf,worldBuf,gl.STATIC_DRAW);
 function drawBuffer(buf,n){gl.bindBuffer(gl.ARRAY_BUFFER,buf);for(let [attr,offset,len] of [[loc.p,0,3],[loc.n,12,3],[loc.c,24,3],[loc.e,36,1]]){gl.enableVertexAttribArray(attr);gl.vertexAttribPointer(attr,len,gl.FLOAT,false,40,offset)}gl.drawArrays(gl.TRIANGLES,0,n)}
-const state={started:false,paused:false,finished:false,t:0,stars:0,pos:{x:0,y:0,z:27},vel:0,heading:0,yaw:0,pitch:.22,cam:[0,8,40],keys:new Set(),touch:new Set(),ground:true,sound:false};let audioCtx,loopId;
+const state={started:false,paused:false,finished:false,t:0,stars:0,pos:{x:0,y:0,z:27},vel:0,heading:0,yaw:0,pitch:.22,cam:[0,8,40],keys:new Set(),touch:new Set(),ground:true,sound:false,moveBlend:0,gaitPhase:0};let audioCtx,loopId;
 
 const sky={active:false,hp:100,kills:0,shots:[],enemyShots:[],bursts:[],cooldown:0,invincible:0,combatTick:0,plasmaTimer:1.1,enemies:[
 {x:-1,z:13,y:13,hp:2,phase:.3},{x:8,z:6,y:18,hp:2,phase:1.4},
@@ -167,7 +397,7 @@ const sky={active:false,hp:100,kills:0,shots:[],enemyShots:[],bursts:[],cooldown
 {x:-14,z:-23,y:26,hp:2,phase:4.8},{x:2,z:-34,y:32,hp:3,phase:5.9}].map(e=>({...e,originX:e.x,originZ:e.z,originY:e.y,dead:false}))};
 const skyCl= (v,a,b)=>Math.min(b,Math.max(a,v));
 function skyUI(){document.body.classList.toggle('sky-active',sky.active);el('skyToggle').classList.toggle('on',sky.active);el('skyToggle').textContent=sky.active?'✦ LAND · F':'✦ SKY MODE · F';el('skyMobile').textContent=sky.active?'LAND':'FLY';el('jump2').textContent=sky.active?'RISE':'JUMP';el('mode').textContent=sky.active?'SKY PATROL · DEFEND PITTSBURGH':'FREEROAM · NIGHT DISTRICT';el('missionLabel').textContent=sky.active?'◆ SKY MISSION 02 · BUG INVASION':'◆ MISSION 01 · THE GOLDEN ROUTE';el('skyStatus').textContent=sky.kills===6?'SECURED':sky.active?'DEFEND THE CITY':'STANDBY';el('healthFill').style.width=sky.hp+'%';el('healthText').textContent=sky.hp;el('bugsCount').textContent='BUGS '+sky.kills+' / 6';el('altitude').textContent='ALT '+Math.round(state.pos.y)+' M';if(sky.active){el('objectiveTitle').textContent=sky.kills===6?'SKY PATROL COMPLETE':'Defeat the alien bug swarm';el('objectiveDetail').textContent=sky.kills+' / 6 bugs defeated · fly and blast';}else if(!state.finished){el('objectiveTitle').textContent=state.stars>=5?'Reach the Golden Bridge':'Collect five Steel Stars';el('objectiveDetail').textContent='Explore the city and rooftops'} }
-function toggleFlight(){if(!state.started)return;sky.active=!sky.active;if(sky.active){state.pos.y=Math.max(state.pos.y,10);state.vel=0;state.ground=false;state.pitch=.17;toast('SKY MODE · SPACE RISE · C DESCEND · J BLAST');if(state.note)state.note('boost')}else{state.vel=0;toast('RETURN TO STREET MODE')}skyUI()}
+function toggleFlight(){if(!state.started)return;if(sky.active&&!STEEL_HILL.canTraverseGround(state.pos.x,state.pos.z)){toast('FLY TO THE BRIDGE OR SHORE TO LAND');return;}sky.active=!sky.active;if(sky.active){state.pos.y=Math.max(state.pos.y,10);state.vel=0;state.ground=false;state.pitch=.17;toast('SKY MODE · SPACE RISE · C DESCEND · J BLAST');if(state.note)state.note('boost')}else{state.vel=0;toast('RETURN TO STREET MODE')}skyUI()}
 function shoot(){if(!sky.active){sagaAttackGround();return;}if(sagaAttackQueen())return;if(!state.started||!sky.active||sky.cooldown>0||sky.hp<=0)return;sky.cooldown=.24;const p=state.pos;let live=sky.enemies.filter(e=>!e.dead).map(e=>({e,d:Math.hypot(e.x-p.x,e.y-(p.y+1),e.z-p.z)})).filter(r=>r.d<80).sort((a,b)=>a.d-b.d);let target=live.find(q=>{let e=q.e,dx=e.x-p.x,dz=e.z-p.z;return(-Math.sin(state.yaw)*dx-Math.cos(state.yaw)*dz)/Math.max(.01,Math.hypot(dx,dz))>.30});let e=target?.e;let vx=e?(e.x-p.x)/target.d:-Math.sin(state.yaw),vy=e?(e.y-p.y-1)/target.d:.06,vz=e?(e.z-p.z)/target.d:-Math.cos(state.yaw);sky.shots.push({x:p.x,y:p.y+1.3,z:p.z,vx:vx*64,vy:vy*64,vz:vz*64,life:1.3});if(state.note)state.note('laser')}
 function skyTick(dt){if(sky.cooldown>0)sky.cooldown-=dt;if(sky.invincible>0)sky.invincible-=dt;if(sky.active){let key=k=>state.keys.has(k)||state.touch.has(k);let climb=(key('Space')?1:0)-(key('KeyC')?1:0);state.pos.y=skyCl(state.pos.y+climb*(key('ShiftLeft')?20:12)*dt,3.5,66);sky.combatTick+=dt;}for(const e of sky.enemies){if(e.dead)continue;e.x=e.originX+Math.sin(state.t*.82+e.phase)*2.2;e.y=e.originY+Math.sin(state.t*2.4+e.phase)*1.35;e.z=e.originZ+Math.cos(state.t*.67+e.phase)*1.7;if(sky.active&&sky.invincible<=0&&Math.hypot(e.x-state.pos.x,e.y-state.pos.y-1.3,e.z-state.pos.z)<2.8){sky.hp=Math.max(0,sky.hp-13);sky.invincible=1.1;sky.bursts.push({x:state.pos.x,y:state.pos.y+1,z:state.pos.z,life:.4});if(state.note)state.note('hurt');toast('ARMOR HIT · '+sky.hp+'%');if(sky.hp===0){sky.active=false;state.pos={x:0,y:0,z:27};state.vel=0;sky.hp=100;toast('ARMOR RECOVERED · SKY PATROL RETRY');}}}
 
@@ -182,7 +412,7 @@ const descent=el('descendMobile');descent.addEventListener('pointerdown',e=>{e.p
 
 function startMusic(){if(audioCtx){audioCtx.resume();return}audioCtx=new (window.AudioContext||window.webkitAudioContext)();let ac=audioCtx;function tone(freq,dur,type,vol,delay=0){let osc=ac.createOscillator(),gain=ac.createGain(),t=ac.currentTime+delay;osc.type=type;osc.frequency.setValueAtTime(freq,t);gain.gain.setValueAtTime(0,t);gain.gain.linearRampToValueAtTime(vol,t+.012);gain.gain.exponentialRampToValueAtTime(.0001,t+dur);osc.connect(gain);gain.connect(ac.destination);osc.start(t);osc.stop(t+dur+.03)}const seq=[110,130.81,146.83,174.61,164.81,146.83,130.81,98];let n=0;loopId=setInterval(()=>{if(!state.sound||!state.started||state.paused)return;let f=seq[n%seq.length];tone(f,.36,'triangle',.032);if(n%2===0)tone(f*2,.17,'sine',.019,.10);if(n%4===0)tone(f/2,.46,'sawtooth',.014);n++},330);state.note=(type)=>{if(!state.sound)return;let f=({jump:320,star:900,win:520,laser:1100,impact:270,bug:640,boost:180,hurt:100})[type]||180;tone(f,type==='win'?.7:type==='laser'?.09:.18,type==='jump'?'triangle':'sine',.055);if(type==='star'||type==='win')tone(f*1.5,.26,'sine',.045,.08)}}
 function soundToggle(on){state.sound=on;if(on)startMusic();el('audio').textContent=on?'♫ SOUND ON':'♫ SOUND OFF';el('audio').classList.toggle('on',on)}
-function begin(sound){state.started=true;state.paused=false;el('titlecover').classList.add('hidden');soundToggle(sound);toast('WELCOME TO PITTSBURGH · EXPLORE ANYWHERE')}
+function begin(sound){state.started=true;state.paused=false;el('titlecover').classList.add('hidden');soundToggle(sound)}
 el('play').onclick=()=>begin(true);el('playMuted').onclick=()=>begin(false);el('audio').onclick=()=>soundToggle(!state.sound);el('camReset').onclick=()=>{state.yaw=0;state.pitch=.22;toast('CAMERA RESET')};el('restart').onclick=()=>{state.pos={x:0,y:0,z:27};state.vel=0;state.stars=0;state.finished=false;pickups.forEach(p=>p.taken=false);resetSky();el('objectiveTitle').textContent='Collect five Steel Stars';el('objectiveDetail').textContent='Explore the city and rooftops';toast('NEW RUN · FREE ROAM')};
 
 const sagaStages=[
@@ -229,6 +459,8 @@ function sagaDraw3D(mesh){
  for(const sign of [-.19,.19])mesh.box(n.x+sign,.46,n.z,.2,.84,.3,'#27354a');
  if((sagaStage===0&&n.name==='Mara')||(sagaStage===2&&n.name===(sagaBeacon?'Lou':'Nia'))||(sagaStage===6&&n.name==='River'))mesh.rod([n.x,2.8,n.z],[n.x,3.56+Math.sin(t*3)*.10,n.z],.1,'#f1d27b',1.4);
  }
+  // Original commuters animate independently; storyline NPC coordinates remain fixed.
+  for(let i=0;i<6;i++){const speed=.7+i*.09,lap=(state.t*speed+i*12.7)%61,z=48-lap,x=(i%2?-1:1)*(10.9+(i%3)*.46),step=Math.sin(state.t*(6+i*.32));const coat=['#536d83','#865c74','#44736a','#826c55','#6b658d','#54818a'][i];mesh.box(x,1.22+Math.abs(step)*.035,z,.48,1.05,.35,coat);mesh.ellipsoid(x,1.98+Math.abs(step)*.035,z,.26,.28,.26,['#c68c65','#986444','#e1b189'][i%3],0,8,4);for(const side of [-1,1]){mesh.box(x+side*.16,.43+side*.10*step,z+side*.18*step,.14,.70,.19,'#1a2735');mesh.box(x+side*.36,1.26-side*.14*step,z-side*.18*step,.12,.65,.16,coat)}}
  // Local shopfront cues, unaffiliated with the real businesses they reference.
  for(const shop of [{x:-7,z:5,color:'#e5ba65'},{x:8,z:-15,color:'#77c0ae'},{x:-9,z:-15,color:'#d9a177'}]){
  mesh.box(shop.x,2.5,shop.z,5.5,2.8,.5,'#46454f');mesh.box(shop.x,3.25,shop.z+.30,5.1,.57,.12,shop.color,.62);mesh.box(shop.x,1.8,shop.z+.31,1.6,1.8,.13,'#47849a',.15);}
@@ -254,11 +486,13 @@ let grabbing=false,lx=0,ly=0,clickX=0,clickY=0;canvas.addEventListener('pointerd
 function interact(){if(sagaInteract())return;let d=Math.hypot(state.pos.x-gate.x,state.pos.z-gate.z);if(d<7){if(state.stars>=5)finish();else toast('COLLECT '+(5-state.stars)+' MORE STEEL STARS')}else toast('EXPLORE · COLLECT STARS · FIND GOLD BRIDGE')}
 function finish(){if(state.finished)return;state.finished=true;el('objectiveTitle').textContent='MISSION COMPLETE';el('objectiveDetail').textContent='You conquered the Golden Route';toast('✦ STEEL CITY LEGEND · MISSION COMPLETE');if(state.note)state.note('win')}
 function yGround(x,z){let top=0;for(let p of platforms){if(Math.abs(x-p.x)<p.w/2+.3&&Math.abs(z-p.z)<p.d/2+.3&&p.h<=state.pos.y+.4)top=Math.max(top,p.h)}return top}
-function obstacle(x,z,y){for(let b of buildings){if(y<b.h-.6&&Math.abs(x-b.x)<b.w/2+.50&&Math.abs(z-b.z)<b.d/2+.50)return true}return false}
-function tick(dt){state.t+=dt;if(!state.started||state.paused)return;let K=k=>state.keys.has(k)||state.touch.has(k);let forward=(K('KeyW')||K('ArrowUp')?1:0)-(K('KeyS')||K('ArrowDown')?1:0),side=(K('KeyD')||K('ArrowRight')?1:0)-(K('KeyA')||K('ArrowLeft')?1:0);let mag=Math.hypot(forward,side);if(mag){forward/=mag;side/=mag}let speed=(K('ShiftLeft')||K('ShiftRight')?12:7)*dt,dx=(-Math.sin(state.yaw)*forward+Math.cos(state.yaw)*side)*speed,dz=(-Math.cos(state.yaw)*forward-Math.sin(state.yaw)*side)*speed;const joy=window.__steelJoystick;if(joy?.active&&Math.hypot(joy.x,joy.y)>.11){forward=-joy.y;side=joy.x;mag=Math.hypot(forward,side);dx=(-Math.sin(joy.baseYaw)*forward+Math.cos(joy.baseYaw)*side)*speed;dz=(-Math.cos(joy.baseYaw)*forward-Math.sin(joy.baseYaw)*side)*speed;const target=Math.atan2(dx,-dz),shortest=Math.atan2(Math.sin(target-state.yaw),Math.cos(target-state.yaw));state.yaw+=shortest*Math.min(1,dt*7);}let nx=clamp(state.pos.x+dx,-73,73),nz=clamp(state.pos.z+dz,-63,51);if(sky.active||!obstacle(nx,state.pos.z,state.pos.y))state.pos.x=nx;if(sky.active||!obstacle(state.pos.x,nz,state.pos.y))state.pos.z=nz;if(mag)state.heading=Math.atan2(dx,-dz);if(sky.active){state.vel=0;skyTick(dt)}else state.vel-=19.8*dt;let prevY=state.pos.y;state.pos.y+=state.vel*dt;const floor=yGround(state.pos.x,state.pos.z);if(!sky.active&&state.pos.y<=floor&&state.vel<=0){state.pos.y=floor;state.vel=0;state.ground=true}else state.ground=false;if(!sky.active&&state.pos.y<-4){state.pos={x:0,y:0,z:27};state.vel=0;toast('RETURNED TO DOWNTOWN')}
+function obstacle(x,z,y){for(let b of buildings){if(y<b.h-.6+(b.baseY||0)&&(b.kind==='hillside-home'||b.baseY===undefined||y+2.2>b.baseY)&&Math.abs(x-b.x)<b.w/2+.50&&Math.abs(z-b.z)<b.d/2+.50)return true}return false}
+function tick(dt){state.t+=dt;if(!state.started||state.paused)return;const prevX=state.pos.x,prevZ=state.pos.z;let K=k=>state.keys.has(k)||state.touch.has(k);let forward=(K('KeyW')||K('ArrowUp')?1:0)-(K('KeyS')||K('ArrowDown')?1:0),side=(K('KeyD')||K('ArrowRight')?1:0)-(K('KeyA')||K('ArrowLeft')?1:0);let mag=Math.hypot(forward,side);if(mag){forward/=mag;side/=mag}let speed=(K('ShiftLeft')||K('ShiftRight')?12:7)*dt,dx=(-Math.sin(state.yaw)*forward+Math.cos(state.yaw)*side)*speed,dz=(-Math.cos(state.yaw)*forward-Math.sin(state.yaw)*side)*speed;const joy=window.__steelJoystick;if(joy?.active&&Math.hypot(joy.x,joy.y)>.11){forward=-joy.y;side=joy.x;mag=Math.hypot(forward,side);dx=(-Math.sin(joy.baseYaw)*forward+Math.cos(joy.baseYaw)*side)*speed;dz=(-Math.cos(joy.baseYaw)*forward-Math.sin(joy.baseYaw)*side)*speed;const target=Math.atan2(dx,-dz),shortest=Math.atan2(Math.sin(target-state.yaw),Math.cos(target-state.yaw));state.yaw+=shortest*Math.min(1,dt*7);}let nx=clamp(state.pos.x+dx,-73,73),nz=clamp(state.pos.z+dz,STEEL_HILL.ACCESS.groundMinZ,STEEL_HILL.ACCESS.groundMaxZ);
+ if(sky.active||(!obstacle(nx,state.pos.z,state.pos.y)&&STEEL_HILL.canTraverseGround(nx,state.pos.z)))state.pos.x=nx;
+ if(sky.active||(!obstacle(state.pos.x,nz,state.pos.y)&&STEEL_HILL.canTraverseGround(state.pos.x,nz)))state.pos.z=nz;if(mag)state.heading=Math.atan2(dx,-dz);const traveled=Math.hypot(state.pos.x-prevX,state.pos.z-prevZ);const moveGoal=sky.active?0:Math.min(1,traveled/Math.max(.001,7*dt));state.moveBlend+=(moveGoal-state.moveBlend)*Math.min(1,dt*12);if(traveled>.0001&&!sky.active)state.gaitPhase+=traveled*1.9;if(sky.active){state.vel=0;skyTick(dt)}else state.vel-=19.8*dt;let prevY=state.pos.y;state.pos.y+=state.vel*dt;const floor=yGround(state.pos.x,state.pos.z);if(!sky.active&&state.pos.y<=floor&&state.vel<=0){state.pos.y=floor;state.vel=0;state.ground=true}else state.ground=false;if(!sky.active&&state.pos.y<-4){state.pos={x:0,y:0,z:27};state.vel=0;toast('RETURNED TO DOWNTOWN')}
 if(!sky.active)skyTick(dt);sagaTick(dt);for(let p of pickups){if(p.taken)continue;let d=Math.hypot(state.pos.x-p.x,state.pos.z-p.z),h=Math.abs(state.pos.y+1.4-p.y);if(d<1.75&&h<2.1){p.taken=true;state.stars++;if(state.note)state.note('star');toast('✦ STEEL STAR COLLECTED · '+state.stars+' / 5');if(state.stars===5){el('objectiveTitle').textContent='Reach the Golden Bridge';el('objectiveDetail').textContent='Return to bridge entrance · press E'}}}
-if(Math.hypot(state.pos.x-gate.x,state.pos.z-gate.z)<3.6&&state.stars>=5)finish();el('count').textContent=state.stars+'/5';if(state.pos.z<-23)el('place').textContent='GOLDEN BRIDGE · THE THREE RIVERS';else if(state.pos.x>7&&state.pos.z<0)el('place').textContent='POINT STATE PARK · RIVERFRONT';else if(state.pos.x>7)el('place').textContent='ROOFTOP PARKOUR · MARKET DISTRICT';else el('place').textContent='DOWNTOWN · GOLDEN TRIANGLE';el('compass').textContent=(Math.round(((state.yaw%(Math.PI*2)+Math.PI*2)%(Math.PI*2))*180/Math.PI))+'°  ◇  '+(sky.active?'SKY PATROL':'FREE EXPLORE');}
-function renderHero(m){const p=state.pos,walk=(state.keys.size+state.touch.size)>0?Math.sin(state.t*12)*.28:0,base=p.y+.04;let ang=state.heading,cs=Math.cos(ang),sn=Math.sin(ang);function transform(a){return[p.x+a[0]*cs+a[2]*sn,base+a[1],p.z-a[0]*sn+a[2]*cs]}function box(lx,ly,lz,w,h,d,col,gl=0){const B=new Mesh();B.box(lx,ly,lz,w,h,d,col,gl);for(let i=0;i<B.v.length;i+=10){let o=transform([B.v[i],B.v[i+1],B.v[i+2]]),n=[B.v[i+3]*cs+B.v[i+5]*sn,B.v[i+4],-B.v[i+3]*sn+B.v[i+5]*cs];m.v.push(...o,...n,...B.v.slice(i+6,i+10))}}
+if(Math.hypot(state.pos.x-gate.x,state.pos.z-gate.z)<3.6&&state.stars>=5)finish();el('count').textContent=state.stars+'/5';if(state.pos.z<-63)el('place').textContent='MOUNT WASHINGTON · HILLSIDE HOMES';else if(state.pos.z<-23)el('place').textContent='GOLDEN BRIDGE · THE THREE RIVERS';else if(state.pos.x>7&&state.pos.z<0)el('place').textContent='POINT STATE PARK · RIVERFRONT';else if(state.pos.x>7)el('place').textContent='ROOFTOP PARKOUR · MARKET DISTRICT';else el('place').textContent='DOWNTOWN · GOLDEN TRIANGLE';el('compass').textContent=(Math.round(((state.yaw%(Math.PI*2)+Math.PI*2)%(Math.PI*2))*180/Math.PI))+'°  ◇  '+(sky.active?'SKY PATROL':'FREE EXPLORE');}
+function renderHero(m){const p=state.pos,walk=Math.sin(state.gaitPhase)*state.moveBlend,base=p.y+.04+(sky.active?.06*Math.sin(state.t*5):.045*Math.abs(walk));let ang=state.heading,cs=Math.cos(ang),sn=Math.sin(ang);function transform(a){return[p.x+a[0]*cs+a[2]*sn,base+a[1],p.z-a[0]*sn+a[2]*cs]}function box(lx,ly,lz,w,h,d,col,gl=0){const B=new Mesh();B.box(lx,ly,lz,w,h,d,col,gl);for(let i=0;i<B.v.length;i+=10){let o=transform([B.v[i],B.v[i+1],B.v[i+2]]),n=[B.v[i+3]*cs+B.v[i+5]*sn,B.v[i+4],-B.v[i+3]*sn+B.v[i+5]*cs];m.v.push(...o,...n,...B.v.slice(i+6,i+10))}}
 // Original armored explorer with metallic shoulder guards, visor and animated legs.
 box(0,1.55,.06,.85,1.05,.49,'#141d2c');box(0,1.67,-.22,.67,.53,.09,'#bb923f',.48);box(0,1.62,-.29,.3,.20,.06,'#ffd982',.7);box(0,2.33,-.01,.53,.55,.55,'#161f2d');box(0,2.37,-.30,.45,.16,.06,'#a7e9ff',.93);box(0,2.54,-.07,.57,.13,.55,'#b59b61');box(-.59,1.89,.02,.42,.43,.53,'#6c7275');box(.59,1.89,.02,.42,.43,.53,'#6c7275');box(-.58,1.39+.14*walk,.08,.25,.65,.26,'#1b2635');box(.58,1.39-.14*walk,.08,.25,.65,.26,'#1b2635');box(-.23,.67+.15*walk,.07,.33,.8,.40,'#273343');box(.23,.67-.15*walk,.07,.33,.8,.40,'#273343');box(-.23,.21+.15*walk,-.12,.37,.24,.64,'#0b111d');box(.23,.21-.15*walk,-.12,.37,.24,.64,'#0b111d');box(0,1.76,.35,.89,1,.12,'#1b2337');box(0,1.79,.43,.48,.83,.09,'#af833a',.21);
 // STEEL CITY VISUAL RUNTIME: real 3D black-and-gold armor, based on the approved cinematic reference.
@@ -284,7 +518,32 @@ if(sky.active){
  }
 }
 }
-function renderDynamic(){dynamic.v.length=0;renderHero(dynamic);sagaDraw3D(dynamic);for(let s of pickups){if(s.taken)continue;let a=state.t*1.7,y=s.y+Math.sin(state.t*3+s.x)*.20;for(let k=0;k<8;k++){let p=k/8*6.283,q=(k+1)/8*6.283;dynamic.rod([s.x+Math.cos(p)*.50,y+Math.sin(p)*.50,s.z],[s.x+Math.cos(q)*.50,y+Math.sin(q)*.50,s.z],.11,'#ffce6f',1.3)}dynamic.pyramid(s.x,y-.23,s.z,.44,.59,.44,'#ffe3a0',.83)}if(state.stars>=5&&!state.finished){let y=5.2+Math.sin(state.t*2)*.6;dynamic.rod([0,y-1.2,-33],[0,y+1.2,-33],.20,'#ffe9ab',1.9)}
+// Rounded armor is built as real directional-lit geometry, not a pasted character illustration.
+function renderArmorFinish(m){
+ const ang=state.heading,cs=Math.cos(ang),sn=Math.sin(ang),p=state.pos;
+ function append(B){for(let i=0;i<B.v.length;i+=10){const lx=B.v[i],ly=B.v[i+1],lz=B.v[i+2],nx=B.v[i+3],ny=B.v[i+4],nz=B.v[i+5];m.v.push(p.x+lx*cs+lz*sn,p.y+ly,p.z-lx*sn+lz*cs,nx*cs+nz*sn,ny,-nx*sn+nz*cs,...B.v.slice(i+6,i+10))}}
+ function shell(x,y,z,rx,ry,rz,col,glow=0){const B=new Mesh();B.ellipsoid(x,y,z,rx,ry,rz,col,glow,12,6);append(B)}
+ function fabric(a,b,c,d,col){const B=new Mesh();B.quad(a,b,c,d,col,.04);append(B)}
+ // Sculptural shoulders, curved helmet and layered metal sternum.
+ shell(0,2.37,.01,.31,.32,.30,'#28374b');
+ shell(0,2.37,-.292,.29,.11,.070,'#a6ecf7',1.1);
+ shell(0,2.65,0,.28,.07,.30,'#d3a55e',.23);
+ shell(0,1.57,-.05,.46,.54,.265,'#253448');
+ shell(0,1.68,-.271,.36,.37,.105,'#ba944e',.35);
+ shell(0,1.66,-.378,.15,.11,.06,'#e7cf87',.95);
+ for(const side of [-1,1]){
+  shell(side*.61,1.98,.01,.33,.24,.32,'#9da7a9',.12);
+  shell(side*.63,1.42,.08,.17,.42,.19,'#30445b');
+  const leg=sky.active?0:Math.sin(state.gaitPhase)*state.moveBlend*side;
+  shell(side*.22,.79+leg*.11,.03+leg*.14,.22,.41,.25,'#354b66');
+  shell(side*.23,.32+leg*.15,-.12+leg*.15,.23,.18,.30,'#9a773d',.22);
+ }
+ // Segmented back cape follows the character and billows slightly with movement.
+ const flutter=Math.sin(state.t*(sky.active?6.7:3.8))*(sky.active?.25:.11+.15*state.moveBlend);
+ fabric([-.39,2.02,.34],[.39,2.02,.34],[.60,1.17,.88+flutter],[-.60,1.17,.88+flutter],'#252d45');
+ fabric([-.60,1.17,.88+flutter],[.60,1.17,.88+flutter],[.80,.22,1.43+flutter*2],[-.80,.22,1.43+flutter*2],'#141c31');
+}
+function renderDynamic(){dynamic.v.length=0;renderHero(dynamic);renderArmorFinish(dynamic);sagaDraw3D(dynamic);for(let s of pickups){if(s.taken)continue;let a=state.t*1.7,y=s.y+Math.sin(state.t*3+s.x)*.20;for(let k=0;k<8;k++){let p=k/8*6.283,q=(k+1)/8*6.283;dynamic.rod([s.x+Math.cos(p)*.50,y+Math.sin(p)*.50,s.z],[s.x+Math.cos(q)*.50,y+Math.sin(q)*.50,s.z],.11,'#ffce6f',1.3)}dynamic.pyramid(s.x,y-.23,s.z,.44,.59,.44,'#ffe3a0',.83)}if(state.stars>=5&&!state.finished){let y=5.2+Math.sin(state.t*2)*.6;dynamic.rod([0,y-1.2,-33],[0,y+1.2,-33],.20,'#ffe9ab',1.9)}
 if(sky.active){dynamic.box(state.pos.x,state.pos.y+.75,state.pos.z+.8,.44,1.5,.22,'#33dff1',1.6);dynamic.pyramid(state.pos.x,state.pos.y+.15,state.pos.z+1.0,.54,-1.8,.52,'#46d9ff',1.8)}
 for(let e of sky.enemies){if(e.dead)continue;let flap=Math.sin(state.t*15+e.phase)*.9;dynamic.box(e.x,e.y,e.z,2.45,1.5,1.75,'#4d336f',.2);dynamic.box(e.x,e.y+.18,e.z-.86,1.4,.70,.32,'#aa63d6',.53);for(let xx of [-.7,.7]){dynamic.box(e.x+xx,e.y+.22,e.z-1.06,.37,.25,.12,'#80f5ff',1.6);for(let j=0;j<3;j++){dynamic.rod([e.x+xx*1.4,e.y+.3,e.z+(j-1)*.48],[e.x+xx*1.95,e.y-1.15,e.z+(j-1)*.57],.12,'#9a8cce',.2)}}for(let sign of [-1,1]){dynamic.pyramid(e.x+sign*1.35,e.y+.3+flap*.1,e.z,1.1,.75+Math.abs(flap),1.1,'#7043af',.40)}}
 for(let s of sky.enemyShots){dynamic.box(s.x,s.y,s.z,.56,.56,.56,'#ee69ff',2.1)}for(let s of sky.shots){dynamic.rod([s.x,s.y,s.z],[s.x-s.vx*.038,s.y-s.vy*.038,s.z-s.vz*.038],.22,'#6cefff',2.2)}for(let b of sky.bursts){let rr=(.45-b.life)*5;for(let j=0;j<6;j++){let a=j*Math.PI/3;dynamic.rod([b.x,b.y,b.z],[b.x+Math.cos(a)*rr,b.y+Math.sin(a)*rr,b.z],.13,'#ffd889',2.0)}}
@@ -292,14 +551,19 @@ let f=new Float32Array(dynamic.v);upload(dbuf,f,gl.DYNAMIC_DRAW);}
 function perspective(fov,aspect,n,far){let v=1/Math.tan(fov/2),nf=1/(n-far);return new Float32Array([v/aspect,0,0,0,0,v,0,0,0,0,(far+n)*nf,-1,0,0,2*far*n*nf,0])}
 function look(eye,at){const z=unit(sub(eye,at)),x=unit(cross([0,1,0],z)),y=cross(z,x);return new Float32Array([x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-(x[0]*eye[0]+x[1]*eye[1]+x[2]*eye[2]),-(y[0]*eye[0]+y[1]*eye[1]+y[2]*eye[2]),-(z[0]*eye[0]+z[1]*eye[1]+z[2]*eye[2]),1])}
 function resize(){let d=Math.min(1.35,window.devicePixelRatio||1),w=Math.floor(innerWidth*d),h=Math.floor(innerHeight*d);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h)}}
-function map(){const cc=el('map').getContext('2d'),w=300;cc.clearRect(0,0,w,w);cc.fillStyle='#0d1d30';cc.fillRect(0,0,w,w);const X=x=>150+x*1.72,Z=z=>159+z*1.72;cc.fillStyle='#0b3a4e';cc.fillRect(0,Z(-63),w,Z(-36)-Z(-63));cc.fillStyle='#5e5037';cc.fillRect(X(-7),0,14*1.72,w);for(let z of [-17,2,26])cc.fillRect(0,Z(z)-5,w,10);cc.strokeStyle='#edbc54';cc.lineWidth=5;cc.beginPath();cc.moveTo(X(0),Z(-63));cc.lineTo(X(0),Z(-34));cc.stroke();for(let b of buildings){cc.fillStyle='#324357';cc.fillRect(X(b.x-b.w/2),Z(b.z-b.d/2),b.w*1.72,b.d*1.72)}for(let s of pickups)if(!s.taken){cc.fillStyle='#ffe08d';cc.beginPath();cc.arc(X(s.x),Z(s.z),3.6,0,6.283);cc.fill()}cc.fillStyle='#8cf7e5';cc.beginPath();cc.arc(X(state.pos.x),Z(state.pos.z),5.5,0,6.283);cc.fill();cc.strokeStyle='#8cf7e5';cc.lineWidth=2.1;cc.beginPath();cc.moveTo(X(state.pos.x),Z(state.pos.z));cc.lineTo(X(state.pos.x)-Math.sin(state.yaw)*15,Z(state.pos.z)-Math.cos(state.yaw)*15);cc.stroke()}
-let prev=0;function loop(ts){let dt=Math.min(.05,(ts-prev)/1000||0);prev=ts;resize();tick(dt);let p=state.pos,ey=[p.x+Math.sin(state.yaw)*11,p.y+(sky.active?7.2:3.7)+state.pitch*4,p.z+Math.cos(state.yaw)*11];for(let i=0;i<3;i++)state.cam[i]+=(ey[i]-state.cam[i])*.14;gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.026,.038,.080,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(loc.proj,false,perspective(Math.PI*.37,canvas.width/canvas.height,.1,220));gl.uniformMatrix4fv(loc.view,false,look(state.cam,[p.x,p.y+1.4,p.z]));gl.uniform3fv(loc.cam,new Float32Array(state.cam));gl.uniform1f(loc.time,state.t);drawBuffer(sbuf,worldBuf.length/10);renderDynamic();drawBuffer(dbuf,dynamic.v.length/10);map();requestAnimationFrame(loop)}resize();state.cam=[0,10,40];requestAnimationFrame(loop);
-window.__steelCityDebug=()=>({campaignStage:sagaStage,campaignComplete:sagaCompleted,campaignBeacon:sagaBeacon,campaignCrewAlive:sagaFoes.filter(x=>x.hp>0).length,campaignJackalHp:sagaJackal.hp,campaignQueenHp:sagaQueen.hp,started:state.started,x:+state.pos.x.toFixed(2),y:+state.pos.y.toFixed(2),z:+state.pos.z.toFixed(2),stars:state.stars,total:pickups.length,worldTriangles:worldBuf.length/30,webgl:true,freeRoam:true,sound:state.sound,finished:state.finished,cameraYaw:state.yaw,joystickX:+(window.__steelJoystick?.x||0).toFixed(3),joystickY:+(window.__steelJoystick?.y||0).toFixed(3),skyMode:sky.active,health:sky.hp,bugsDefeated:sky.kills,bugsAlive:sky.enemies.filter(e=>!e.dead).length,shots:sky.shots.length,enemyShots:sky.enemyShots.length});
+function map(){const cc=el('map').getContext('2d'),w=300;cc.clearRect(0,0,w,w);cc.fillStyle='#0d1d30';cc.fillRect(0,0,w,w);const X=x=>150+x*1.72,Z=z=>159+z*1.72;cc.fillStyle='#0b3a4e';cc.fillRect(0,Z(-63),w,Z(-36)-Z(-63));cc.fillStyle='#5e5037';cc.fillRect(X(-7),0,14*1.72,w);for(let z of [-17,2,26])cc.fillRect(0,Z(z)-5,w,10);cc.strokeStyle='#edbc54';cc.lineWidth=5;cc.beginPath();cc.moveTo(X(0),Z(-63));cc.lineTo(X(0),Z(-34));cc.stroke();for(let b of buildings){cc.fillStyle=b.kind==='hillside-home'?'#c99f6b':'#324357';cc.fillRect(X(b.x-b.w/2),Z(b.z-b.d/2),b.w*1.72,b.d*1.72)}for(let s of pickups)if(!s.taken){cc.fillStyle='#ffe08d';cc.beginPath();cc.arc(X(s.x),Z(s.z),3.6,0,6.283);cc.fill()}cc.fillStyle='#8cf7e5';cc.beginPath();cc.arc(X(state.pos.x),Z(state.pos.z),5.5,0,6.283);cc.fill();cc.strokeStyle='#8cf7e5';cc.lineWidth=2.1;cc.beginPath();cc.moveTo(X(state.pos.x),Z(state.pos.z));cc.lineTo(X(state.pos.x)-Math.sin(state.yaw)*15,Z(state.pos.z)-Math.cos(state.yaw)*15);cc.stroke()}
+let prev=0;function loop(ts){let dt=Math.min(.05,(ts-prev)/1000||0);prev=ts;resize();tick(dt);let p=state.pos,ey=[p.x+Math.sin(state.yaw)*11,p.y+(sky.active?7.2:3.7)+state.pitch*4,p.z+Math.cos(state.yaw)*11];for(let i=0;i<3;i++)state.cam[i]+=(ey[i]-state.cam[i])*.14;gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.026,.038,.080,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(loc.proj,false,perspective(Math.PI*.37,canvas.width/canvas.height,.1,220));gl.uniformMatrix4fv(loc.view,false,look(state.cam,[p.x,p.y+1.4,p.z]));gl.uniform3fv(loc.cam,new Float32Array(state.cam));gl.uniform1f(loc.time,state.t);gl.uniform1f(loc.staticScene,1);drawBuffer(sbuf,worldBuf.length/10);renderDynamic();gl.uniform1f(loc.staticScene,0);drawBuffer(dbuf,dynamic.v.length/10);map();requestAnimationFrame(loop)}resize();state.cam=[0,10,40];requestAnimationFrame(loop);
+window.__steelCityDebug=()=>({graphicsRevision:'cinematic-geometry-v3',lightingRevision:'rain-slick-neon-v2',materialRevision:'masonry-glass-puddles-v1',neighborhoodDetail:'mount-washington-homes-v2',bridgeDetail:STEEL_BRIDGE.revision,bridgeTrussSegments,bridgeFinishRevision:STEEL_BRIDGE.finish.revision,bridgeFinishPieces,bridgeLightingRevision:BRIDGE_LIGHT.revision,bridgePortalMasonry,hillsideWalkMinZ:STEEL_HILL.ACCESS.groundMinZ,hillsideHomeCount:hillsideHomes.length,hillsideSolidCount:buildings.filter(b=>b.kind==='hillside-home').length,hillsideHomeFootprints:buildings.filter(b=>b.kind==='hillside-home').map(b=>({x:b.x,z:b.z,w:b.w,d:b.d,h:b.h,baseY:b.baseY})),campaignStage:sagaStage,campaignComplete:sagaCompleted,campaignBeacon:sagaBeacon,campaignCrewAlive:sagaFoes.filter(x=>x.hp>0).length,campaignJackalHp:sagaJackal.hp,campaignQueenHp:sagaQueen.hp,started:state.started,x:+state.pos.x.toFixed(2),y:+state.pos.y.toFixed(2),z:+state.pos.z.toFixed(2),stars:state.stars,total:pickups.length,worldTriangles:worldBuf.length/30,webgl:true,freeRoam:true,motionBlend:+state.moveBlend.toFixed(3),gaitPhase:+state.gaitPhase.toFixed(3),sound:state.sound,finished:state.finished,cameraYaw:state.yaw,joystickX:+(window.__steelJoystick?.x||0).toFixed(3),joystickY:+(window.__steelJoystick?.y||0).toFixed(3),skyMode:sky.active,health:sky.hp,bugsDefeated:sky.kills,bugsAlive:sky.enemies.filter(e=>!e.dead).length,shots:sky.shots.length,enemyShots:sky.enemyShots.length});
 })();
 </script><script>// Portable perspective renderer: used only when WebGL is disabled by device or policy.
 (()=>{
 if(window.__steelCityDebug)return;
 const $=id=>document.getElementById(id),cv=$('game'),g=cv.getContext('2d');if(!g)return;$('error').classList.remove('show');
+const STEEL_BRIDGE=window.__steelBridgeContract;
+const BRIDGE_LIGHT=STEEL_BRIDGE.lighting;
+let bridgeTrussSegments=STEEL_BRIDGE.panels.length*STEEL_BRIDGE.sides.length*3;
+let bridgePortalMasonry=0;
+let bridgeFinishPieces=0;
 const state={started:false,x:0,z:27,y:0,vy:0,yaw:0,pitch:.22,stars:0,sound:false,t:0,finished:false},keys=new Set(),touch=new Set();let last=0,ctx,interval;
 
 const sky={active:false,hp:100,kills:0,shots:[],enemyShots:[],bursts:[],cooldown:0,invincible:0,combatTick:0,plasmaTimer:1.1,enemies:[
@@ -308,7 +572,7 @@ const sky={active:false,hp:100,kills:0,shots:[],enemyShots:[],bursts:[],cooldown
 {x:-14,z:-23,y:26,hp:2,phase:4.8},{x:2,z:-34,y:32,hp:3,phase:5.9}].map(e=>({...e,originX:e.x,originZ:e.z,originY:e.y,dead:false}))};
 const skyCl= (v,a,b)=>Math.min(b,Math.max(a,v));
 function skyUI(){document.body.classList.toggle('sky-active',sky.active);$('skyToggle').classList.toggle('on',sky.active);$('skyToggle').textContent=sky.active?'✦ LAND · F':'✦ SKY MODE · F';$('skyMobile').textContent=sky.active?'LAND':'FLY';$('jump2').textContent=sky.active?'RISE':'JUMP';$('mode').textContent=sky.active?'SKY PATROL · DEFEND PITTSBURGH':'FREEROAM · NIGHT DISTRICT';$('missionLabel').textContent=sky.active?'◆ SKY MISSION 02 · BUG INVASION':'◆ MISSION 01 · THE GOLDEN ROUTE';$('skyStatus').textContent=sky.kills===6?'SECURED':sky.active?'DEFEND THE CITY':'STANDBY';$('healthFill').style.width=sky.hp+'%';$('healthText').textContent=sky.hp;$('bugsCount').textContent='BUGS '+sky.kills+' / 6';$('altitude').textContent='ALT '+Math.round(state.y)+' M';if(sky.active){$('objectiveTitle').textContent=sky.kills===6?'SKY PATROL COMPLETE':'Defeat the alien bug swarm';$('objectiveDetail').textContent=sky.kills+' / 6 bugs defeated · fly and blast';}else if(!state.finished){$('objectiveTitle').textContent=state.stars>=5?'Reach the Golden Bridge':'Collect five Steel Stars';$('objectiveDetail').textContent='Explore the city and rooftops'} }
-function toggleFlight(){if(!state.started)return;sky.active=!sky.active;if(sky.active){state.y=Math.max(state.y,10);state.vy=0;state.pitch=.17;toast('SKY MODE · SPACE RISE · C DESCEND · J BLAST');note(220)}else{state.vy=0;toast('RETURN TO STREET MODE')}skyUI()}
+function toggleFlight(){if(!state.started)return;if(sky.active&&!STEEL_HILL.canTraverseGround(state.x,state.z)){toast('FLY TO THE BRIDGE OR SHORE TO LAND');return;}sky.active=!sky.active;if(sky.active){state.y=Math.max(state.y,10);state.vy=0;state.pitch=.17;toast('SKY MODE · SPACE RISE · C DESCEND · J BLAST');note(220)}else{state.vy=0;toast('RETURN TO STREET MODE')}skyUI()}
 function shoot(){if(!sky.active){sagaAttackGround();return;}if(sagaAttackQueen())return;if(!state.started||!sky.active||sky.cooldown>0||sky.hp<=0)return;sky.cooldown=.24;const p={x:state.x,y:state.y,z:state.z};let live=sky.enemies.filter(e=>!e.dead).map(e=>({e,d:Math.hypot(e.x-p.x,e.y-(p.y+1),e.z-p.z)})).filter(r=>r.d<80).sort((a,b)=>a.d-b.d);let target=live.find(q=>{let e=q.e,dx=e.x-p.x,dz=e.z-p.z;return(-Math.sin(state.yaw)*dx-Math.cos(state.yaw)*dz)/Math.max(.01,Math.hypot(dx,dz))>.30});let e=target?.e;let vx=e?(e.x-p.x)/target.d:-Math.sin(state.yaw),vy=e?(e.y-p.y-1)/target.d:.06,vz=e?(e.z-p.z)/target.d:-Math.cos(state.yaw);sky.shots.push({x:p.x,y:p.y+1.3,z:p.z,vx:vx*64,vy:vy*64,vz:vz*64,life:1.3});note(1100)}
 function skyTick(dt){if(sky.cooldown>0)sky.cooldown-=dt;if(sky.invincible>0)sky.invincible-=dt;if(sky.active){let key=k=>keys.has(k)||touch.has(k);let climb=(key('Space')?1:0)-(key('KeyC')?1:0);state.y=skyCl(state.y+climb*(key('ShiftLeft')?20:12)*dt,3.5,66);sky.combatTick+=dt;}for(const e of sky.enemies){if(e.dead)continue;e.x=e.originX+Math.sin(state.t*.82+e.phase)*2.2;e.y=e.originY+Math.sin(state.t*2.4+e.phase)*1.35;e.z=e.originZ+Math.cos(state.t*.67+e.phase)*1.7;if(sky.active&&sky.invincible<=0&&Math.hypot(e.x-state.x,e.y-state.y-1.3,e.z-state.z)<2.8){sky.hp=Math.max(0,sky.hp-13);sky.invincible=1.1;sky.bursts.push({x:state.x,y:state.y+1,z:state.z,life:.4});note(130);toast('ARMOR HIT · '+sky.hp+'%');if(sky.hp===0){sky.active=false;state.x=0;state.y=0;state.z=27;state.vy=0;sky.hp=100;toast('ARMOR RECOVERED · SKY PATROL RETRY');}}}
 
@@ -323,7 +587,12 @@ const descent=$('descendMobile');descent.addEventListener('pointerdown',e=>{e.pr
 
 const skyline=new Image();let skylineReady=false;skyline.onload=()=>skylineReady=true;skyline.onerror=()=>{try{const css=getComputedStyle($('titlecover')).backgroundImage;const m=css.match(/data:image\/jpeg;base64,[A-Za-z0-9+\/=]+/);if(m)skyline.src=m[0]}catch(_){}};skyline.src=new URL('assets/pittsburgh-night-skyline.jpg',document.baseURI).href;
 const stars=[{x:0,z:15,y:1.4},{x:-4,z:2,y:1.4},{x:4,z:-14,y:1.4},{x:1,z:-29,y:1.4},{x:17,z:3,y:6.6},{x:-3,z:36,y:1.4},{x:11,z:11,y:3.6}].map(x=>({...x,taken:false}));
+const STEEL_HILL=window.__steelHillsideContract,HOME=STEEL_HILL.HOME;
 const buildings=[[19,-24,11,12,40],[33,-22,12,13,47],[-17,-28,9,9,24],[-30,-20,10,9,32],[19,-6,11,13,29],[-17,-7,9,11,16],[-34,-52,11,11,37],[3,-78,15,11,46],[-21,-76,13,10,34],[27,-80,12,11,52],[-39,-74,10,10,27],[49,-77,14,12,32]];for(let zz of [-32,-9,16,39])for(let xx of [-47,-35,-23,23,35,47]){if(zz===-9&&xx===23)continue;let f=Math.abs(xx+zz)%8;buildings.push([xx,zz,7+f/3,7+f/4,6+f*1.5])}
+const hillsideHomes=STEEL_HILL.homes;
+for(const h of hillsideHomes){
+ const b=[h.x,h.z,h.w,h.d,h.h];b.kind='hillside-home';b.baseY=h.baseY;buildings.push(b);
+}
 const on=(k)=>keys.has(k)||touch.has(k);function note(f=440){if(!state.sound||!ctx)return;let o=ctx.createOscillator(),v=ctx.createGain();o.type='sine';o.frequency.value=f;let t=ctx.currentTime;v.gain.setValueAtTime(.06,t);v.gain.exponentialRampToValueAtTime(.0002,t+.25);o.connect(v);v.connect(ctx.destination);o.start(t);o.stop(t+.27)}
 function music(on){state.sound=on;$('audio').textContent=on?'♫ SOUND ON':'♫ SOUND OFF';if(on){ctx=ctx||new (window.AudioContext||window.webkitAudioContext)();ctx.resume();if(!interval){let n=0,seq=[110,130.81,146.83,174.61,164.81,146.83,130.81,98];interval=setInterval(()=>{if(!state.sound||!state.started)return;note(seq[n++%8])},330)}}}
 
@@ -376,7 +645,7 @@ sagaId('restart').addEventListener('click',()=>{sagaStage=0;sagaBeacon=0;sagaCom
 sagaRender();
 
 function toast(s){$('toast').textContent=s;$('toast').classList.add('show');clearTimeout(toast.id);toast.id=setTimeout(()=>$('toast').classList.remove('show'),2100)}
-function begin(sound){state.started=true;$('titlecover').classList.add('hidden');music(sound);toast('EXPLORE PITTSBURGH · NO AUTO-RUNNING')}
+function begin(sound){state.started=true;$('titlecover').classList.add('hidden');music(sound)}
 $('play').onclick=()=>begin(true);$('playMuted').onclick=()=>begin(false);$('audio').onclick=()=>music(!state.sound);$('camReset').onclick=()=>{state.yaw=0;state.pitch=.22};$('restart').onclick=()=>{state.x=0;state.z=27;state.y=0;state.stars=0;state.finished=false;stars.forEach(p=>p.taken=false);resetSky();$('objectiveTitle').textContent='Collect five Steel Stars';$('objectiveDetail').textContent='Explore the city and rooftops';toast('NEW RUN')};
 function jump(){if(state.y===0){state.vy=8.3;note(310)}}
 function interact(){if(sagaInteract())return;if(state.stars>=5&&Math.hypot(state.x,state.z+35)<7){state.finished=true;toast('MISSION COMPLETE · STEEL CITY LEGEND');note(800)}else toast('EXPLORE · COLLECT STARS · REACH BRIDGE')}
@@ -384,24 +653,97 @@ window.addEventListener('keydown',e=>{if(['KeyW','KeyA','KeyS','KeyD','ArrowUp',
 for(const [id,key] of [['sprint','ShiftLeft']]){const b=$(id);b.addEventListener('pointerdown',e=>{e.preventDefault();touch.add(key);b.classList.add('active');try{b.setPointerCapture(e.pointerId)}catch{}});for(let a of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(a,()=>{touch.delete(key);b.classList.remove('active')})}$('jump2').addEventListener('pointerdown',e=>{e.preventDefault();if(sky.active){touch.add('Space');const up=()=>touch.delete('Space');$('jump2').addEventListener('pointerup',up,{once:true});$('jump2').addEventListener('pointercancel',up,{once:true});}else jump()});
 let grab=false,sx=0,sy=0,clickX=0,clickY=0;cv.addEventListener('pointerdown',e=>{if(!state.started)return;grab=true;sx=clickX=e.clientX;sy=clickY=e.clientY;cv.setPointerCapture(e.pointerId)});cv.addEventListener('pointermove',e=>{if(!grab)return;state.yaw+=(e.clientX-sx)*.006;state.pitch=Math.max(-.2,Math.min(.8,state.pitch+(e.clientY-sy)*.004));sx=e.clientX;sy=e.clientY});cv.addEventListener('pointerup',()=>{if(grab&&sky.active&&Math.hypot(sx-clickX,sy-clickY)<12)shoot();grab=false});cv.addEventListener('pointercancel',()=>grab=false);
 const yfloor=(x,z)=>{for(let [a,b,w,d,h] of [[8,15,3.4,3.4,1.15],[11,11,3.5,3.8,2.4],[14,7,3.5,4,3.8],[17,3,7,7,5.1]])if(Math.abs(x-a)<w/2&&Math.abs(z-b)<d/2&&state.y>=h-.4)return h;return 0};
-function tick(dt){state.t+=dt;if(!state.started)return;let f=(on('KeyW')||on('ArrowUp')?1:0)-(on('KeyS')||on('ArrowDown')?1:0),s=(on('KeyD')||on('ArrowRight')?1:0)-(on('KeyA')||on('ArrowLeft')?1:0),mg=Math.hypot(f,s)||1;let speed=(on('ShiftLeft')?12:7)*dt;let dx=(-Math.sin(state.yaw)*f+Math.cos(state.yaw)*s)*speed/mg,dz=(-Math.cos(state.yaw)*f-Math.sin(state.yaw)*s)*speed/mg;const joy=window.__steelJoystick;if(joy?.active&&Math.hypot(joy.x,joy.y)>.11){f=-joy.y;s=joy.x;mg=1;dx=(-Math.sin(joy.baseYaw)*f+Math.cos(joy.baseYaw)*s)*speed;dz=(-Math.cos(joy.baseYaw)*f-Math.sin(joy.baseYaw)*s)*speed;const target=Math.atan2(dx,-dz),shortest=Math.atan2(Math.sin(target-state.yaw),Math.cos(target-state.yaw));state.yaw+=shortest*Math.min(1,dt*7);}function blocked(x,z){return buildings.some(b=>state.y<b[4]-.6&&Math.abs(x-b[0])<b[2]/2+.45&&Math.abs(z-b[1])<b[3]/2+.45)}if(sky.active||!blocked(state.x+dx,state.z))state.x=Math.min(73,Math.max(-73,state.x+dx));if(sky.active||!blocked(state.x,state.z+dz))state.z=Math.max(-63,Math.min(51,state.z+dz));if(sky.active){state.vy=0;skyTick(dt)}else state.vy-=19.8*dt;state.y+=state.vy*dt;let fl=yfloor(state.x,state.z);if(!sky.active&&state.y<fl){state.y=fl;state.vy=0}
-if(!sky.active)skyTick(dt);sagaTick(dt);for(let p of stars)if(!p.taken&&Math.hypot(state.x-p.x,state.z-p.z)<1.65&&Math.abs(state.y+1.5-p.y)<2){p.taken=true;state.stars++;note(850);toast('✦ STEEL STAR '+state.stars+' / 5');if(state.stars===5){$('objectiveTitle').textContent='Reach the Golden Bridge';$('objectiveDetail').textContent='Find bridge entrance · press E'}}if(state.stars>=5&&Math.hypot(state.x,state.z+35)<3.5&&!state.finished)interact();$('count').textContent=state.stars+'/5';$('compass').textContent=Math.round(((state.yaw%6.283+6.283)%6.283)*180/Math.PI)+'° ◇ '+(sky.active?'SKY PATROL':'FREE EXPLORE');$('place').textContent=state.z<-22?'THE GOLDEN BRIDGE · THREE RIVERS':state.x>10?'MARKET DISTRICT · PARKOUR':'DOWNTOWN · GOLDEN TRIANGLE';}
+function tick(dt){state.t+=dt;if(!state.started)return;let f=(on('KeyW')||on('ArrowUp')?1:0)-(on('KeyS')||on('ArrowDown')?1:0),s=(on('KeyD')||on('ArrowRight')?1:0)-(on('KeyA')||on('ArrowLeft')?1:0),mg=Math.hypot(f,s)||1;let speed=(on('ShiftLeft')?12:7)*dt;let dx=(-Math.sin(state.yaw)*f+Math.cos(state.yaw)*s)*speed/mg,dz=(-Math.cos(state.yaw)*f-Math.sin(state.yaw)*s)*speed/mg;const joy=window.__steelJoystick;if(joy?.active&&Math.hypot(joy.x,joy.y)>.11){f=-joy.y;s=joy.x;mg=1;dx=(-Math.sin(joy.baseYaw)*f+Math.cos(joy.baseYaw)*s)*speed;dz=(-Math.cos(joy.baseYaw)*f-Math.sin(joy.baseYaw)*s)*speed;const target=Math.atan2(dx,-dz),shortest=Math.atan2(Math.sin(target-state.yaw),Math.cos(target-state.yaw));state.yaw+=shortest*Math.min(1,dt*7);}function blocked(x,z){return buildings.some(b=>state.y<b[4]-.6+(b.baseY||0)&&(b.kind==='hillside-home'||b.baseY===undefined||state.y+2.2>b.baseY)&&Math.abs(x-b[0])<b[2]/2+.45&&Math.abs(z-b[1])<b[3]/2+.45)}if(sky.active||(!blocked(state.x+dx,state.z)&&STEEL_HILL.canTraverseGround(state.x+dx,state.z)))state.x=Math.min(73,Math.max(-73,state.x+dx));
+ if(sky.active||(!blocked(state.x,state.z+dz)&&STEEL_HILL.canTraverseGround(state.x,state.z+dz)))state.z=Math.max(STEEL_HILL.ACCESS.groundMinZ,Math.min(STEEL_HILL.ACCESS.groundMaxZ,state.z+dz));if(sky.active){state.vy=0;skyTick(dt)}else state.vy-=19.8*dt;state.y+=state.vy*dt;let fl=yfloor(state.x,state.z);if(!sky.active&&state.y<fl){state.y=fl;state.vy=0}
+if(!sky.active)skyTick(dt);sagaTick(dt);for(let p of stars)if(!p.taken&&Math.hypot(state.x-p.x,state.z-p.z)<1.65&&Math.abs(state.y+1.5-p.y)<2){p.taken=true;state.stars++;note(850);toast('✦ STEEL STAR '+state.stars+' / 5');if(state.stars===5){$('objectiveTitle').textContent='Reach the Golden Bridge';$('objectiveDetail').textContent='Find bridge entrance · press E'}}if(state.stars>=5&&Math.hypot(state.x,state.z+35)<3.5&&!state.finished)interact();$('count').textContent=state.stars+'/5';$('compass').textContent=Math.round(((state.yaw%6.283+6.283)%6.283)*180/Math.PI)+'° ◇ '+(sky.active?'SKY PATROL':'FREE EXPLORE');$('place').textContent=state.z<-63?'MOUNT WASHINGTON · HILLSIDE HOMES':state.z<-22?'THE GOLDEN BRIDGE · THREE RIVERS':state.x>10?'MARKET DISTRICT · PARKOUR':'DOWNTOWN · GOLDEN TRIANGLE';}
 function put(x,y,z){let cy=state.y+(sky.active?7.2:3.8)+state.pitch*3,cp=[state.x+Math.sin(state.yaw)*9,cy,state.z+Math.cos(state.yaw)*9],tx=state.x,ty=state.y+1.45,tz=state.z;let f=[tx-cp[0],ty-cp[1],tz-cp[2]],fl=Math.hypot(...f);f=f.map(q=>q/fl);let r=[-f[2],0,f[0]],rl=Math.hypot(...r);r=r.map(q=>q/rl);let u=[r[1]*f[2]-r[2]*f[1],r[2]*f[0]-r[0]*f[2],r[0]*f[1]-r[1]*f[0]];let v=[x-cp[0],y-cp[1],z-cp[2]],depth=v[0]*f[0]+v[1]*f[1]+v[2]*f[2];if(depth<.35)return null;let xx=(v[0]*r[0]+v[1]*r[1]+v[2]*r[2])*cv.height*.95/depth+cv.width*.5,yy=cv.height*.49-(v[0]*u[0]+v[1]*u[1]+v[2]*u[2])*cv.height*.95/depth;return {x:xx,y:yy,depth}}
 function polygon(pts,col,stroke=null){const p=pts.map(a=>put(...a));if(p.some(x=>!x))return;g.beginPath();g.moveTo(p[0].x,p[0].y);for(let i=1;i<p.length;i++)g.lineTo(p[i].x,p[i].y);g.closePath();g.fillStyle=col;g.fill();if(stroke){g.strokeStyle=stroke;g.lineWidth=1;g.stroke()}}
 function quad(a,b,c,d,col){polygon([a,b,c,d],col)}
 function cube(x,y,z,w,h,d,front='#344459'){let a=x-w/2,b=x+w/2,t=y+h,zz=z+d/2,bb=z-d/2;const side='#242f45',other='#1a2940';quad([a,y,zz],[b,y,zz],[b,t,zz],[a,t,zz],front);quad([b,y,bb],[a,y,bb],[a,t,bb],[b,t,bb],front);quad([a,y,bb],[a,y,zz],[a,t,zz],[a,t,bb],side);quad([b,y,zz],[b,y,bb],[b,t,bb],[b,t,zz],other);quad([a,t,zz],[b,t,zz],[b,t,bb],[a,t,bb],'#536577')}
 function rod(a,b,w,col){let p=put(...a),q=put(...b);if(!p||!q)return;g.lineWidth=Math.max(.7,w*cv.height*.6/((p.depth+q.depth)*.5));g.strokeStyle=col;g.beginPath();g.moveTo(p.x,p.y);g.lineTo(q.x,q.y);g.stroke()}
 function drawSky(){let grad=g.createLinearGradient(0,0,0,cv.height);grad.addColorStop(0,'#090f2a');grad.addColorStop(.46,'#263051');grad.addColorStop(.56,'#1b1f35');grad.addColorStop(1,'#080f1e');g.fillStyle=grad;g.fillRect(0,0,cv.width,cv.height);if(skylineReady){let sw=skyline.width,sh=skyline.height*.69,desH=cv.height*.56,srcW=Math.min(sw,sh*cv.width/desH),start=(sw-srcW)*.5;g.globalAlpha=.87;g.drawImage(skyline,start,0,srcW,sh,0,0,cv.width,desH);g.globalAlpha=1;let fog=g.createLinearGradient(0,cv.height*.26,0,cv.height*.63);fog.addColorStop(0,'#09122505');fog.addColorStop(1,'#111c30ea');g.fillStyle=fog;g.fillRect(0,cv.height*.26,cv.width,cv.height*.4)}g.fillStyle='#c8def2';for(let i=0;i<53;i++){let x=((i*317+19)%991)/991*cv.width,y=((i*149+18)%411)/900*cv.height;g.globalAlpha=(i%7+2)/30;g.fillRect(x,y,1.2,1.2)}g.globalAlpha=1;g.shadowColor='#dbe5ff';g.shadowBlur=35;g.fillStyle='#d8dfe9';g.beginPath();g.arc(cv.width*.78,cv.height*.16,cv.height*.036,0,6.283);g.fill();g.shadowBlur=0;}
-function render(){let d=Math.min(1.1,window.devicePixelRatio||1);cv.width=Math.round(innerWidth*d);cv.height=Math.round(innerHeight*d);drawSky();
+function render(){let d=Math.min(1.1,window.devicePixelRatio||1),rw=Math.round(innerWidth*d),rh=Math.round(innerHeight*d);if(cv.width!==rw)cv.width=rw;if(cv.height!==rh)cv.height=rh;drawSky();
 // Visible ground cells, rendered back to front; side lanes and rivers are navigable.
 let tiles=[];for(let x=-81;x<=81;x+=9)for(let z=-90;z<=55;z+=9){let dist=Math.hypot(x-state.x,z-state.z);if(dist>93)continue;tiles.push({x,z,dist})}tiles.sort((a,b)=>b.dist-a.dist);for(let q of tiles){let x=q.x,z=q.z,river=z<-36&&z>-64,road=Math.abs(x)<8||[-17,2,26].some(q=>Math.abs(z-q)<5),col=river?'#13405b':road?'#242d3a':'#263746';if(river)col='#12415b';quad([x-.02,-.08,z-.02],[x+9,-.08,z-.02],[x+9,-.08,z+9],[x-.02,-.08,z+9],col)}
 // Road centerlines and bridge deck.
-for(let z=-32;z<52;z+=9){quad([-.14,.01,z], [.14,.01,z],[.14,.01,z+3.3],[-.14,.01,z+3.3],'#af9464')}cube(0,-.06,-47,12,.45,29,'#a18a53');for(let k=0;k<2;k++)for(let i=0;i<19;i++){let z=-61+i*1.56,y=1.2+7.9*Math.sin(i/18*Math.PI);rod([(k?6:-6),.4,z],[(k?6:-6),y,z],.12,'#edb854');if(i)rod([(k?6:-6),1.2+7.9*Math.sin((i-1)/18*Math.PI),z-1.56],[(k?6:-6),y,z],.28,'#ffd274')}
+for(let z=-32;z<52;z+=9){quad([-.14,.01,z], [.14,.01,z],[.14,.01,z+3.3],[-.14,.01,z+3.3],'#af9464')}cube(0,-.06,-47,12,.45,29,'#a18a53');for(let k=0;k<2;k++)for(let i=0;i<19;i++){let z=-61+i*1.56,y=1.2+7.9*Math.sin(i/18*Math.PI);rod([(k?6:-6),.4,z],[(k?6:-6),y,z],.12,BRIDGE_LIGHT.upright);if(i)rod([(k?6:-6),1.2+7.9*Math.sin((i-1)/18*Math.PI),z-1.56],[(k?6:-6),y,z],.28,BRIDGE_LIGHT.arch)}
+// Fallback uses the exact same steel-lattice control points as WebGL.
+// Reset per-frame counts so receipts do not accumulate across renders.
+bridgeTrussSegments=0;
+bridgePortalMasonry=0;
+for(const x of STEEL_BRIDGE.sides){
+ for(const panel of STEEL_BRIDGE.panels){
+  const a=panel.a,b=panel.b,y=STEEL_BRIDGE.deckY;
+  rod([x,a.y-.52,a.z],[x,b.y-.52,b.z],.12,BRIDGE_LIGHT.lattice);
+  rod([x,y,a.z],[x,b.y,b.z],.095,BRIDGE_LIGHT.cross);
+  rod([x,a.y,a.z],[x,y,b.z],.09,BRIDGE_LIGHT.diagonal);
+  bridgeTrussSegments+=3;
+ }
+ for(const z of [-60.65,-33.35]){
+  cube(x,.65,z,.72,3.0,.72,'#66534a');
+  cube(x,3.65,z,.82,.36,.82,BRIDGE_LIGHT.cap);
+  cube(x,1.04,z,.96,.18,.96,'#495360');
+  cube(x,3.15,z,.90,.20,.90,'#877966');
+  bridgePortalMasonry+=2;
+ }
+}
+// WebGL and canvas share exactly the same hillside geometry.
+for(let i=0;i<26;i++){
+ const x=-82+i*6.5,h=STEEL_HILL.heights[i];cube(x,-1.5,-79,7,h,21,'#142c32');
+}
+for(const h of hillsideHomes){
+ const {x,z,baseY:y,facade,roof}=h;
+ cube(x,y,z,HOME.w,HOME.h,HOME.d,facade);
+ polygon([[x-HOME.roofW/2,y+HOME.h,z+HOME.roofD/2],
+          [x,y+HOME.h+HOME.roofRise,z+HOME.roofD/2],
+          [x+HOME.roofW/2,y+HOME.h,z+HOME.roofD/2]],roof);
+ cube(x,y,z+HOME.d/2+.04,HOME.doorW,HOME.doorH,HOME.doorD,HOME.doorCol);
+ cube(x,y+HOME.lampY-HOME.lampH/2,z+HOME.d/2+.12,HOME.lampW,HOME.lampH,HOME.lampD,HOME.lampCol);
+ for(const off of [-HOME.winOff,HOME.winOff]){
+  cube(x+off,y+HOME.h*.68-HOME.winH/2,z+HOME.d/2+.04,HOME.win,HOME.winH,HOME.winD,HOME.winCol);
+  rod([x+off,y+HOME.h*.68-HOME.winH/2,z+HOME.d/2+.10],[x+off,y+HOME.h*.68+HOME.winH/2,z+HOME.d/2+.10],.05,HOME.trimCol);
+ }
+}
 // Buildings drawn back-to-front, with emissive facade windows.
-let sorted=buildings.filter(b=>b[1]>-63).sort((a,b)=>Math.hypot(b[0]-state.x,b[1]-state.z)-Math.hypot(a[0]-state.x,a[1]-state.z));for(let [x,z,w,dep,h] of sorted){if(Math.hypot(x-state.x,z-state.z)>117)continue;cube(x,0,z,w,h,dep,h>25?'#293b54':'#3d4551');for(let yy=2;yy<h-1;yy+=2.1){for(let i=-w/2+.9;i<w/2-.5;i+=1.65){if(Math.floor((i+20)*3+yy*4)%5===0)continue;let p=put(x+i,yy,z+dep/2+.07);if(p&&p.x>-30&&p.x<cv.width+30){let r=Math.min(13,cv.height*.60/p.depth);g.fillStyle=(Math.floor(i*19+yy*11)%3===0?'#95b9ce':'#ffd48c');g.globalAlpha=.72;g.fillRect(p.x,p.y,Math.max(.5,r*.48),Math.max(.5,r*.24));g.globalAlpha=1}}}if(x===-34&&z===-52)for(let a of [-3,3]){rod([x+a,h,z-3],[x+a,h+5,z-3],.16,'#ffe1a1');rod([x+a,h,z+3],[x+a,h+5,z+3],.16,'#ffe1a1')}}
+let sorted=buildings.filter(b=>b[1]>-63).sort((a,b)=>Math.hypot(b[0]-state.x,b[1]-state.z)-Math.hypot(a[0]-state.x,a[1]-state.z));for(let [x,z,w,dep,h] of sorted){if(Math.hypot(x-state.x,z-state.z)>117)continue;cube(x,0,z,w,h,dep,h>25?'#293b54':'#3d4551');for(let yy=2;yy<h-1;yy+=2.1){for(let i=-w/2+.9;i<w/2-.5;i+=1.65){if(Math.floor((i+20)*3+yy*4)%5===0)continue;let p=put(x+i,yy,z+dep/2+.07);if(p&&p.x>-30&&p.x<cv.width+30){let r=Math.min(13,cv.height*.60/p.depth);g.fillStyle=(Math.floor(i*19+yy*11)%3===0?'#95b9ce':'#ffd48c');g.globalAlpha=.72;g.fillRect(p.x,p.y,Math.max(.5,r*.48),Math.max(.5,r*.24));g.globalAlpha=1}}}// Perspective-projected shopfronts with warm trim, cornice, and glass entrances.
+ const face=z+dep/2+.13;
+ quad([x-w*.47,1.95,face],[x+w*.47,1.95,face],[x+w*.47,2.2,face],[x-w*.47,2.2,face],h<22?'#c99164':'#64899c');
+ quad([x-w*.33,.22,face+.04],[x+w*.33,.22,face+.04],[x+w*.33,1.6,face+.04],[x-w*.33,1.6,face+.04],'#182b42');
+ for(const side of [-1,1]){quad([x+side*w*.38,.2,face+.07],[x+side*w*.20,.2,face+.07],[x+side*w*.20,1.43,face+.07],[x+side*w*.38,1.43,face+.07],'#79aab4');}
+ quad([x-w*.49,1.67,face+.04],[x+w*.49,1.67,face+.04],[x+w*.49,1.76,face+.90],[x-w*.49,1.76,face+.90],'#d9ad6e');
+ if(h>18){quad([x-w*.49,h-.20,face],[x+w*.49,h-.20,face],[x+w*.49,h+.05,face],[x-w*.49,h+.05,face],'#9ea2a8');}
+ if(x===-34&&z===-52)for(let a of [-3,3]){rod([x+a,h,z-3],[x+a,h+5,z-3],.16,'#ffe1a1');rod([x+a,h,z+3],[x+a,h+5,z+3],.16,'#ffe1a1')}}
 for(let [x,z,w,dep,h] of [[8,15,3.4,3.4,1.15],[11,11,3.5,3.8,2.4],[14,7,3.5,4,3.8],[17,3,7,7,5.1]])cube(x,0,z,w,h,dep,'#7f8080');
-// Landmark fountain, glowing lamp line and collectibles.
+// Reflective crossings and traffic silhouettes. Depth projection keeps them attached to the city.
+ for(const z of [9,30])for(let i=-6;i<=6;i++)quad([i*.9-.25,.022,z],[i*.9+.25,.022,z],[i*.9+.25,.022,z+1.55],[i*.9-.25,.022,z+1.55],'#a8aeb5');
+ for(const [x,z,body] of [[-10.5,21,'#697d8b'],[10.4,-12,'#986157'],[-10.4,-28,'#496b75'],[10.4,42,'#354d60']]){
+  cube(x,0,z,1.9,1.15,3.75,body);cube(x,.86,z-.12,1.47,.65,2.15,'#3a5067');
+  for(const dx of [-.70,.70]){cube(x+dx,.02,z-1.1,.29,.55,.42,'#101821');cube(x+dx,.02,z+1.12,.29,.55,.42,'#101821');}
+  for(const dx of [-.52,.52])rod([x+dx,.80,z-1.89],[x+dx,.96,z-1.9],.12,'#fce4b5');
+ }
+ // Landmark fountain, glowing lamp line and collectibles.
 let fp=put(18,0,-30);if(fp){rod([18,0,-30],[18,8,-30],.34,'#aeeaff');for(let i=0;i<14;i++){let a=i/14*6.283,b=(i+1)/14*6.283;rod([18+Math.cos(a)*5,.2,-30+Math.sin(a)*5],[18+Math.cos(b)*5,.2,-30+Math.sin(b)*5],.13,'#beeaff')}}for(let zz=-28;zz<49;zz+=10)for(let xx of [-9.5,9.5]){rod([xx,0,zz],[xx,5,zz],.14,'#98aab2');let p=put(xx,5,zz);if(p){g.fillStyle='#ffe0a1';g.shadowBlur=15;g.shadowColor='#ffd083';g.beginPath();g.arc(p.x,p.y,Math.max(2,cv.height*.025/p.depth),0,6.283);g.fill();g.shadowBlur=0}}
+// Painter's fallback cannot near-plane clip a single 29-unit bridge top.
+bridgeFinishPieces=0;
+// Draw small overlapping top quads AFTER distant buildings, before pickups/hero.
+// This restores the physical deck when crossing its middle without a teleport.
+if(state.z < -31 && state.z > -64 && Math.abs(state.x) < 8.5){
+ for(let zz=-61,i=0;zz<-33;zz+=1,i++){
+  const far=Math.min(-33,zz+1.025);
+  const col=i%5===0?'#4a5260':'#3d4552';
+  quad([-5.83,.405,zz],[5.83,.405,zz],[5.83,.405,far],[-5.83,.405,far],col);
+ }
+ // The same roadway-finish contract, drawn after the near-plane-safe base.
+ for(const {z,marker} of STEEL_BRIDGE.finish.panels){
+  cube(0,.45,z,11.12,.038,.055,'#6f7380');
+  bridgeFinishPieces++;
+  for(const x of [-5.45,5.45]){
+   cube(x,.43,z,.22,.17,1.58,marker?'#a78a55':'#756d59');
+   bridgeFinishPieces++;
+  }
+  if(marker){cube(0,.455,z,.20,.034,.64,'#d1b979');bridgeFinishPieces++}
+ }
+}
 for(let s of stars){if(s.taken)continue;let p=put(s.x,s.y+Math.sin(state.t*3)*.18,s.z);if(!p)continue;let r=Math.max(2,cv.height*.32/p.depth);g.save();g.translate(p.x,p.y);g.rotate(state.t*.8);g.shadowColor='#ffcb66';g.shadowBlur=20;g.fillStyle='#ffda7e';g.beginPath();for(let j=0;j<10;j++){let a=j/10*6.283-Math.PI/2,rr=j%2?r*.44:r;let x=Math.cos(a)*rr,y=Math.sin(a)*rr;if(!j)g.moveTo(x,y);else g.lineTo(x,y)}g.closePath();g.fill();g.restore()}
 
 sagaDraw2D(put,g,cv.height);
@@ -423,9 +765,9 @@ if(sky.active){g.fillStyle='#111929';g.strokeStyle='#e2ac50';g.lineWidth=.035;
  for(let side of [-1,1]){g.shadowColor='#ffc661';g.shadowBlur=17;g.fillStyle='#ffe19a';g.beginPath();g.moveTo(side*.22,2.68);g.lineTo(side*.38,2.68);g.lineTo(side*.30,3.70+Math.sin(state.t*17+side)*.22);g.closePath();g.fill()}
  g.shadowBlur=0;}
 if(sky.active){g.shadowColor='#45ecff';g.shadowBlur=25;g.fillStyle='#65eaff';g.beginPath();g.moveTo(-.29,2.6);g.lineTo(0,3.85+Math.sin(state.t*19)*.3);g.lineTo(.29,2.6);g.closePath();g.fill();}g.restore()}
-const mm=$('map').getContext('2d'),W=300;mm.clearRect(0,0,W,W);mm.fillStyle='#0e2636';mm.fillRect(0,0,W,W);const X=x=>150+x*1.7,Z=z=>158+z*1.7;mm.fillStyle='#184457';mm.fillRect(0,Z(-64),300,Z(-36)-Z(-64));mm.fillStyle='#8f814f';mm.fillRect(X(-7),0,14*1.7,300);mm.fillRect(0,Z(-17)-4,300,8);mm.fillRect(0,Z(2)-4,300,8);mm.fillRect(0,Z(26)-4,300,8);mm.strokeStyle='#edbf59';mm.lineWidth=5;mm.beginPath();mm.moveTo(X(0),Z(-63));mm.lineTo(X(0),Z(-34));mm.stroke();mm.fillStyle='#b7edeb';mm.beginPath();mm.arc(X(state.x),Z(state.z),5,0,6.283);mm.fill();for(let s of stars){if(s.taken)continue;mm.fillStyle='#ffd77e';mm.beginPath();mm.arc(X(s.x),Z(s.z),3,0,6.283);mm.fill()}
+const mm=$('map').getContext('2d'),W=300;mm.clearRect(0,0,W,W);mm.fillStyle='#0e2636';mm.fillRect(0,0,W,W);const X=x=>150+x*1.7,Z=z=>158+z*1.7;mm.fillStyle='#184457';mm.fillRect(0,Z(-64),300,Z(-36)-Z(-64));mm.fillStyle='#8f814f';mm.fillRect(X(-7),0,14*1.7,300);mm.fillRect(0,Z(-17)-4,300,8);mm.fillRect(0,Z(2)-4,300,8);mm.fillRect(0,Z(26)-4,300,8);mm.strokeStyle='#edbf59';mm.lineWidth=5;mm.beginPath();mm.moveTo(X(0),Z(-63));mm.lineTo(X(0),Z(-34));mm.stroke();for(const h of hillsideHomes){mm.fillStyle='#c99f6b';mm.fillRect(X(h.x-h.w/2),Z(h.z-h.d/2),h.w*1.7,h.d*1.7)}mm.fillStyle='#b7edeb';mm.beginPath();mm.arc(X(state.x),Z(state.z),5,0,6.283);mm.fill();for(let s of stars){if(s.taken)continue;mm.fillStyle='#ffd77e';mm.beginPath();mm.arc(X(s.x),Z(s.z),3,0,6.283);mm.fill()}
 }
 function frame(t){let dt=Math.min(.05,(t-last)/1000||0);last=t;tick(dt);render();requestAnimationFrame(frame)}requestAnimationFrame(frame);
-window.__steelCityDebug=()=>({campaignStage:sagaStage,campaignComplete:sagaCompleted,campaignBeacon:sagaBeacon,campaignCrewAlive:sagaFoes.filter(x=>x.hp>0).length,campaignJackalHp:sagaJackal.hp,campaignQueenHp:sagaQueen.hp,started:state.started,x:+state.x.toFixed(2),y:+state.y.toFixed(2),z:+state.z.toFixed(2),stars:state.stars,total:stars.length,webgl:false,fallback:true,freeRoam:true,sound:state.sound,finished:state.finished,cameraYaw:state.yaw,joystickX:+(window.__steelJoystick?.x||0).toFixed(3),joystickY:+(window.__steelJoystick?.y||0).toFixed(3),skyMode:sky.active,health:sky.hp,bugsDefeated:sky.kills,bugsAlive:sky.enemies.filter(e=>!e.dead).length,shots:sky.shots.length,enemyShots:sky.enemyShots.length});
+window.__steelCityDebug=()=>({graphicsRevision:'cinematic-geometry-v3',lightingRevision:'rain-slick-neon-v2',neighborhoodDetail:'mount-washington-homes-v2',bridgeDetail:STEEL_BRIDGE.revision,bridgeTrussSegments,bridgeFinishRevision:STEEL_BRIDGE.finish.revision,bridgeFinishPieces,bridgeLightingRevision:BRIDGE_LIGHT.revision,bridgePortalMasonry,hillsideWalkMinZ:STEEL_HILL.ACCESS.groundMinZ,hillsideHomeCount:hillsideHomes.length,hillsideSolidCount:buildings.filter(b=>b.kind==='hillside-home').length,hillsideHomeFootprints:buildings.filter(b=>b.kind==='hillside-home').map(b=>({x:b[0],z:b[1],w:b[2],d:b[3],h:b[4],baseY:b.baseY})),campaignStage:sagaStage,campaignComplete:sagaCompleted,campaignBeacon:sagaBeacon,campaignCrewAlive:sagaFoes.filter(x=>x.hp>0).length,campaignJackalHp:sagaJackal.hp,campaignQueenHp:sagaQueen.hp,started:state.started,x:+state.x.toFixed(2),y:+state.y.toFixed(2),z:+state.z.toFixed(2),stars:state.stars,total:stars.length,webgl:false,fallback:true,freeRoam:true,sound:state.sound,finished:state.finished,cameraYaw:state.yaw,joystickX:+(window.__steelJoystick?.x||0).toFixed(3),joystickY:+(window.__steelJoystick?.y||0).toFixed(3),skyMode:sky.active,health:sky.hp,bugsDefeated:sky.kills,bugsAlive:sky.enemies.filter(e=>!e.dead).length,shots:sky.shots.length,enemyShots:sky.enemyShots.length});
 })();
 </script></body></html>
