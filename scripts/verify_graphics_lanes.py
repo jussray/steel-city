@@ -44,6 +44,8 @@ def main():
             "art and playable lanes disagree on bridge night exposure")
     require(art["requires_runtime_cast_revision"] == runtime["cast_revision"],
             "art and playable lanes disagree on storyboard cast")
+    require(art["requires_runtime_cinematic_revision"] == runtime["cinematic_revision"],
+            "art and playable lanes disagree on storyboard cinematic view")
     require(art["asset"] == "assets/pittsburgh-night-skyline.jpg", "unexpected art path")
     approved = source_bytes()
     asset_path = ROOT / art["asset"]
@@ -64,6 +66,9 @@ def main():
     require("bridgeDetail:STEEL_BRIDGE.revision" in game,
             "shared bridge revision absent from playable renderers")
     require("three-rivers-lattice-v1" == runtime["bridge_detail"], "unrecognized bridge revision")
+    require("revision:'" + runtime["cinematic_revision"] + "'" in game and
+            game.count("cinematicRevision:CINE.revision") == 2,
+            "storyboard cinematic revision absent from WebGL or fallback renderer")
     require("neighborhoodDetail:'" + runtime["neighborhood_detail"] + "'" in game, "scene detail drift")
     require(game.count("const CAST_REVISION='" + runtime["cast_revision"] + "'") == 2 and
             game.count("castRevision:CAST_REVISION") == 2,
@@ -97,6 +102,7 @@ def main():
                 check.get("bridgeDetail") == runtime["bridge_detail"] and
                 check.get("bridgeFinishRevision") == runtime["bridge_finish_revision"] and
                 check.get("bridgeLightingRevision") == runtime["bridge_lighting_revision"] and
+                check.get("cinematicRevision") == runtime["cinematic_revision"] and
                 check.get("bridgePortalMasonry") == 8 and
                 check.get("bridgeFinishPieces") == 49,
                 "gameplay renderer version drift: " + label)
@@ -159,7 +165,8 @@ def main():
                 "expectedMaterialRevision": runtime["material_revision"],
                 "expectedBridgeDetail": runtime["bridge_detail"],
                 "expectedBridgeFinishRevision": runtime["bridge_finish_revision"],
-                "expectedBridgeLightingRevision": runtime["bridge_lighting_revision"]},
+                "expectedBridgeLightingRevision": runtime["bridge_lighting_revision"],
+                "expectedCinematicRevision": runtime["cinematic_revision"]},
         "runtime": {"id": "runtime", "peerLane": "art", "shotId": shot_id,
                     "graphicsRevision": runtime["graphics_revision"],
                     "lightingRevision": runtime["lighting_revision"],
@@ -167,6 +174,7 @@ def main():
                     "bridgeDetail": runtime["bridge_detail"],
                     "bridgeFinishRevision": runtime["bridge_finish_revision"],
                     "bridgeLightingRevision": runtime["bridge_lighting_revision"],
+                    "cinematicRevision": runtime["cinematic_revision"],
                     "bridgePortalMasonry": 8,
                     "castRevision": runtime["cast_revision"],
                     "expectedArtSha256": art_sha,

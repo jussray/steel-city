@@ -14,7 +14,8 @@
       "requires_runtime_material_revision": "masonry-glass-puddles-v1",
       "requires_runtime_bridge_finish_revision": "riveted-wet-deck-v1",
       "requires_runtime_bridge_lighting_revision": "burnished-bronze-night-v1",
-      "requires_runtime_cast_revision": "storyboard-cast-v1"
+      "requires_runtime_cast_revision": "storyboard-cast-v1",
+      "requires_runtime_cinematic_revision": "storyboard-city-v1"
     },
     "runtime": {
       "id": "runtime",
@@ -35,7 +36,8 @@
       "bridge_lighting_revision": "burnished-bronze-night-v1",
       "cast_revision": "storyboard-cast-v1",
       "cast_receipt": "proof/steel-city/storyboard-cast-receipt.json",
-      "cast_reference": "graphics/reference/three-rivers-storyboard-v1.webp"
+      "cast_reference": "graphics/reference/three-rivers-storyboard-v1.webp",
+      "cinematic_revision": "storyboard-city-v1"
     }
   },
   "release_gates": {
