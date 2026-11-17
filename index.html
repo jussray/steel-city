@@ -99,10 +99,67 @@ canvas#game{z-index:1;background:transparent;}
  .mapwrap{top:94px;bottom:auto;right:max(12px,env(safe-area-inset-right));width:96px;height:96px;opacity:.87}
 }
 </style>
+<style id="steel-storyboard-hud">
+/* Lane A storyboard HUD (panels 03/04/07 of graphics/reference/three-rivers-storyboard-v1.webp, a painted target, not gameplay).
+   Restyle only: steel blue glass, bridge gold, cyan. Positions and sizes stay within the touch-layout gate. */
+:root{--sb-gold:#f2c35e;--sb-gold2:#ffe3a0;--sb-cyan:#62e6ff;--sb-line:#d8e6f58c}
+/* Steel Stars badge (panel 04) */
+.counter{padding:5px 11px 5px 12px;border:1.5px solid var(--sb-gold);border-radius:10px;background:linear-gradient(160deg,#10223fe8,#060e1ee6);box-shadow:0 0 0 1px #00000066,0 8px 22px #000a,inset 0 1px 0 #fff3,0 0 14px #f2c35e33;color:var(--sb-gold2);line-height:1.05;filter:none}
+.counter b{color:#fff3cf;text-shadow:0 0 10px #f2c35e88;letter-spacing:.06em;margin-left:2px}
+.counter small{margin-top:2px;color:#a9c3dc}
+/* Objective card (panels 03/07) */
+#storyHud{background:linear-gradient(150deg,#0a1830f2,#10243fe0 60%,#0b1a31ea);border:1px solid #f2c35e70;border-left:3px solid var(--sb-gold);border-radius:8px 14px 14px 8px;box-shadow:0 14px 40px #000b,inset 0 1px 0 #ffffff1f,0 0 18px #62e6ff14}
+#storyHud .eyebrow{color:var(--sb-gold)}
+#storyActLabel[data-roman]{font-size:0!important;letter-spacing:0}
+#storyActLabel[data-roman]::before{content:attr(data-roman);font-size:10px;letter-spacing:.16em}
+#storyHud h2{color:#fff;text-shadow:0 1px 6px #000}
+#storyHud p{display:flex;gap:6px;align-items:flex-start;color:#d4e3f0}
+#storyHud p::before{content:'';flex:0 0 auto;width:8px;height:8px;margin-top:.25em;border:1.5px solid var(--sb-gold);border-radius:2px;background:#0a1426}
+#storyHud .progress i{background:#3b4f6b}#storyHud .progress i.done{background:var(--sb-gold)}
+#storyHud button{background:#11223b;border-color:#f2c35e80}
+/* Circular minimap (panels 03/07) */
+.mapwrap{border-radius:50%;padding:0;overflow:visible;outline:0;background:radial-gradient(circle,#0c2038 0 60%,#06101f 100%);border:2px solid var(--sb-gold);box-shadow:0 0 0 2px #e9f1ffb3,0 0 0 4px #06101f99,0 12px 30px #000a,0 0 16px #62e6ff2e}
+.mapwrap #map{border-radius:50%;filter:saturate(.75) hue-rotate(-8deg)}
+.mapwrap::after{content:'';position:absolute;inset:0;border-radius:50%;box-shadow:inset 0 0 18px #04101fcc,inset 0 0 0 1px #62e6ff40;pointer-events:none}
+.mapwrap .maplabel{display:none}
+.map-north{position:absolute;z-index:1;top:-7px;left:50%;transform:translateX(-50%);width:15px;height:15px;border-radius:50%;display:grid;place-items:center;font:900 9px/1 system-ui,sans-serif;color:#fff;background:#0a1730;border:1.5px solid var(--sb-gold);pointer-events:none}
+.map-district{position:absolute;z-index:1;left:50%;bottom:4px;transform:translateX(-50%);display:flex;align-items:center;gap:4px;max-width:calc(100% + 24px);padding:2px 7px 2px 6px;border-radius:9px;background:#071224e6;border:1px solid #f2c35e99;color:#fff;font-size:7px;font-weight:850;letter-spacing:.06em;white-space:nowrap;pointer-events:none}
+.map-district span{overflow:hidden;text-overflow:ellipsis}
+.map-pin{flex:0 0 auto;width:7px;height:7px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:var(--sb-gold);box-shadow:inset 0 0 0 1.6px #e2a73a,0 0 5px #f2c35e}
+/* Joystick ring with four chevrons (panel 07) */
+#controls #moveJoystick{border:2px solid #dbe7f5c8;background:radial-gradient(circle,#1b2c45cc 0 30%,#0e1a2ee6 62%,#070e1ce8 100%);box-shadow:0 0 0 4px #0a1426aa,0 0 0 5.5px #f2c35e55,0 12px 32px #000b,inset 0 0 18px #62e6ff2a}
+#moveJoystick .joystick-glyph{font-size:0;background:center/100% 100% no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none' stroke='%23e8f0fa' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M43 17l7-7 7 7M43 83l7 7 7-7M17 43l-7 7 7 7M83 43l7 7-7 7'/%3E%3C/svg%3E")}
+#moveJoystick #moveKnob{background:radial-gradient(circle at 36% 30%,#ffffff,#c9d3df 30%,#7d8b9c 68%,#465263 100%);border:2px solid #eef4fb;box-shadow:0 4px 14px #000b,0 0 12px #62e6ff66,inset 0 -3px 6px #0005}
+/* Action tiles: TALK FLY BLAST / DOWN RUN JUMP (panel 07) */
+#controls .actions-pad{--tw:58px;--th:54px;display:grid;grid-template-columns:repeat(3,var(--tw));grid-template-rows:repeat(2,var(--th));gap:6px;align-items:stretch}
+#controls .actions-pad #talkMobile{grid-area:1/1}#controls .actions-pad #skyMobile{grid-area:1/2}#controls .actions-pad #fireMobile{grid-area:1/3}
+#controls .actions-pad #descendMobile{grid-area:2/1}#controls .actions-pad #sprint{grid-area:2/2}#controls .actions-pad #jump2{grid-area:2/3}
+#controls .actions-pad button{width:100%!important;height:100%!important;padding:0;border-radius:13px;border:1.5px solid var(--sb-line);background:linear-gradient(165deg,#1a2f50f0,#0a1528f2);color:#fff;font-size:10px!important;font-weight:900;letter-spacing:.08em!important;line-height:1;text-align:center;box-shadow:0 8px 20px #000a,inset 0 1px 0 #ffffff26,inset 0 -2px 0 #00000055;-webkit-tap-highlight-color:transparent;touch-action:none;user-select:none}
+#controls .actions-pad button::before{content:'';display:block;width:22px;height:22px;margin:0 auto 4px;background-position:center;background-size:contain;background-repeat:no-repeat}
+#controls .actions-pad #jump2{border-color:var(--sb-gold);color:var(--sb-gold2)}
+#controls .actions-pad #fireMobile{border-color:#f2c35ecc}
+#controls .actions-pad button:active,#controls .actions-pad button.active{background:linear-gradient(165deg,#3a5f8e,#14284a);border-color:var(--sb-cyan);box-shadow:0 0 0 3px #62e6ff40,0 6px 16px #000a}
+body.sky-active #controls #jump2::after{content:none}
+#talkMobile::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 4h16a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 20 16h-9l-4.5 4v-4H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 4z' fill='%23fff'/%3E%3Ccircle cx='7.5' cy='10' r='1.4' fill='%23132a4a'/%3E%3Ccircle cx='12' cy='10' r='1.4' fill='%23132a4a'/%3E%3Ccircle cx='16.5' cy='10' r='1.4' fill='%23132a4a'/%3E%3C/svg%3E")}
+#skyMobile::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23fff'%3E%3Cpath d='M1.5 17.5C8 16.5 14 12 18.5 4c1.2 2.4.8 4.6-.6 6.6 2-.6 3.6-.4 4.6.2-1.6 1.6-3.4 2.6-5.6 3.2 1.4.2 2.4.8 3 1.6-5.4 2.4-11.6 3-18.4 1.9z'/%3E%3Cpath d='M3 20.5c4.4.4 8.6 0 12.4-1.2' stroke='%23fff' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")}
+#fireMobile::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 .8l2.3 6.6L21 4.7l-3.9 5.7 6.1 1.6-6.1 1.8 3.9 5.6-6.7-2.6L12 23.2l-2.3-6.4L3 19.4l3.9-5.6L.8 12l6.1-1.6L3 4.7l6.7 2.7z' fill='%23ffb53b'/%3E%3Ccircle cx='12' cy='12' r='4.4' fill='%23fff2c4'/%3E%3C/svg%3E")}
+#descendMobile::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v16M5 12.5l7 7 7-7'/%3E%3C/svg%3E")}
+#sprint::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='15.5' cy='3.8' r='2' fill='%23fff' stroke='none'/%3E%3Cpath d='M8 9.2l4.2-2 3.2 2.3-2.2 5 3.4 2.6V22M13.2 14.5l-3 3.2H4.8M15.4 9.5l2.4 3H21.5M12.2 7.2L8.8 11'/%3E%3C/svg%3E")}
+#jump2::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffd36e' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 21V5M5 11.5l7-7 7 7'/%3E%3C/svg%3E")}
+@media(max-width:430px){#controls .actions-pad{--tw:54px;--th:50px;gap:5px}.counter{padding:2px 8px 3px 9px;line-height:1}.counter b{line-height:1}.counter small{margin-top:1px}}
+@media(max-width:800px){#storyActLabel[data-roman]::before{font-size:8px}}
+@media (orientation:landscape) and (max-height:500px){
+ #controls .actions-pad{--tw:54px;--th:47px;gap:5px}
+ #controls .actions-pad button::before{width:19px;height:19px;margin-bottom:3px}
+ #storyActLabel[data-roman]::before{font-size:8px}
+ .counter{padding:3px 9px 4px 10px}
+ .counter small{margin-top:1px}
+}
+</style>
 <div id="skyBackdrop" aria-hidden="true"></div>
 <canvas id="game" aria-label="Free-roaming third-person 3D Pittsburgh-inspired game world"></canvas>
-<div id="hud"><div class="bar"><div class="logo">STEEL CITY<br><b>OPEN WORLD</b></div><div class="citytag">PITTSBURGH, PA<br>THE THREE RIVERS</div></div><div class="objective"><small id="missionLabel">◆ MISSION 01 · THE GOLDEN ROUTE</small><strong id="objectiveTitle">Collect five Steel Stars</strong><span id="objectiveDetail">Explore the city and rooftops</span></div><div class="compass" id="compass">N  ◇  PITTSBURGH</div><div class="counter">STEEL STARS &nbsp;<b id="count">0/5</b><small id="mode">FREEROAM · NIGHT DISTRICT</small></div><div class="buttons"><button class="mini skylaunch" id="skyToggle" aria-label="Toggle Sky Mode">✦ SKY MODE · F</button><button class="mini" id="audio">♫ SOUND OFF</button><button class="mini" id="camReset">↺ CAMERA</button><button class="mini" id="restart">↻ RESET</button></div><div id="skyhud" aria-live="polite"><div class="sky-title">☄ SKY PATROL <span id="skyStatus">STANDBY</span></div><div class="healthline"><span>ARMOR</span><div class="meter"><i id="healthFill"></i></div><b id="healthText">100</b></div><div class="skyline"><span id="bugsCount">BUGS 0 / 6</span><span id="altitude">ALT 0 M</span></div><div class="sky-advice" id="skyAdvice">F: FLY · SPACE: RISE · C: DESCEND · J: BLAST</div></div><div id="reticle"><span>+</span><small id="targetLabel">TARGET ACQUIRED</small></div><div class="location" id="place">DOWNTOWN · GOLDEN TRIANGLE</div><div class="help">WASD MOVE · DRAG LOOK · F FLY/LAND · SPACE RISE · C DESCEND · J / CLICK FIRE · SHIFT BOOST</div><div class="mapwrap"><canvas id="map" width="300" height="300"></canvas><div class="maplabel">CITY DISTRICT</div></div><div class="toast" id="toast"></div></div>
-<div id="controls"><div class="pad" id="movePad" aria-label="Movement controls"><div id="moveJoystick" role="group" tabindex="0" aria-label="Movement joystick. Drag to move. Camera follows the joystick direction. Keyboard W A S D also works."><div class="joystick-glyph" aria-hidden="true">✦</div><div id="moveKnob" aria-hidden="true"></div></div><span class="joystick-caption">MOVE + LOOK</span></div><div class="actions-pad"><button id="skyMobile" aria-label="Toggle sky flight">FLY</button><button id="fireMobile" aria-label="Fire energy pulse">BLAST</button><button id="descendMobile" aria-label="Descend">DOWN</button><button id="sprint" aria-label="Sprint">RUN</button><button id="jump2" aria-label="Jump">JUMP</button></div></div>
+<div id="hud"><div class="bar"><div class="logo">STEEL CITY<br><b>OPEN WORLD</b></div><div class="citytag">PITTSBURGH, PA<br>THE THREE RIVERS</div></div><div class="objective"><small id="missionLabel">◆ MISSION 01 · THE GOLDEN ROUTE</small><strong id="objectiveTitle">Collect five Steel Stars</strong><span id="objectiveDetail">Explore the city and rooftops</span></div><div class="compass" id="compass">N  ◇  PITTSBURGH</div><div class="counter">STEEL STARS &nbsp;<b id="count">0/5</b><small id="mode">FREEROAM · NIGHT DISTRICT</small></div><div class="buttons"><button class="mini skylaunch" id="skyToggle" aria-label="Toggle Sky Mode">✦ SKY MODE · F</button><button class="mini" id="audio">♫ SOUND OFF</button><button class="mini" id="camReset">↺ CAMERA</button><button class="mini" id="restart">↻ RESET</button></div><div id="skyhud" aria-live="polite"><div class="sky-title">☄ SKY PATROL <span id="skyStatus">STANDBY</span></div><div class="healthline"><span>ARMOR</span><div class="meter"><i id="healthFill"></i></div><b id="healthText">100</b></div><div class="skyline"><span id="bugsCount">BUGS 0 / 6</span><span id="altitude">ALT 0 M</span></div><div class="sky-advice" id="skyAdvice">F: FLY · SPACE: RISE · C: DESCEND · J: BLAST</div></div><div id="reticle"><span>+</span><small id="targetLabel">TARGET ACQUIRED</small></div><div class="location" id="place">DOWNTOWN · GOLDEN TRIANGLE</div><div class="help">WASD MOVE · DRAG LOOK · F FLY/LAND · SPACE RISE · C DESCEND · J / CLICK FIRE · SHIFT BOOST</div><div class="mapwrap"><canvas id="map" width="300" height="300"></canvas><div class="maplabel">CITY DISTRICT</div><span class="map-north" aria-hidden="true">N</span><div class="map-district" aria-hidden="true"><i class="map-pin"></i><span id="mapDistrict">GOLDEN TRIANGLE</span></div></div><div class="toast" id="toast"></div></div>
+<div id="controls"><div class="pad" id="movePad" aria-label="Movement controls"><div id="moveJoystick" role="group" tabindex="0" aria-label="Movement joystick. Drag to move. Camera follows the joystick direction. Keyboard W A S D also works."><div class="joystick-glyph" aria-hidden="true">✦</div><div id="moveKnob" aria-hidden="true"></div></div><span class="joystick-caption">MOVE + LOOK</span></div><div class="actions-pad"><button id="talkMobile" aria-label="Talk or interact (E)">TALK</button><button id="skyMobile" aria-label="Toggle sky flight">FLY</button><button id="fireMobile" aria-label="Fire energy pulse">BLAST</button><button id="descendMobile" aria-label="Descend">DOWN</button><button id="sprint" aria-label="Sprint">RUN</button><button id="jump2" aria-label="Jump">JUMP</button></div></div>
 <section id="storyHud" aria-label="Story campaign"><div class="eyebrow" id="storyActLabel">THE THREE RIVERS · ACT 1/7</div><h2 id="storyTitle">The First Signal</h2><p id="storyGoal">Speak with Mara at Market Square</p><div class="progress" id="storyProgress"></div><div class="actions"><button id="storyRoute" class="primary">⌖ GO</button><button id="storyAttack" aria-label="Energy pulse attack">⚡ BLAST</button><button id="storyOpen">▤ ACTS</button></div></section><section id="storyJournal" hidden aria-label="Story campaign"><h2>THE THREE RIVERS SAGA</h2><p>Seven-stage original superhero adventure set in a stylized Pittsburgh district. Follow the signal through Market Square, Pittsburgh-inspired shopfronts, bridges, hillside homes, a fictional tech gang, and an alien Queen. Real businesses are geographic references, not sponsors. Use WASD to roam, F to fly or land, Space to jump or rise, C to descend, J to blast and E to talk.</p><div id="storyActCards" class="storyActs"></div><button id="storyClose">CLOSE STORY</button></section><section id="storyVictory" hidden><div><div style="color:#ffdc94;font-size:11px;letter-spacing:.2em">THE THREE RIVERS SAGA · COMPLETE</div><h2>PITTSBURGH STANDS TOGETHER</h2><p>The neighborhood signal reached the bridges. The Circuit Crew is stopped, the markets are lit, and the alien Queen has withdrawn. Your city is safe for another night.</p><button id="storyContinue">CONTINUE FREE-ROAM</button></div></section><div class="titlecover" id="titlecover"><div class="intro"><div class="sup">THE CITY IS YOUR PLAYGROUND</div><h1 class="bigtitle">STEEL<br>CITY<span>NIGHT SHIFT</span></h1><div class="subhead">No lanes. No automatic running. <b>Explore an open Pittsburgh-inspired 3D district</b>, leap across rooftops, discover the bridges, and collect five Steel Stars, then take flight and defend the skies from alien bugs.</div><div class="features"><span>FREE-ROAM 3D</span><span>ROOFTOP PARKOUR</span><span>7-ACT STORY CAMPAIGN</span><span>GOLDEN BRIDGES</span><span>ORIGINAL SOUNDTRACK</span><span>SKY MODE · ALIEN BUGS</span></div><button class="mainbtn" id="play">▶ &nbsp; ENTER PITTSBURGH</button><button class="menu-sound" id="playMuted">PLAY MUTED</button><div class="smallprint">Original independent browser-game prototype. Features Pittsburgh-inspired landmarks rather than an exact-scale digital map. No official relationship to Mario, GTA, Batman, Sony, or Meta.</div></div></div>
 <div class="error" id="error">This device cannot initialize WebGL. Open this file in a modern Chrome, Edge, or Safari browser.</div>
 <script>
@@ -122,6 +179,32 @@ canvas#game{z-index:1;background:transparent;}
   asset.onerror=()=>{const menu=getComputedStyle(document.getElementById('titlecover')).backgroundImage;const match=menu.match(/data:image\/jpeg;base64,[A-Za-z0-9+\/=]+/);if(match){sky.style.backgroundImage=`linear-gradient(180deg,#0a0c2195 0%,#121b2b3d 43%,#0a172d 100%),url("${match[0]}")`;sky.dataset.graphicsAsset='embedded-fallback'}else sky.dataset.graphicsAsset='unavailable'};
   asset.src=new URL('assets/pittsburgh-night-skyline.jpg',document.baseURI).href;
   window.__steelJoystickReset=reset;
+})();
+</script>
+<script id="steel-storyboard-hud-js">
+/* Lane A storyboard HUD: TALK tile = E key, minimap district pin, roman act label. Reads game text; never writes it. */
+(()=>{
+  const $=id=>document.getElementById(id);
+  const talk=$('talkMobile');
+  if(talk){
+    let held=false;
+    const send=type=>window.dispatchEvent(new KeyboardEvent(type,{code:'KeyE',key:'e',bubbles:true,cancelable:true}));
+    const release=()=>{if(!held)return;held=false;talk.classList.remove('active');send('keyup')};
+    talk.addEventListener('pointerdown',e=>{e.preventDefault();if(held)return;held=true;talk.classList.add('active');send('keydown')});
+    for(const type of ['pointerup','pointercancel','pointerleave'])talk.addEventListener(type,release);
+    talk.addEventListener('click',e=>{if(e.detail===0){send('keydown');send('keyup')}});
+    window.addEventListener('blur',release);
+  }
+  const place=$('place'),district=$('mapDistrict');
+  const syncPlace=()=>{if(!place||!district)return;const parts=place.textContent.split('·'),name=(parts[parts.length-1]||'').trim();if(name&&district.textContent!==name)district.textContent=name};
+  const roman=['I','II','III','IV','V','VI','VII','VIII','IX','X'];
+  const label=$('storyActLabel');
+  const syncAct=()=>{if(!label)return;const t=label.textContent,m=t.match(/ACT\s+(\d+)\s*\/\s*(\d+)/);const next=m&&roman[m[1]-1]&&roman[m[2]-1]?t.replace(m[0],`ACT ${roman[m[1]-1]} / ${roman[m[2]-1]}`):'';if(next){if(label.dataset.roman!==next)label.dataset.roman=next}else if(label.dataset.roman!==undefined)delete label.dataset.roman};
+  syncPlace();syncAct();
+  if(window.MutationObserver){
+    if(place)new MutationObserver(syncPlace).observe(place,{childList:true,characterData:true,subtree:true});
+    if(label)new MutationObserver(syncAct).observe(label,{childList:true,characterData:true,subtree:true});
+  }
 })();
 </script>
 <script id="steel-hillside-contract">
