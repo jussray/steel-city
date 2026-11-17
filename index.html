@@ -525,10 +525,6 @@ void main(){
  float gradeL=dot(lit,vec3(.299,.587,.114));
  lit=mix(lit*vec3(.84,.97,1.18)+vec3(.0,.010,.026),lit,smoothstep(.10,.55,gradeL));
  lit+=vec3(.085,.05,.0)*smoothstep(.55,1.2,gradeL);
- // Storyboard soft vignette (screen space) with a steel-blue top and bridge-gold floor wash.
- vec2 uv=gl_FragCoord.xy/max(uRes,vec2(1.0));
- lit*=1.0-.62*smoothstep(.52,1.0,length((uv-vec2(.46,.56))/vec2(.88,.80)));
- lit+=vec3(.17,.36,.57)*.07*smoothstep(.64,1.0,uv.y)+vec3(1.0,.72,.36)*.06*(1.0-smoothstep(0.0,.28,uv.y));
  gl_FragColor=vec4(pow(max(lit,vec3(0.0)),vec3(.87)),1.0);
 }`;
 function sh(t,s){const x=gl.createShader(t);gl.shaderSource(x,s);gl.compileShader(x);if(!gl.getShaderParameter(x,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(x));return x}
@@ -671,8 +667,7 @@ for(const t of CINE.farTowers){
  world.box(t.x,t.base+t.h/2,t.z,t.w,t.h,t.d,t.body);cinematicPieces++;
  for(const row of t.rows){const y=row.y,top=row.y+row.h;
   for(const s of row.segs)world.quad([s.a,y,f],[s.b,y,f],[s.b,top,f],[s.a,top,f],row.col,row.glow);
-  world.quad([b+.06,y,r],[b+.06,y,l],[b+.06,top,l],[b+.06,top,r],row.col,row.glow*.8);
-  world.quad([a-.06,y,l],[a-.06,y,r],[a-.06,top,r],[a-.06,top,l],row.col,row.glow*.8);cinematicPieces++;
+  cinematicPieces++;
  }
  if(t.crown){world.pyramid(t.x,t.base+t.h,t.z,t.w*.72,t.crown.h,t.d*.72,t.crown.col,t.crown.glow);world.rod([t.x,t.base+t.h+t.crown.h*.9,t.z],[t.x,t.base+t.h+t.crown.h+2.6,t.z],.09,t.crown.col,1.4);cinematicPieces+=2}
 }
