@@ -122,13 +122,13 @@ canvas#game{z-index:1;background:transparent;}
 #storyVictory button#storyContinue:hover,#storyVictory button#storyContinue:focus-visible{background:linear-gradient(180deg,#16284a,#081224);outline:2px solid #ffe3a0;outline-offset:3px}
 @media(max-height:500px){#storyVictory .sb-crest{width:min(400px,100vh)}#storyVictory .sb-v-the{font-size:clamp(12px,4.6vh,18px)}#storyVictory .sb-v-saga{font-size:clamp(15px,6.6vh,24px)}#storyVictory .sb-v-complete{font-size:clamp(28px,12.5vh,48px)}#storyVictory .sb-victory p{margin:4px auto 8px;font-size:12px}#storyVictory button#storyContinue{padding:9px 20px}}
 /* Chapter card: panel 02 "ACT I / VII — THE FIRST SIGNAL". Display-only, never hit-testable. */
-#sbChapterCard{position:absolute;left:50%;bottom:clamp(150px,27vh,260px);z-index:23;transform:translateX(-50%);pointer-events:none;user-select:none;min-width:min(330px,82vw);max-width:92vw;padding:10px 30px 12px 26px;text-align:left;background:linear-gradient(100deg,#050b16f2 0%,#0a1629e6 70%,#0a162900 100%);border-left:4px solid #f0c25a;clip-path:polygon(0 0,100% 0,calc(100% - 18px) 100%,0 100%);box-shadow:0 10px 30px #0008;opacity:0;will-change:opacity,transform}
+#sbChapterCard{position:absolute;left:50%;top:136px;bottom:auto;z-index:23;transform:translateX(-50%);pointer-events:none;user-select:none;min-width:min(330px,82vw);max-width:92vw;padding:10px 30px 12px 26px;text-align:left;background:linear-gradient(100deg,#050b16f2 0%,#0a1629e6 70%,#0a162900 100%);border-left:4px solid #f0c25a;clip-path:polygon(0 0,100% 0,calc(100% - 18px) 100%,0 100%);box-shadow:0 10px 30px #0008;opacity:0;will-change:opacity,transform}
 #sbChapterCard[hidden]{display:none!important}
 #sbChapterCard .sb-cc-act{font-family:'Inter','Segoe UI',system-ui,sans-serif;font-weight:900;font-size:13px;letter-spacing:.28em;color:#ffd469}
 #sbChapterCard .sb-cc-act b{font-weight:900}#sbChapterCard .sb-cc-act i{font-style:normal;color:#ffffff80}
 #sbChapterCard .sb-cc-title{margin-top:3px;font-family:Impact,'Arial Black','Inter Display','Inter',system-ui,sans-serif;font-style:italic;font-weight:900;font-size:clamp(20px,3vw,30px);letter-spacing:.03em;line-height:1.02;color:#fff;text-transform:uppercase;text-shadow:0 2px 8px #000}
 @media(orientation:portrait) and (max-width:760px){#sbChapterCard{bottom:auto;top:clamp(160px,26vh,240px)}}
-@media(orientation:landscape) and (max-height:500px){#sbChapterCard{top:auto;bottom:max(16px,env(safe-area-inset-bottom));padding:7px 24px 8px 18px;min-width:0}#sbChapterCard .sb-cc-act{font-size:10px}#sbChapterCard .sb-cc-title{font-size:18px}}
+@media(orientation:landscape) and (max-height:500px){#sbChapterCard{display:none!important}#sbChapterCard .sb-cc-act{font-size:10px}#sbChapterCard .sb-cc-title{font-size:18px}}
 </style>
 <style id="steel-touch-layout">
 /* Touch play on every screen shape. Controls follow the input device, not the width, and short
@@ -756,7 +756,7 @@ function sagaTick(dt){sagaCooldown=Math.max(0,sagaCooldown-dt);sagaPulse+=dt;if(
 // STORYBOARD CAST v1 (panels 02/04/05/06): original real-time 3D characters, not painted art.
 const CAST_REVISION='storyboard-cast-v1';
 const castStats={heroEmblems:0,bootJets:0,maraParts:0,clockParts:0,starPickups:0,starSparkles:0,crewHooded:0,bugsWinged:0,dynamicVertices:0};
-const MARKET_CLOCK={x:2.7,z:24.4};
+const MARKET_CLOCK={x:4.6,z:24.4};
 // Pose a locally built Mesh (front = +z) at a world point with a yaw and uniform scale.
 function castFace(B,x,y,z,r,col,emi,f,seg=20){for(let i=0;i<seg;i++){const a=i/seg*6.283,b=(i+1)/seg*6.283,p=[x+Math.cos(a)*r,y+Math.sin(a)*r,z],q=[x+Math.cos(b)*r,y+Math.sin(b)*r,z];if(f>0)B.tri([x,y,z],p,q,col,emi);else B.tri([x,y,z],q,p,col,emi)}}
 function castPose(mesh,B,x,y,z,yaw,sc=1){const cs=Math.cos(yaw),sn=Math.sin(yaw);for(let i=0;i<B.v.length;i+=10){const lx=B.v[i]*sc,ly=B.v[i+1]*sc,lz=B.v[i+2]*sc,nx=B.v[i+3],nz=B.v[i+5];mesh.v.push(x+lx*cs+lz*sn,y+ly,z-lx*sn+lz*cs,nx*cs+nz*sn,B.v[i+4],-nx*sn+nz*cs,B.v[i+6],B.v[i+7],B.v[i+8],B.v[i+9])}}
@@ -946,7 +946,7 @@ function renderArmorFinish(m){
 }
 function renderDynamic(){dynamic.v.length=0;for(const k in castStats)castStats[k]=0;renderHero(dynamic);renderArmorFinish(dynamic);sagaDraw3D(dynamic);for(let s of pickups){if(s.taken)continue;let y=s.y+Math.sin(state.t*3+s.x)*.20;drawSteelStar(dynamic,s,y)}if(state.stars>=5&&!state.finished){let y=5.2+Math.sin(state.t*2)*.6;dynamic.rod([0,y-1.2,-33],[0,y+1.2,-33],.20,'#ffe9ab',1.9)}
 if(sky.active){dynamic.box(state.pos.x,state.pos.y+.75,state.pos.z+.8,.44,1.5,.22,'#33dff1',1.6);dynamic.pyramid(state.pos.x,state.pos.y+.15,state.pos.z+1.0,.54,-1.8,.52,'#46d9ff',1.8)}
-for(let e of sky.enemies){if(e.dead)continue;drawAlienBug(dynamic,e,1,'#1a1024')}
+for(let e of sky.enemies){if(e.dead||!(sky.active||sagaStage>=4))continue;drawAlienBug(dynamic,e,1,'#1a1024')}
 for(let s of sky.enemyShots){dynamic.box(s.x,s.y,s.z,.56,.56,.56,'#ee69ff',2.1)}for(let s of sky.shots){dynamic.rod([s.x,s.y,s.z],[s.x-s.vx*.038,s.y-s.vy*.038,s.z-s.vz*.038],.22,'#6cefff',2.2)}for(let b of sky.bursts){let rr=(.45-b.life)*5;for(let j=0;j<6;j++){let a=j*Math.PI/3;dynamic.rod([b.x,b.y,b.z],[b.x+Math.cos(a)*rr,b.y+Math.sin(a)*rr,b.z],.13,'#ffd889',2.0)}}
 castStats.dynamicVertices=dynamic.v.length/10;let f=new Float32Array(dynamic.v);upload(dbuf,f,gl.DYNAMIC_DRAW);}
 function perspective(fov,aspect,n,far){let v=1/Math.tan(fov/2),nf=1/(n-far);return new Float32Array([v/aspect,0,0,0,0,v,0,0,0,0,(far+n)*nf,-1,0,0,2*far*n*nf,0])}
@@ -1036,7 +1036,7 @@ function sagaTick(dt){sagaCooldown=Math.max(0,sagaCooldown-dt);sagaPulse+=dt;if(
 // STORYBOARD CAST v1 (panels 02/04/05/06): canvas fallback mirrors the WebGL cast, same coordinates and palette.
 const CAST_REVISION='storyboard-cast-v1';
 const castStats={heroEmblems:0,bootJets:0,maraParts:0,clockParts:0,starPickups:0,starSparkles:0,crewHooded:0,bugsWinged:0};
-const MARKET_CLOCK={x:2.7,z:24.4};
+const MARKET_CLOCK={x:4.6,z:24.4};
 function castStarPath(g,R,r){g.beginPath();for(let j=0;j<10;j++){let a=j/10*6.283-Math.PI/2,rr=j%2?r:R;if(!j)g.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);else g.lineTo(Math.cos(a)*rr,Math.sin(a)*rr)}g.closePath()}
 function castClock2D(project,g){const c=MARKET_CLOCK,base=project(c.x,0,c.z),top=project(c.x,3.0,c.z),face=project(c.x,3.45,c.z+.2),sign=project(c.x,2.55,c.z+.05);if(!base||!top||!face||!sign)return;
  const u=(base.y-top.y)/3.0;g.save();g.fillStyle='#101216';g.fillRect(base.x-u*.31,base.y-u*.28,u*.62,u*.28);g.strokeStyle='#15171c';g.lineWidth=Math.max(1.5,u*.17);g.beginPath();g.moveTo(base.x,base.y-u*.3);g.lineTo(top.x,top.y);g.stroke();
@@ -1220,7 +1220,7 @@ for(let s of stars){if(s.taken)continue;let y=s.y+Math.sin(state.t*3+s.x)*.2,p=p
 
 sagaDraw2D(put,g,cv.height);
 // Alien hover-swarm: billboards are placed at projected 3D coordinates, preserving free camera movement.
-for(let e of sky.enemies){if(e.dead)continue;let p=put(e.x,e.y,e.z);if(!p||p.x<-100||p.x>cv.width+100)continue;let rr=Math.min(135,cv.height*1.4/p.depth),wing=Math.sin(state.t*15+e.phase)*rr*.3;g.save();g.translate(p.x,p.y);castBug2D(g,rr,wing,state.t+e.phase,false);g.restore()}
+for(let e of sky.enemies){if(e.dead||!(sky.active||sagaStage>=4))continue;let p=put(e.x,e.y,e.z);if(!p||p.x<-100||p.x>cv.width+100)continue;let rr=Math.min(135,cv.height*1.4/p.depth),wing=Math.sin(state.t*15+e.phase)*rr*.3;g.save();g.translate(p.x,p.y);castBug2D(g,rr,wing,state.t+e.phase,false);g.restore()}
 for(let s of sky.enemyShots){let p=put(s.x,s.y,s.z);if(!p)continue;let r=Math.max(3,cv.height*.36/p.depth);g.save();g.shadowColor='#c44bff';g.shadowBlur=25;g.fillStyle='#d68cff';g.beginPath();g.arc(p.x,p.y,r,0,6.283);g.fill();g.restore()}for(let s of sky.shots){let p=put(s.x,s.y,s.z);if(!p)continue;let rr=Math.max(3,cv.height*.3/p.depth);g.save();g.shadowColor='#67f7ff';g.shadowBlur=28;g.fillStyle='#b3ffff';g.beginPath();g.arc(p.x,p.y,rr,0,6.283);g.fill();g.restore()}
 for(let b of sky.bursts){let p=put(b.x,b.y,b.z);if(!p)continue;let rr=(.4-b.life)*60;g.strokeStyle='#ffe08b';g.lineWidth=5;g.shadowColor='#ffb970';g.shadowBlur=20;g.beginPath();g.arc(p.x,p.y,rr,0,6.283);g.stroke();g.shadowBlur=0}
 
