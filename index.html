@@ -61,6 +61,76 @@ canvas#game{z-index:1;background:transparent;}
  #hud .toast{top:29%;width:min(290px,calc(100vw - 20px));padding:7px 9px;font-size:10px;letter-spacing:.04em;line-height:1.3}
 }
 </style></head><body>
+<style id="steel-storyboard-screens">
+/* Storyboard lane B: title, chapter card and completion treatments.
+   Reference: graphics/reference/three-rivers-storyboard-v1.webp (concept art, not gameplay).
+   The approved title JPEG stays the #titlecover background; only type and buttons change. */
+#titlecover .intro{display:flex;flex-direction:column;align-items:flex-start;gap:0}
+#titlecover .sb-head{display:flex;flex-direction:column;align-items:flex-start}
+#titlecover .bigtitle{display:flex;flex-direction:column;align-items:flex-start;font-family:Impact,'Arial Black','Inter Display','Inter',system-ui,sans-serif;font-weight:900;font-style:italic;line-height:.9;letter-spacing:.01em;text-shadow:none;filter:drop-shadow(0 6px 14px #000c) drop-shadow(0 0 22px #e9b9492e);font-size:clamp(50px,min(7.8vw,13.5vh),118px)}
+#titlecover .bigtitle span{display:block;margin:0;font-size:inherit;letter-spacing:inherit}
+#titlecover .bigtitle .sb-steel{white-space:nowrap;padding:.02em .08em .04em 0;background:linear-gradient(180deg,#ffffff 0%,#e9eef4 26%,#9aa6b4 47%,#5c6877 52%,#d5dce4 66%,#f7f9fb 80%,#8d98a6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.022em #e8b54a;transform:skewX(-6deg)}
+#titlecover .bigtitle .sb-shift{margin-top:.12em;font-size:.30em;letter-spacing:.42em;font-weight:800;padding-left:.15em;white-space:nowrap;background:linear-gradient(180deg,#ffffff 0%,#d8ecff 45%,#7fb2e6 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 8px #4f9be055)}
+#titlecover .bigtitle .sb-saga{display:flex;align-items:center;gap:.6em;margin-top:.55em;font-family:'Inter','Segoe UI',system-ui,sans-serif;font-style:normal;font-size:.135em;letter-spacing:.32em;font-weight:800;color:#f4f0e4;white-space:nowrap}
+#titlecover .bigtitle .sb-saga:before{content:'';width:3.2em;height:2px;background:linear-gradient(90deg,transparent,#f0c25a)}
+#titlecover .sb-cta{display:flex;flex-direction:column;align-items:flex-start;gap:12px;margin-top:22px}
+#titlecover .mainbtn#play{padding:2px 4px;margin:0;border:0;border-radius:0;background:none;box-shadow:none;color:#f6c54d;font-family:Impact,'Arial Black','Inter Display','Inter',system-ui,sans-serif;font-style:italic;font-weight:900;letter-spacing:.02em;font-size:clamp(28px,min(3.4vw,6vh),46px);line-height:.92;text-align:left;filter:drop-shadow(0 4px 6px #000d) drop-shadow(0 0 18px #f3b23e66);transition:transform .15s,filter .15s}
+#titlecover #play span{display:inline-block;background:linear-gradient(180deg,#fff6c8 0%,#ffd768 38%,#e9a52c 62%,#b9761b 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.012em #6a3f08}
+#titlecover #play .sb-enter{display:block}
+#titlecover #play:hover,#titlecover #play:focus-visible{transform:translateX(3px) scale(1.03);filter:drop-shadow(0 4px 6px #000d) drop-shadow(0 0 26px #ffcb57aa)}
+#titlecover #play:focus-visible,#titlecover #playMuted:focus-visible{outline:2px solid #ffe3a0;outline-offset:4px}
+#titlecover .menu-sound#playMuted{display:inline-flex;align-items:center;gap:10px;margin:0;padding:11px 26px 11px 20px;border:2px solid #e9b949;border-radius:999px;background:linear-gradient(180deg,#0d1a2fe8,#050b16f0);color:#fff;font-weight:900;letter-spacing:.09em;font-size:14px;box-shadow:0 0 0 1px #00000080,0 8px 22px #000a,inset 0 0 14px #e9b94922}
+#titlecover #playMuted .sb-tri{color:#ffd15a;font-size:.95em}
+#titlecover #playMuted:hover{background:linear-gradient(180deg,#16284a,#081224)}
+@media(max-width:760px){
+ #titlecover .bigtitle{font-size:clamp(46px,14.2vw,84px)}
+ #titlecover .bigtitle .sb-shift{font-size:.34em;letter-spacing:.36em}
+ #titlecover .bigtitle .sb-saga{font-size:.17em;letter-spacing:.24em}
+ #titlecover .sb-cta{margin-top:14px;gap:10px}
+ #titlecover .mainbtn#play{font-size:clamp(28px,8.6vw,40px)}
+}
+@media(orientation:landscape) and (max-height:500px){
+ #titlecover .intro{flex-direction:row;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;column-gap:22px;width:100%;max-width:none}
+ #titlecover .sb-head{flex:1 1 auto;min-width:0}
+ #titlecover .bigtitle{font-size:clamp(40px,15.5vh,66px)}
+ #titlecover .bigtitle .sb-saga{font-size:.18em}
+ #titlecover .subhead{max-width:380px}
+ #titlecover .sb-cta{flex:0 0 auto;align-items:center;margin:0 0 4px;gap:9px}
+ #titlecover .mainbtn#play{padding:2px 4px;font-size:clamp(24px,8.6vh,36px);text-align:center}
+ #titlecover .menu-sound#playMuted{padding:8px 18px 8px 14px;font-size:12px}
+ #titlecover .smallprint{display:none}
+}
+@media(orientation:landscape) and (max-height:340px){
+ #titlecover .sup{display:none}
+ #titlecover .subhead{-webkit-line-clamp:1}
+}
+/* Completion: panel 08 "The City Is Still Ours". */
+#storyVictory{background:radial-gradient(ellipse at 50% 42%,#0a1830b8 0%,#061225e0 55%,#030a16f2 100%)}
+#storyVictory>div.sb-victory{position:relative;max-width:560px;width:100%;padding:8px 18px 18px;background:none;border:0;border-radius:0;text-align:center}
+#storyVictory .sb-crest{position:relative;margin:0 auto;width:min(440px,92vw);aspect-ratio:400/250;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:2%}
+#storyVictory .sb-laurel{position:absolute;inset:0;width:100%;height:100%;filter:drop-shadow(0 0 10px #f3b23e55) drop-shadow(0 3px 4px #000c)}
+#storyVictory .sb-v-the,#storyVictory h2,#storyVictory .sb-v-star{position:relative;z-index:1}
+#storyVictory .sb-v-the{font-family:Impact,'Arial Black','Inter Display','Inter',system-ui,sans-serif;font-weight:900;font-size:clamp(16px,4.2vw,22px);letter-spacing:.1em;color:#ffd979;text-shadow:0 2px 6px #000}
+#storyVictory h2{display:flex;flex-direction:column;align-items:center;margin:2px 0 0;font-family:Impact,'Arial Black','Inter Display','Inter',system-ui,sans-serif;font-style:italic;font-weight:900;line-height:.95;color:#ffd06a}
+#storyVictory .sb-v-saga,#storyVictory .sb-v-complete{display:block;background:linear-gradient(180deg,#fff4c4 0%,#ffd567 40%,#e5a12b 64%,#a9681a 100%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:.012em #5a3306;filter:drop-shadow(0 3px 4px #000c)}
+#storyVictory .sb-v-saga{font-size:clamp(20px,5.6vw,31px);letter-spacing:.02em}
+#storyVictory .sb-v-complete{font-size:clamp(40px,11.5vw,64px);letter-spacing:.01em;margin-top:2px}
+#storyVictory .sb-v-star{margin-top:2px;font-size:clamp(18px,4.6vw,26px);color:#fff1b3;text-shadow:0 0 10px #ffd35a,0 0 22px #f5a92d}
+#storyVictory .sb-victory p{max-width:420px;margin:10px auto 16px;font-size:14px;color:#d4e2ee;text-shadow:0 2px 6px #000}
+#storyVictory button#storyContinue{flex:none;display:inline-flex;align-items:center;gap:10px;padding:12px 26px;border:2px solid #e9b949;border-radius:999px;background:linear-gradient(180deg,#0d1a2ff0,#050b16f5);color:#fff;font-size:13px;font-weight:900;letter-spacing:.1em;box-shadow:0 8px 24px #000b,inset 0 0 14px #e9b94922}
+#storyVictory button#storyContinue span{color:#ffd15a}
+#storyVictory button#storyContinue:hover,#storyVictory button#storyContinue:focus-visible{background:linear-gradient(180deg,#16284a,#081224);outline:2px solid #ffe3a0;outline-offset:3px}
+@media(max-height:500px){#storyVictory .sb-crest{width:min(330px,60vh*1.6)}#storyVictory .sb-victory p{margin:4px auto 8px;font-size:12px}#storyVictory button#storyContinue{padding:9px 20px}}
+/* Chapter card: panel 02 "ACT I / VII — THE FIRST SIGNAL". Display-only, never hit-testable. */
+#sbChapterCard{position:absolute;left:50%;bottom:clamp(150px,27vh,260px);z-index:23;transform:translateX(-50%);pointer-events:none;user-select:none;min-width:min(330px,82vw);max-width:92vw;padding:10px 30px 12px 26px;text-align:left;background:linear-gradient(100deg,#050b16f2 0%,#0a1629e6 70%,#0a162900 100%);border-left:4px solid #f0c25a;clip-path:polygon(0 0,100% 0,calc(100% - 18px) 100%,0 100%);box-shadow:0 10px 30px #0008;animation:sbChapterIn 2.6s ease both}
+#sbChapterCard[hidden]{display:none!important}
+#sbChapterCard .sb-cc-act{font-family:'Inter','Segoe UI',system-ui,sans-serif;font-weight:900;font-size:13px;letter-spacing:.28em;color:#ffd469}
+#sbChapterCard .sb-cc-act b{font-weight:900}#sbChapterCard .sb-cc-act i{font-style:normal;color:#ffffff80}
+#sbChapterCard .sb-cc-title{margin-top:3px;font-family:Impact,'Arial Black','Inter Display','Inter',system-ui,sans-serif;font-style:italic;font-weight:900;font-size:clamp(20px,3vw,30px);letter-spacing:.03em;line-height:1.02;color:#fff;text-transform:uppercase;text-shadow:0 2px 8px #000}
+@keyframes sbChapterIn{0%{opacity:0;transform:translateX(calc(-50% - 26px))}12%{opacity:1;transform:translateX(-50%)}82%{opacity:1;transform:translateX(-50%)}100%{opacity:0;transform:translateX(calc(-50% + 14px))}}
+@media(orientation:landscape) and (max-height:500px){#sbChapterCard{top:auto;bottom:max(16px,env(safe-area-inset-bottom));padding:7px 24px 8px 18px;min-width:0}#sbChapterCard .sb-cc-act{font-size:10px}#sbChapterCard .sb-cc-title{font-size:18px}}
+@media(prefers-reduced-motion:reduce){#sbChapterCard{animation:none}}
+</style>
 <style id="steel-touch-layout">
 /* Touch play on every screen shape. Controls follow the input device, not the width, and short
    landscape screens get a title and HUD that fit. Portrait phones and desktop keep their layout. */
@@ -103,7 +173,7 @@ canvas#game{z-index:1;background:transparent;}
 <canvas id="game" aria-label="Free-roaming third-person 3D Pittsburgh-inspired game world"></canvas>
 <div id="hud"><div class="bar"><div class="logo">STEEL CITY<br><b>OPEN WORLD</b></div><div class="citytag">PITTSBURGH, PA<br>THE THREE RIVERS</div></div><div class="objective"><small id="missionLabel">◆ MISSION 01 · THE GOLDEN ROUTE</small><strong id="objectiveTitle">Collect five Steel Stars</strong><span id="objectiveDetail">Explore the city and rooftops</span></div><div class="compass" id="compass">N  ◇  PITTSBURGH</div><div class="counter">STEEL STARS &nbsp;<b id="count">0/5</b><small id="mode">FREEROAM · NIGHT DISTRICT</small></div><div class="buttons"><button class="mini skylaunch" id="skyToggle" aria-label="Toggle Sky Mode">✦ SKY MODE · F</button><button class="mini" id="audio">♫ SOUND OFF</button><button class="mini" id="camReset">↺ CAMERA</button><button class="mini" id="restart">↻ RESET</button></div><div id="skyhud" aria-live="polite"><div class="sky-title">☄ SKY PATROL <span id="skyStatus">STANDBY</span></div><div class="healthline"><span>ARMOR</span><div class="meter"><i id="healthFill"></i></div><b id="healthText">100</b></div><div class="skyline"><span id="bugsCount">BUGS 0 / 6</span><span id="altitude">ALT 0 M</span></div><div class="sky-advice" id="skyAdvice">F: FLY · SPACE: RISE · C: DESCEND · J: BLAST</div></div><div id="reticle"><span>+</span><small id="targetLabel">TARGET ACQUIRED</small></div><div class="location" id="place">DOWNTOWN · GOLDEN TRIANGLE</div><div class="help">WASD MOVE · DRAG LOOK · F FLY/LAND · SPACE RISE · C DESCEND · J / CLICK FIRE · SHIFT BOOST</div><div class="mapwrap"><canvas id="map" width="300" height="300"></canvas><div class="maplabel">CITY DISTRICT</div></div><div class="toast" id="toast"></div></div>
 <div id="controls"><div class="pad" id="movePad" aria-label="Movement controls"><div id="moveJoystick" role="group" tabindex="0" aria-label="Movement joystick. Drag to move. Camera follows the joystick direction. Keyboard W A S D also works."><div class="joystick-glyph" aria-hidden="true">✦</div><div id="moveKnob" aria-hidden="true"></div></div><span class="joystick-caption">MOVE + LOOK</span></div><div class="actions-pad"><button id="skyMobile" aria-label="Toggle sky flight">FLY</button><button id="fireMobile" aria-label="Fire energy pulse">BLAST</button><button id="descendMobile" aria-label="Descend">DOWN</button><button id="sprint" aria-label="Sprint">RUN</button><button id="jump2" aria-label="Jump">JUMP</button></div></div>
-<section id="storyHud" aria-label="Story campaign"><div class="eyebrow" id="storyActLabel">THE THREE RIVERS · ACT 1/7</div><h2 id="storyTitle">The First Signal</h2><p id="storyGoal">Speak with Mara at Market Square</p><div class="progress" id="storyProgress"></div><div class="actions"><button id="storyRoute" class="primary">⌖ GO</button><button id="storyAttack" aria-label="Energy pulse attack">⚡ BLAST</button><button id="storyOpen">▤ ACTS</button></div></section><section id="storyJournal" hidden aria-label="Story campaign"><h2>THE THREE RIVERS SAGA</h2><p>Seven-stage original superhero adventure set in a stylized Pittsburgh district. Follow the signal through Market Square, Pittsburgh-inspired shopfronts, bridges, hillside homes, a fictional tech gang, and an alien Queen. Real businesses are geographic references, not sponsors. Use WASD to roam, F to fly or land, Space to jump or rise, C to descend, J to blast and E to talk.</p><div id="storyActCards" class="storyActs"></div><button id="storyClose">CLOSE STORY</button></section><section id="storyVictory" hidden><div><div style="color:#ffdc94;font-size:11px;letter-spacing:.2em">THE THREE RIVERS SAGA · COMPLETE</div><h2>PITTSBURGH STANDS TOGETHER</h2><p>The neighborhood signal reached the bridges. The Circuit Crew is stopped, the markets are lit, and the alien Queen has withdrawn. Your city is safe for another night.</p><button id="storyContinue">CONTINUE FREE-ROAM</button></div></section><div class="titlecover" id="titlecover"><div class="intro"><div class="sup">THE CITY IS YOUR PLAYGROUND</div><h1 class="bigtitle">STEEL<br>CITY<span>NIGHT SHIFT</span></h1><div class="subhead">No lanes. No automatic running. <b>Explore an open Pittsburgh-inspired 3D district</b>, leap across rooftops, discover the bridges, and collect five Steel Stars, then take flight and defend the skies from alien bugs.</div><div class="features"><span>FREE-ROAM 3D</span><span>ROOFTOP PARKOUR</span><span>7-ACT STORY CAMPAIGN</span><span>GOLDEN BRIDGES</span><span>ORIGINAL SOUNDTRACK</span><span>SKY MODE · ALIEN BUGS</span></div><button class="mainbtn" id="play">▶ &nbsp; ENTER PITTSBURGH</button><button class="menu-sound" id="playMuted">PLAY MUTED</button><div class="smallprint">Original independent browser-game prototype. Features Pittsburgh-inspired landmarks rather than an exact-scale digital map. No official relationship to Mario, GTA, Batman, Sony, or Meta.</div></div></div>
+<section id="storyHud" aria-label="Story campaign"><div class="eyebrow" id="storyActLabel">THE THREE RIVERS · ACT 1/7</div><h2 id="storyTitle">The First Signal</h2><p id="storyGoal">Speak with Mara at Market Square</p><div class="progress" id="storyProgress"></div><div class="actions"><button id="storyRoute" class="primary">⌖ GO</button><button id="storyAttack" aria-label="Energy pulse attack">⚡ BLAST</button><button id="storyOpen">▤ ACTS</button></div></section><section id="storyJournal" hidden aria-label="Story campaign"><h2>THE THREE RIVERS SAGA</h2><p>Seven-stage original superhero adventure set in a stylized Pittsburgh district. Follow the signal through Market Square, Pittsburgh-inspired shopfronts, bridges, hillside homes, a fictional tech gang, and an alien Queen. Real businesses are geographic references, not sponsors. Use WASD to roam, F to fly or land, Space to jump or rise, C to descend, J to blast and E to talk.</p><div id="storyActCards" class="storyActs"></div><button id="storyClose">CLOSE STORY</button></section><section id="storyVictory" hidden aria-label="The Three Rivers Saga complete"><div class="sb-victory"><div class="sb-crest"><svg class="sb-laurel" viewBox="0 0 400 250" aria-hidden="true"><defs><linearGradient id="sbGold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1b8"/><stop offset=".45" stop-color="#f2c14e"/><stop offset="1" stop-color="#a8701c"/></linearGradient><path id="sbLeaf" d="M0 0C7 -6 19 -7 29 0C19 7 7 6 0 0Z"/></defs><g id="sbBranch" fill="url(#sbGold)" stroke="#5e3b0c" stroke-width=".7"><path d="M152.7 221.5 L146.6 218.4 L140.6 215.0 L135.0 211.2 L129.5 207.0 L124.3 202.6 L119.4 197.8 L114.8 192.7 L110.6 187.4 L106.6 181.8 L103.0 176.0 L99.8 170.0 L96.9 163.8 L94.4 157.4 L92.3 150.9 L90.7 144.2 L89.4 137.5 L88.5 130.7 L88.1 123.9 L88.0 117.1 L88.4 110.2 L89.2 103.4 L90.4 96.7 L92.1 90.1 L94.1 83.5 L96.5 77.1 L99.3 70.9 L102.5 64.8 L106.1 59.0 L110.0 53.4 L114.2 48.0" fill="none" stroke="#e0aa3e" stroke-width="3" stroke-linecap="round"/><use href="#sbLeaf" transform="translate(140.3 214.8) rotate(172) scale(1.02)"/><use href="#sbLeaf" transform="translate(140.3 214.8) rotate(252) scale(1.02)"/><use href="#sbLeaf" transform="translate(120.3 198.7) rotate(185) scale(0.97)"/><use href="#sbLeaf" transform="translate(120.3 198.7) rotate(265) scale(0.97)"/><use href="#sbLeaf" transform="translate(104.5 178.6) rotate(198) scale(0.92)"/><use href="#sbLeaf" transform="translate(104.5 178.6) rotate(278) scale(0.92)"/><use href="#sbLeaf" transform="translate(93.7 155.4) rotate(212) scale(0.87)"/><use href="#sbLeaf" transform="translate(93.7 155.4) rotate(292) scale(0.87)"/><use href="#sbLeaf" transform="translate(88.5 130.3) rotate(225) scale(0.82)"/><use href="#sbLeaf" transform="translate(88.5 130.3) rotate(305) scale(0.82)"/><use href="#sbLeaf" transform="translate(89.0 104.7) rotate(238) scale(0.77)"/><use href="#sbLeaf" transform="translate(89.0 104.7) rotate(318) scale(0.77)"/><use href="#sbLeaf" transform="translate(95.4 79.9) rotate(251) scale(0.72)"/><use href="#sbLeaf" transform="translate(95.4 79.9) rotate(331) scale(0.72)"/><use href="#sbLeaf" transform="translate(107.3 57.2) rotate(264) scale(0.67)"/><use href="#sbLeaf" transform="translate(107.3 57.2) rotate(344) scale(0.67)"/><use href="#sbLeaf" transform="translate(114.2 48.0) rotate(310) scale(.62)"/></g><use href="#sbBranch" transform="translate(400 0) scale(-1 1)"/></svg><div class="sb-v-the">THE</div><h2><span class="sb-v-saga">THREE RIVERS SAGA</span><span class="sb-v-complete">COMPLETE</span></h2><div class="sb-v-star" aria-hidden="true">★</div></div><p>The neighborhood signal reached the bridges. The Circuit Crew is stopped, the markets are lit, and the alien Queen has withdrawn. The city is still ours for another night.</p><button id="storyContinue">CONTINUE EXPLORING <span aria-hidden="true">▸</span></button></div></section><div id="sbChapterCard" aria-hidden="true" hidden><div class="sb-cc-act"><b>ACT</b> <span id="sbChapterNum">I</span> <i>/</i> VII</div><div class="sb-cc-title" id="sbChapterTitle">THE FIRST SIGNAL</div></div><div class="titlecover" id="titlecover"><div class="intro"><div class="sb-head"><div class="sup">THE CITY IS YOUR PLAYGROUND</div><h1 class="bigtitle" aria-label="Steel City: Night Shift. The Three Rivers Saga"><span class="sb-steel">STEEL CITY</span><span class="sb-shift">NIGHT SHIFT</span><span class="sb-saga">THE THREE RIVERS SAGA</span></h1><div class="subhead">No lanes. No automatic running. <b>Explore an open Pittsburgh-inspired 3D district</b>, leap across rooftops, discover the bridges, and collect five Steel Stars, then take flight and defend the skies from alien bugs.</div><div class="features"><span>FREE-ROAM 3D</span><span>ROOFTOP PARKOUR</span><span>7-ACT STORY CAMPAIGN</span><span>GOLDEN BRIDGES</span><span>ORIGINAL SOUNDTRACK</span><span>SKY MODE · ALIEN BUGS</span></div></div><div class="sb-cta"><button class="mainbtn" id="play" aria-label="Enter Pittsburgh with sound"><span class="sb-enter">ENTER</span> <span class="sb-pgh">PITTSBURGH</span></button><button class="menu-sound" id="playMuted" aria-label="Play muted"><span class="sb-tri" aria-hidden="true">▶</span> PLAY MUTED</button></div><div class="smallprint">Original independent browser-game prototype. Features Pittsburgh-inspired landmarks rather than an exact-scale digital map. No official relationship to Mario, GTA, Batman, Sony, or Meta.</div></div></div>
 <div class="error" id="error">This device cannot initialize WebGL. Open this file in a modern Chrome, Edge, or Safari browser.</div>
 <script>
 /* One pointer-captured analog stick shared by 3D WebGL and 2.5D fallback. */
@@ -167,6 +237,27 @@ canvas#game{z-index:1;background:transparent;}
   const run=()=>requestAnimationFrame(()=>window.__steelHillsideSmoke());
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',run,{once:true});else run();
  }
+})();
+</script>
+<script id="steel-storyboard-screens-js">
+/* Act chapter card. Reads the story HUD text the renderers already write; never touches game state. */
+(()=>{
+  const card=document.getElementById('sbChapterCard'),num=document.getElementById('sbChapterNum'),name=document.getElementById('sbChapterTitle');
+  const label=document.getElementById('storyActLabel'),title=document.getElementById('storyTitle'),cover=document.getElementById('titlecover');
+  if(!card||!label||!title||!cover)return;
+  const ROMAN=['I','II','III','IV','V','VI','VII'];let shown=null,timer=0;
+  const started=()=>cover.classList.contains('hidden');
+  function current(){const m=/ACT\s+(\d+)\s*\/\s*7/.exec(label.textContent||'');return m?{act:+m[1],title:(title.textContent||'').trim()}:null}
+  function show(c){shown=c.act+'|'+c.title;num.textContent=ROMAN[c.act-1]||c.act;name.textContent=c.title;
+    clearTimeout(timer);card.hidden=true;void card.offsetWidth;card.hidden=false;card.dataset.act=c.act;
+    timer=setTimeout(()=>{card.hidden=true},2600)}
+  function check(){if(!started())return;const c=current();if(!c){shown=null;return}if(c.act+'|'+c.title!==shown)show(c)}
+  // Renderers rewrite the same text many times a second; act on real changes only.
+  const watch=new MutationObserver(check);
+  watch.observe(label,{childList:true,characterData:true,subtree:true});
+  watch.observe(title,{childList:true,characterData:true,subtree:true});
+  watch.observe(cover,{attributes:true,attributeFilter:['class']});
+  window.__steelChapterCard=()=>({hidden:card.hidden,act:card.dataset.act||null,title:name.textContent});
 })();
 </script>
 <script id="steel-bridge-contract">
