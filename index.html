@@ -962,7 +962,7 @@ if(sky.active){
 function renderArmorFinish(m){
  const ang=state.heading,cs=Math.cos(ang),sn=Math.sin(ang),p=state.pos;
  function append(B){for(let i=0;i<B.v.length;i+=10){const lx=B.v[i],ly=B.v[i+1],lz=B.v[i+2],nx=B.v[i+3],ny=B.v[i+4],nz=B.v[i+5];m.v.push(p.x+lx*cs+lz*sn,p.y+ly,p.z-lx*sn+lz*cs,nx*cs+nz*sn,ny,-nx*sn+nz*cs,...B.v.slice(i+6,i+10))}}
- function shell(x,y,z,rx,ry,rz,col,glow=0,seg=12,rings=6){const B=new Mesh();B.ellipsoid(x,y,z,rx,ry,rz,col,glow,seg,rings);append(B)}
+ function shell(x,y,z,rx,ry,rz,col,glow=0,seg=8,rings=4){const B=new Mesh();B.ellipsoid(x,y,z,rx,ry,rz,col,glow,seg,rings);append(B)}
  function fabric(a,b,c,d,col){const B=new Mesh();B.quad(a,b,c,d,col,.04);append(B)}
  // Sculptural shoulders, curved helmet and layered metal sternum.
  // Dark skin tone, short dark curly hair and trimmed beard (storyboard hero), plus hood collar.
@@ -978,8 +978,8 @@ function renderArmorFinish(m){
  // Rounded torso and layered shoulder pauldrons replace the box-shaped silhouette.
  shell(0,1.91,.13,.40,.18,.30,'#172b49',.02,12,5);
  for(const side of [-1,1]){
-  shell(side*.59,1.99,.01,.33,.26,.31,'#33507a',.10,12,7);
-  shell(side*.60,2.01,.01,.34,.048,.325,'#dca94f',.70,12,3);
+  shell(side*.59,1.99,.01,.33,.26,.31,'#33507a',.10,8,5);
+  shell(side*.60,2.01,.01,.34,.048,.325,'#dca94f',.70,8,3);
   shell(side*.63,1.45,.08,.18,.38,.19,'#22375a');
   shell(side*.63,1.02,.06,.18,.17,.17,'#101a2d');
   const leg=sky.active?0:Math.sin(state.gaitPhase)*state.moveBlend*side;
