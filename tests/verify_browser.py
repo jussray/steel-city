@@ -61,6 +61,8 @@ def verify(page, url, require_webgl, require_hardware):
                style.pointerEvents === 'none';
     }""", timeout=3000)
     assert page.locator("#hud").is_visible(), "Gameplay HUD missing after play"
+    assert page.title() == "STEEL CITY: NIGHT SHIFT | Pittsburgh 3D", "Browser title differs from approved Steel City game"
+    assert page.locator("#hud .logo b").inner_text().strip() == "NIGHT SHIFT", "Gameplay HUD uses obsolete Open World branding"
     # Clear the opening gameplay image, and keep the portrait HUD controls apart.
     assert not page.locator("#toast").evaluate("(el) => el.classList.contains('show')"), "Startup toast obscures 3D gameplay"
     if page.viewport_size["width"] <= 430:
