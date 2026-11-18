@@ -15,6 +15,7 @@ SKYLINE = ROOT / "assets" / "pittsburgh-night-skyline.jpg"
 assert SKYLINE.is_file(), "Missing exported skyline"
 assert "cinematic-geometry-v3" in GAME, "Cinematic geometry revision missing"
 assert "function renderArmorFinish(m)" in GAME, "Rounded 3D armor geometry missing"
+assert "bevelBox(x,y,z,w,h,d,col,glow=0,radius=.12)" in GAME, "Rounded box mesh missing"
 assert "uniform float uStaticScene;" in GAME, "World-only material shader gate missing"
 
 proof = ROOT / "proof" / "steel-city"
@@ -57,6 +58,9 @@ with sync_playwright() as p:
             assert before.get("sceneSculptRevision") == "facade-cape-relief-v1", before
             assert before.get("facadeReliefPieces", 0) >= 200, before
             assert before.get("heroReliefPieces", 0) >= 16, before
+            assert before.get("sceneMeshRevision") == "beveled-architecture-armor-v1", before
+            assert before.get("facadeBeveledPieces", 0) >= 40, before
+            assert before.get("heroBeveledPieces", 0) >= 12, before
             lighting = page.evaluate("window.__steelBridgeContract.lighting")
             assert lighting["archEmission"] <= .15 and lighting["railEmission"] <= .15, lighting
             assert before.get("hillsideHomeCount") == 11, before
@@ -113,6 +117,9 @@ with sync_playwright() as p:
                            "sceneSculptRevision": before["sceneSculptRevision"],
                            "facadeReliefPieces": before["facadeReliefPieces"],
                            "heroReliefPieces": before["heroReliefPieces"],
+                           "sceneMeshRevision": before["sceneMeshRevision"],
+                           "facadeBeveledPieces": before["facadeBeveledPieces"],
+                           "heroBeveledPieces": before["heroBeveledPieces"],
                            "GL": info, "browserErrors": errors})
             page.close()
     finally:
