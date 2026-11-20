@@ -948,7 +948,7 @@ if(sky.active){
   box(side*.23,-.55-wave,-.02,.22,1.05+Math.abs(wave),.22,'#4ae8ff',1.8);
   box(side*.23,-.95-wave*1.3,-.02,.10,.75+Math.abs(wave),.10,'#9ff8ff',2.2);
   box(side*.31,-.30-wave,.38,.13,.60+Math.abs(wave),.15,'#bff9ff',2.0);
-  box(side*.31,-.70-wave,.44,.09,.55+Math.abs(wave),.13,'#5ef0ff',2.3);castStats.bootJets++;
+  box(side*.31,-.70-wave,.44,.09,.55+Math.abs(wave),.13,'#18c8ff',1.6);castStats.bootJets++;
  }
  for(let k=0;k<3;k++){
   let wave=Math.sin(state.t*5+k*.8)*.14;
@@ -993,7 +993,7 @@ function renderArmorFinish(m){
  fabric([-.60,1.17,.88+flutter],[.60,1.17,.88+flutter],[.80,.22,1.43+flutter*2],[-.80,.22,1.43+flutter*2],'#121c33');
 }
 function renderDynamic(){dynamic.v.length=0;for(const k in castStats)castStats[k]=0;renderHero(dynamic);renderArmorFinish(dynamic);sagaDraw3D(dynamic);for(let s of pickups){if(s.taken)continue;let y=s.y+Math.sin(state.t*3+s.x)*.20;drawSteelStar(dynamic,s,y)}if(state.stars>=5&&!state.finished){let y=5.2+Math.sin(state.t*2)*.6;dynamic.rod([0,y-1.2,-33],[0,y+1.2,-33],.20,'#ffe9ab',1.9)}
-if(sky.active){dynamic.box(state.pos.x,state.pos.y+.75,state.pos.z+.8,.44,1.5,.22,'#33dff1',1.6);dynamic.pyramid(state.pos.x,state.pos.y+.15,state.pos.z+1.0,.54,-1.8,.52,'#46d9ff',1.8)}
+if(sky.active){dynamic.box(state.pos.x,state.pos.y+.75,state.pos.z+.8,.44,1.5,.22,'#12b4ff',1.15);dynamic.pyramid(state.pos.x,state.pos.y+.15,state.pos.z+1.0,.54,-1.8,.52,'#1ab8ff',1.25)}
 for(let e of sky.enemies){if(e.dead||!(sky.active||sagaStage>=4))continue;drawAlienBug(dynamic,e,1,'#1a1024')}
 for(let s of sky.enemyShots){dynamic.box(s.x,s.y,s.z,.56,.56,.56,'#ee69ff',2.1)}for(let s of sky.shots){dynamic.rod([s.x,s.y,s.z],[s.x-s.vx*.038,s.y-s.vy*.038,s.z-s.vz*.038],.22,'#6cefff',2.2)}for(let b of sky.bursts){let rr=(.45-b.life)*5;for(let j=0;j<6;j++){let a=j*Math.PI/3;dynamic.rod([b.x,b.y,b.z],[b.x+Math.cos(a)*rr,b.y+Math.sin(a)*rr,b.z],.13,'#ffd889',2.0)}}
 castStats.dynamicVertices=dynamic.v.length/10;let f=new Float32Array(dynamic.v);upload(dbuf,f,gl.DYNAMIC_DRAW);}
