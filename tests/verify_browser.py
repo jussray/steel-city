@@ -68,7 +68,9 @@ def verify(page, url, require_webgl, require_hardware):
         menu = page.locator("#hud .buttons").bounding_box()
         assert mission and menu, "Portrait mission controls are not measurable"
         assert mission["y"] < 110, f"Mission panel obscures the camera center: {mission}"
-        assert mission["x"] + mission["width"] + 6 <= menu["x"], f"Mission overlaps the menu controls: {mission} / {menu}"
+        # Storyboard contract: utility menu on the left, mission card on the right.
+        assert menu["x"] + menu["width"] + 6 <= mission["x"], \
+            f"Storyboard HUD order or clearance failed: menu={menu}, mission={mission}"
     proof = ROOT / "proof" / "steel-city"
     proof.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(proof / f"fallback-{page.viewport_size['width']}px.png"))

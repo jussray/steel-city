@@ -5,6 +5,7 @@ on:
       - main
       - build/restore-steel-city-saga
       - fix/steel-city-hillside-parity-20261115
+      - claude/magical-fermat-psq8s1
   workflow_dispatch:
 permissions:
   contents: read

@@ -22,9 +22,9 @@ PROOF = ROOT / "proof" / "steel-city"
 # Every act's story text, so the HUD is checked at its tallest, not only at Act 1.
 ACTS = list(dict.fromkeys(re.findall(r"\{title:'([^']+)',goal:'([^']+)'", HTML)))
 assert len(ACTS) >= 7, f"Expected seven story acts, parsed {len(ACTS)}"
-# Pre-existing on every screen size, desktop included: in Sky Mode the story card sits over the
-# Sky HUD. Tracked as its own fix; reported on every run and removed from here once fixed.
-KNOWN_ISSUES = ("#storyHud overlaps #skyhud",)
+# Known, tolerated overlaps. Empty: the story card / Sky HUD overlap was fixed by the storyboard
+# layout (story card top-right, Sky HUD stacked below it), so it is enforced on every shape.
+KNOWN_ISSUES = ()
 
 TOUCH = {"has_touch": True, "is_mobile": True}
 PROFILES = {
@@ -120,6 +120,22 @@ def verify(browser, label, options):
 
     # 3. On-foot HUD: nothing scrolled away, touch targets receive touches, panels stay readable.
     layout = page.evaluate(LAYOUT_JS, ACTS)
+    # The arrangement must match the approved storyboard, not merely avoid collisions.
+    storyboard = page.evaluate("""() => {
+      const rect = selector => {
+        const r = document.querySelector(selector).getBoundingClientRect();
+        return {left:r.left, top:r.top, right:r.right, bottom:r.bottom};
+      };
+      return {width:innerWidth, minimap:rect('.mapwrap'),
+              mission:rect('#storyHud'), menu:rect('.buttons')};
+    }""")
+    minimap, mission, menu = (storyboard[key] for key in ('minimap', 'mission', 'menu'))
+    assert minimap['left'] <= 30 and minimap['top'] <= 30, \
+        (label, "minimap must be in the top-left corner", storyboard)
+    assert menu['left'] <= minimap['left'] + 10 and menu['top'] >= minimap['bottom'] + 6, \
+        (label, "utility menu must sit under the minimap", storyboard)
+    assert mission['right'] >= storyboard['width'] - 30 and minimap['right'] + 6 <= mission['left'], \
+        (label, "mission must sit top-right without covering minimap", storyboard)
     assert layout["scroll"] == [0, 0], (label, "document scrolled; HUD clipped", layout["scroll"])
     if touch:
         assert {"moveJoystick", "jump2", "talkMobile"} <= set(layout["targets"]), (label, "touch controls missing", layout["targets"])

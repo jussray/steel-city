@@ -67,6 +67,7 @@ def run(browser, mode):
     state = dbg()
     assert state["webgl"] is (mode == "webgl"), (mode, state)
     assert state["castRevision"] == CAST_REVISION, (mode, state)
+    assert state["heroShapeRevision"] == "rounded-hero-v2", (mode, "hero silhouette revision differs between renderers", state)
     shots, metrics = {}, {}
 
     def shot(name, clip=None):
