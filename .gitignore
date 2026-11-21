@@ -29,3 +29,6 @@ game28.dta
 
 # Log files
 warnings.log
+
+# Local browser-proof screenshots and receipts written by tests
+proof/
