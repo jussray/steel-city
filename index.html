@@ -876,7 +876,9 @@ function sagaDraw3D(mesh){
  if(n.name==='Mara')drawMara(mesh,n,ys);else{
  mesh.box(n.x,1.42+ys,n.z,.68,1.1,.52,n.color);mesh.box(n.x,2.21+ys,n.z,.5,.48,.5,'#d5a880');mesh.box(n.x,2.49+ys,n.z,.55,.15,.55,'#2c3444');
  for(const sign of [-.19,.19])mesh.box(n.x+sign,.46,n.z,.2,.84,.3,'#27354a');}
- if((sagaStage===0&&n.name==='Mara')||(sagaStage===2&&n.name===(sagaBeacon?'Lou':'Nia'))||(sagaStage===6&&n.name==='River'))mesh.rod([n.x,2.8,n.z],[n.x,3.56+Math.sin(t*3)*.10,n.z],.1,'#f1d27b',1.4);
+ // Gold quest marker. Glow .35 keeps it gold (1.4 clipped to white), and it is skipped while the NPC
+ // sits between the over-shoulder camera and the player, where it filled the frame as a white slab.
+ if(((sagaStage===0&&n.name==='Mara')||(sagaStage===2&&n.name===(sagaBeacon?'Lou':'Nia'))||(sagaStage===6&&n.name==='River'))&&Math.hypot(state.cam[0]-n.x,state.cam[2]-n.z)>3.2)mesh.rod([n.x,2.8,n.z],[n.x,3.56+Math.sin(t*3)*.10,n.z],.1,'#f1d27b',.35);
  }
   // Original commuters animate independently; storyline NPC coordinates remain fixed.
   for(let i=0;i<6;i++){const speed=.7+i*.09,lap=(state.t*speed+i*12.7)%61,z=48-lap,x=(i%2?-1:1)*(10.9+(i%3)*.46),step=Math.sin(state.t*(6+i*.32));const coat=['#536d83','#865c74','#44736a','#826c55','#6b658d','#54818a'][i];mesh.box(x,1.22+Math.abs(step)*.035,z,.48,1.05,.35,coat);mesh.ellipsoid(x,1.98+Math.abs(step)*.035,z,.26,.28,.26,['#c68c65','#986444','#e1b189'][i%3],0,8,4);for(const side of [-1,1]){mesh.box(x+side*.16,.43+side*.10*step,z+side*.18*step,.14,.70,.19,'#1a2735');mesh.box(x+side*.36,1.26-side*.14*step,z-side*.18*step,.12,.65,.16,coat)}}
