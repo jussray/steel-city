@@ -9,3 +9,9 @@ Read live main HEAD, target branch HEAD and merge-base before changing anything.
 Focused checks: `python scripts/export_graphics.py`, `python tests/verify_browser.py`, and `python tests/verify_joystick.py` on the graphics branch. Device WebGL and Meta-glasses compatibility need separate physical tests.
 
 Report REALITY / FIX / PROOF / RISK / ROLLBACK / NEXT GATE with exact SHAs, files and screenshots.
+
+## Portfolio cinematic composition standard (staged)
+
+Preserve the approved Pittsburgh skyline, game world, seven-act structure, gameplay controls, art assets, and existing cinematic-image-to-code proof gate. One cohesive cinematic composition means in-renderer visual continuity, not key-art-only screenshots or invented performance claims.
+
+Preserve product-specific approved original design references and local instructions; Figma mockups are scaffolding. Require exact-head desktop/mobile visual screenshots, interaction and keyboard, reduced-motion and performance checks before a PASS. Keep runtime adoption, source changes, merges, deployment, publication, and spending as independent evidence and approval gates. No changes to auth, payment, data, agent authority, privacy or working game controls without separate scope. Draft reference: `jussray/founder-control-room/skills/cinematic-composition/SKILL.md` on `feat/cinematic-composition-contract-20261104`.
