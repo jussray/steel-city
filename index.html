@@ -1037,9 +1037,55 @@ function map(){const cc=el('map').getContext('2d'),w=300;cc.clearRect(0,0,w,w);c
 let cineAt=null,cineFov=CINE.camera.groundFov,cineShoulder=0;function cineFrame(p,dt){const k=1-Math.exp(-dt*CINE.camera.follow);cineFov+=((sky.active?CINE.camera.skyFov:CINE.camera.groundFov)-cineFov)*(1-Math.exp(-dt*4));const f=CINE.camera.frame(p,state.yaw,state.pitch,sky.active,canvas.width/Math.max(1,canvas.height),cineFov);cineShoulder=f.shoulder;if(!cineAt||Math.hypot(state.cam[0]-f.eye[0],state.cam[1]-f.eye[1],state.cam[2]-f.eye[2])>28){state.cam=f.eye.slice();cineAt=f.target.slice()}for(let i=0;i<3;i++)cineAt[i]+=(f.target[i]-cineAt[i])*Math.min(1,k*1.6);return {eye:f.eye,target:cineAt,fov:cineFov,k}}
 // Keep movement tied to elapsed wall-clock time when the software GPU renders slowly.
 // Bound long-tab-resume catch-up and integrate in 50 ms physics-safe substeps.
-let prev=0;function loop(ts){let dt=Math.min(.12,Math.max(0,(ts-prev)/1000||0));prev=ts;resize();for(let remaining=dt;remaining>.0001;remaining-=.05)tick(Math.min(.05,remaining));let p=state.pos,cf=cineFrame(p,dt),ey=cf.eye;for(let i=0;i<3;i++)state.cam[i]+=(ey[i]-state.cam[i])*cf.k;gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.026,.038,.080,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(loc.proj,false,perspective(cf.fov,canvas.width/canvas.height,.1,220));gl.uniformMatrix4fv(loc.view,false,look(state.cam,cf.target));gl.uniform3fv(loc.cam,new Float32Array(state.cam));gl.uniform2f(locRes,canvas.width,canvas.height);gl.uniform1f(loc.time,state.t);const glow=selectLocalGlow(p,state.started,state.stars,pickups,sky.shots,state.t);gl.uniform4fv(locGoldGlow,glow.gold);gl.uniform4fv(locCyanGlow,glow.cyan);gl.uniform1f(loc.staticScene,1);drawBuffer(sbuf,worldBuf.length/10);renderDynamic();gl.uniform1f(loc.staticScene,0);drawBuffer(dbuf,dynamic.v.length/10);map();requestAnimationFrame(loop)}resize();state.cam=[0,10,40];requestAnimationFrame(loop);
+// Optional LDR bloom. The original scene and depth buffer are retained.
+// Bright extraction runs at half resolution, capped at 640 pixels.
+function createSteelBloom(){
+ if(new URLSearchParams(location.search).get('bloom')==='off')return null;
+ const vertex='attribute vec2 aXY;varying vec2 vUV;void main(){vUV=aXY*.5+.5;gl_Position=vec4(aXY,0.,1.);}';
+ const bright='precision mediump float;varying vec2 vUV;uniform sampler2D uScene;uniform vec2 uStep;vec3 pick(vec2 uv){vec4 c=texture2D(uScene,uv);return c.rgb*c.a*smoothstep(.76,.97,max(max(c.r,c.g),c.b));}void main(){vec3 c=pick(vUV+uStep*vec2(-.5,-.5))+pick(vUV+uStep*vec2(.5,-.5))+pick(vUV+uStep*vec2(-.5,.5))+pick(vUV+uStep*vec2(.5,.5));gl_FragColor=vec4(c*.25,1.);}';
+ const composite='precision mediump float;varying vec2 vUV;uniform sampler2D uScene,uBright;uniform vec2 uStep;void main(){vec4 base=texture2D(uScene,vUV);vec3 g=texture2D(uBright,vUV).rgb*.20;g+=(texture2D(uBright,vUV+vec2(uStep.x,0.)).rgb+texture2D(uBright,vUV-vec2(uStep.x,0.)).rgb+texture2D(uBright,vUV+vec2(0.,uStep.y)).rgb+texture2D(uBright,vUV-vec2(0.,uStep.y)).rgb)*.12;g+=(texture2D(uBright,vUV+uStep).rgb+texture2D(uBright,vUV-uStep).rgb+texture2D(uBright,vUV+vec2(uStep.x,-uStep.y)).rgb+texture2D(uBright,vUV+vec2(-uStep.x,uStep.y)).rgb)*.08;g*=.48;float a=max(base.a,max(max(g.r,g.g),g.b));gl_FragColor=vec4(min(min(base.rgb,vec3(base.a))+g,vec3(a)),a);}';
+ function program(fragment){const v=sh(gl.VERTEX_SHADER,vertex),f=sh(gl.FRAGMENT_SHADER,fragment),p=gl.createProgram();gl.attachShader(p,v);gl.attachShader(p,f);gl.linkProgram(p);gl.deleteShader(v);gl.deleteShader(f);if(!gl.getProgramParameter(p,gl.LINK_STATUS)){const message=gl.getProgramInfoLog(p);gl.deleteProgram(p);throw Error(message)}return p}
+ let bp,cp,quad,sceneTex,brightTex,fb,w=0,h=0,bw=0,bh=0,failed=false;
+ const stats={enabled:true,frames:0,bufferWidth:0,bufferHeight:0,reason:null};
+ function texture(){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t}
+ function release(){if(bp)gl.deleteProgram(bp);if(cp)gl.deleteProgram(cp);if(quad)gl.deleteBuffer(quad);if(sceneTex)gl.deleteTexture(sceneTex);if(brightTex)gl.deleteTexture(brightTex);if(fb)gl.deleteFramebuffer(fb)}
+ try{bp=program(bright);cp=program(composite);quad=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,quad);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);sceneTex=texture();brightTex=texture();fb=gl.createFramebuffer();gl.bindTexture(gl.TEXTURE_2D,null)}catch(e){release();stats.enabled=false;stats.reason=String(e);return {stats,apply(){}}}
+ function allocate(width,height){
+  if(width===w&&height===h)return true;
+  if(width<1||height<1||width>gl.getParameter(gl.MAX_TEXTURE_SIZE)||height>gl.getParameter(gl.MAX_TEXTURE_SIZE))return false;
+  w=width;h=height;const scale=Math.min(.5,640/Math.max(w,h));bw=Math.max(1,Math.floor(w*scale));bh=Math.max(1,Math.floor(h*scale));
+  gl.bindTexture(gl.TEXTURE_2D,sceneTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+  gl.bindTexture(gl.TEXTURE_2D,brightTex);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,bw,bh,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,fb);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,brightTex,0);
+  const ok=gl.checkFramebufferStatus(gl.FRAMEBUFFER)===gl.FRAMEBUFFER_COMPLETE;gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  stats.bufferWidth=bw;stats.bufferHeight=bh;return ok;
+ }
+ function pass(p,stepX,stepY){
+  gl.useProgram(p);gl.bindBuffer(gl.ARRAY_BUFFER,quad);const xy=gl.getAttribLocation(p,'aXY');gl.enableVertexAttribArray(xy);gl.vertexAttribPointer(xy,2,gl.FLOAT,false,0,0);
+  gl.uniform1i(gl.getUniformLocation(p,'uScene'),0);gl.uniform2f(gl.getUniformLocation(p,'uStep'),stepX,stepY);
+  if(p===cp)gl.uniform1i(gl.getUniformLocation(p,'uBright'),1);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);gl.disableVertexAttribArray(xy);
+ }
+ function apply(){
+  if(failed||gl.isContextLost())return;
+  try{
+   gl.activeTexture(gl.TEXTURE0);
+   if(!allocate(canvas.width,canvas.height))throw Error('Bloom framebuffer unavailable');
+   gl.bindTexture(gl.TEXTURE_2D,sceneTex);gl.copyTexSubImage2D(gl.TEXTURE_2D,0,0,0,0,0,w,h);
+   for(const a of [loc.p,loc.n,loc.c,loc.e])if(a>=0)gl.disableVertexAttribArray(a);
+   gl.disable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);
+   gl.bindFramebuffer(gl.FRAMEBUFFER,fb);gl.viewport(0,0,bw,bh);pass(bp,1/w,1/h);
+   gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,w,h);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,brightTex);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,sceneTex);pass(cp,2/bw,2/bh);
+   stats.frames++;
+  }catch(e){failed=true;stats.enabled=false;stats.reason=String(e);release()}
+  finally{gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,null);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,null);gl.useProgram(pr);gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE)}
+ }
+ return {stats,apply};
+}
+const steelBloom=createSteelBloom();
+let prev=0;function loop(ts){let dt=Math.min(.12,Math.max(0,(ts-prev)/1000||0));prev=ts;resize();for(let remaining=dt;remaining>.0001;remaining-=.05)tick(Math.min(.05,remaining));let p=state.pos,cf=cineFrame(p,dt),ey=cf.eye;for(let i=0;i<3;i++)state.cam[i]+=(ey[i]-state.cam[i])*cf.k;gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.026,.038,.080,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(loc.proj,false,perspective(cf.fov,canvas.width/canvas.height,.1,220));gl.uniformMatrix4fv(loc.view,false,look(state.cam,cf.target));gl.uniform3fv(loc.cam,new Float32Array(state.cam));gl.uniform2f(locRes,canvas.width,canvas.height);gl.uniform1f(loc.time,state.t);const glow=selectLocalGlow(p,state.started,state.stars,pickups,sky.shots,state.t);gl.uniform4fv(locGoldGlow,glow.gold);gl.uniform4fv(locCyanGlow,glow.cyan);gl.uniform1f(loc.staticScene,1);drawBuffer(sbuf,worldBuf.length/10);renderDynamic();gl.uniform1f(loc.staticScene,0);drawBuffer(dbuf,dynamic.v.length/10);if(state.started&&steelBloom)steelBloom.apply();map();requestAnimationFrame(loop)}resize();state.cam=[0,10,40];requestAnimationFrame(loop);
 window.__steelCityDebug=()=>({castRevision:CAST_REVISION,heroShapeRevision:HERO_SHAPE_REVISION,castStats:{...castStats},marketClock:{...MARKET_CLOCK},graphicsRevision:'cinematic-geometry-v3',lightingRevision:'rain-slick-neon-v2',materialRevision:'masonry-glass-puddles-v1',neighborhoodDetail:'mount-washington-homes-v2',bridgeDetail:STEEL_BRIDGE.revision,bridgeTrussSegments,bridgeFinishRevision:STEEL_BRIDGE.finish.revision,bridgeFinishPieces,bridgeLightingRevision:BRIDGE_LIGHT.revision,bridgePortalMasonry,hillsideWalkMinZ:STEEL_HILL.ACCESS.groundMinZ,hillsideHomeCount:hillsideHomes.length,hillsideSolidCount:buildings.filter(b=>b.kind==='hillside-home').length,hillsideHomeFootprints:buildings.filter(b=>b.kind==='hillside-home').map(b=>({x:b.x,z:b.z,w:b.w,d:b.d,h:b.h,baseY:b.baseY})),campaignStage:sagaStage,campaignComplete:sagaCompleted,campaignBeacon:sagaBeacon,campaignCrewAlive:sagaFoes.filter(x=>x.hp>0).length,campaignJackalHp:sagaJackal.hp,campaignQueenHp:sagaQueen.hp,started:state.started,x:+state.pos.x.toFixed(2),y:+state.pos.y.toFixed(2),z:+state.pos.z.toFixed(2),stars:state.stars,total:pickups.length,worldTriangles:worldBuf.length/30,webgl:true,freeRoam:true,motionBlend:+state.moveBlend.toFixed(3),gaitPhase:+state.gaitPhase.toFixed(3),sound:state.sound,finished:state.finished,cameraYaw:state.yaw,joystickX:+(window.__steelJoystick?.x||0).toFixed(3),joystickY:+(window.__steelJoystick?.y||0).toFixed(3),skyMode:sky.active,health:sky.hp,bugsDefeated:sky.kills,bugsAlive:sky.enemies.filter(e=>!e.dead).length,shots:sky.shots.length,enemyShots:sky.enemyShots.length});
-{const base=window.__steelCityDebug;window.__steelCityDebug=()=>({...base(),cinematicRevision:CINE.revision,cinematicCamera:{mode:CINE.camera.mode,fovDeg:+(cineFov*180/Math.PI).toFixed(1),shoulder:+cineShoulder.toFixed(2)},cinematicPieces})}
+{const base=window.__steelCityDebug;window.__steelCityDebug=()=>({...base(),bloom:steelBloom?{...steelBloom.stats}:{enabled:false,frames:0,reason:'disabled by URL'},cinematicRevision:CINE.revision,cinematicCamera:{mode:CINE.camera.mode,fovDeg:+(cineFov*180/Math.PI).toFixed(1),shoulder:+cineShoulder.toFixed(2)},cinematicPieces})}
 })();
 </script><script>// Portable perspective renderer: used only when WebGL is disabled by device or policy.
 (()=>{
