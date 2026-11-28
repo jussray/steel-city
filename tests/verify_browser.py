@@ -74,6 +74,24 @@ def verify(page, url, require_webgl, require_hardware):
     proof = ROOT / "proof" / "steel-city"
     proof.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(proof / f"fallback-{page.viewport_size['width']}px.png"))
+    # Idle game updates must keep the mission HUD nodes stable.
+    # Wait for active animation frames, not just an arbitrary fixed sleep.
+    stable_hud = page.evaluate("""() => new Promise(resolve => {
+        const progress = document.querySelector('#storyProgress i');
+        const card = document.querySelector('#storyActCards .storyAct');
+        const start = performance.now();
+        let frames = 0;
+        function check() {
+            frames++;
+            if (frames >= 12 && performance.now() - start >= 500) {
+                resolve(!!progress && !!card &&
+                    progress === document.querySelector('#storyProgress i') &&
+                    card === document.querySelector('#storyActCards .storyAct'));
+            } else requestAnimationFrame(check);
+        }
+        requestAnimationFrame(check);
+    })""")
+    assert stable_hud, "Idle mission HUD unnecessarily replaces existing nodes"
     page.locator("#storyOpen").click()
     assert page.locator(".storyAct").count() == 7, "Expected seven acts in journal"
     page.locator("#storyClose").click()
@@ -92,6 +110,26 @@ def verify(page, url, require_webgl, require_hardware):
     assert page.evaluate("window.__steelCityDebug().y") > y, "Flight ascend did not work"
     page.keyboard.press("j")
     page.wait_for_timeout(30)
+    # Ground waypoints must land at the destination, not try to land over water first.
+    # Use real movement and the same GO button available to players.
+    for key, condition in (
+        ("KeyW", "window.__steelCityDebug().z < -40"),
+        ("KeyD", "window.__steelCityDebug().x > 8"),
+    ):
+        page.keyboard.down(key)
+        try:
+            page.wait_for_function(condition, timeout=30000)
+        except Exception as exc:
+            page.screenshot(path=str(proof / f"movement-failure-{page.viewport_size['width']}px.png"))
+            raise AssertionError(f"Movement gate {key} ({condition}) failed: {page.evaluate('window.__steelCityDebug()')}; browser errors={errors}") from exc
+        finally:
+            page.keyboard.up(key)
+    over_water = page.evaluate("window.__steelCityDebug()")
+    assert over_water["skyMode"] and -64 < over_water["z"] < -36 and abs(over_water["x"]) > 5.6, over_water
+    page.locator("#storyRoute").click()
+    page.wait_for_function("!window.__steelCityDebug().skyMode", timeout=5000)
+    landed = page.evaluate("window.__steelCityDebug()")
+    assert landed["campaignStage"] == 1 and landed["z"] >= -36, landed
     assert not errors, f"Browser JS exceptions: {errors}"
     page.locator("#restart").click()
     page.wait_for_timeout(80)

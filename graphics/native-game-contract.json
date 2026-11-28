@@ -1,0 +1,227 @@
+{
+  "schemaVersion": 1,
+  "kind": "steel-city-gameplay-definition-snapshot",
+  "source": {
+    "repository": "jussray/steel-city",
+    "commit": "70cad9bf513319dc570f934bdba0e174008c0ac0",
+    "path": "index.html",
+    "status": "candidate source; native import not implemented"
+  },
+  "coordinates": {
+    "x": "horizontal",
+    "y": "vertical altitude",
+    "z": "horizontal",
+    "unit": "browser world unit; native scale and orientation require calibration"
+  },
+  "campaign": {
+    "initialActIndex": 0,
+    "completionActIndex": 7,
+    "acts": [
+      {
+        "index": 1,
+        "title": "The First Signal",
+        "goal": "Speak with Mara in Market Square · E",
+        "story": "Mara discovers a strange frequency beneath Pittsburgh."
+      },
+      {
+        "index": 2,
+        "title": "Bridge Lockdown",
+        "goal": "Disarm the three Circuit Crew villains · J",
+        "story": "Tech criminals are trying to lock the golden bridge."
+      },
+      {
+        "index": 3,
+        "title": "Blackout on Penn",
+        "goal": "Speak with Nia and then Lou near the Strip · E",
+        "story": "Market owners need help restoring the city signal."
+      },
+      {
+        "index": 4,
+        "title": "Rooftop Pursuit",
+        "goal": "Stop Volt Jackal at the parkour rooftops · J",
+        "story": "A masked villain reveals the source of the signal."
+      },
+      {
+        "index": 5,
+        "title": "The Sky Opens",
+        "goal": "Fly and defeat six alien bugs · F, J",
+        "story": "The invasion begins above the Three Rivers."
+      },
+      {
+        "index": 6,
+        "title": "Queen Above the Rivers",
+        "goal": "Defeat the alien Queen · J",
+        "story": "The alien Queen confronts the hero above the skyline."
+      },
+      {
+        "index": 7,
+        "title": "One City",
+        "goal": "Land by the Point State Park fountain · E",
+        "story": "Restore peace and return to the community."
+      }
+    ],
+    "groundInteractionRadius": 8,
+    "waypoints": [
+      {
+        "act": 1,
+        "character": "Mara",
+        "x": 0,
+        "y": 0,
+        "z": 27
+      },
+      {
+        "act": 2,
+        "rule": "first surviving Circuit Crew member, offset x+2,z+3"
+      },
+      {
+        "act": 3,
+        "character": "Nia",
+        "x": 3,
+        "y": 0,
+        "z": -17
+      },
+      {
+        "act": 3,
+        "character": "Lou",
+        "x": -4,
+        "y": 0,
+        "z": -17
+      },
+      {
+        "act": 4,
+        "x": 9,
+        "y": 0,
+        "z": 16
+      },
+      {
+        "act": 5,
+        "x": 0,
+        "y": 17,
+        "z": 20
+      },
+      {
+        "act": 6,
+        "x": 3,
+        "y": 26,
+        "z": -38
+      },
+      {
+        "act": 7,
+        "x": 18,
+        "y": 0,
+        "z": -30
+      }
+    ]
+  },
+  "collectibles": {
+    "initialCount": 0,
+    "targetCount": 5,
+    "alternateLocations": 7,
+    "policy": "collect any five; remaining pickups hidden after completion; reset restores pickups",
+    "locations": [
+      {
+        "id": "steel-star-1",
+        "x": 0,
+        "z": 15,
+        "yWebGL": 1.5,
+        "yCanvas": 1.4
+      },
+      {
+        "id": "steel-star-2",
+        "x": -4,
+        "z": 2,
+        "yWebGL": 1.5,
+        "yCanvas": 1.4
+      },
+      {
+        "id": "steel-star-3",
+        "x": 4,
+        "z": -14,
+        "yWebGL": 1.5,
+        "yCanvas": 1.4
+      },
+      {
+        "id": "steel-star-4",
+        "x": 1,
+        "z": -29,
+        "yWebGL": 1.5,
+        "yCanvas": 1.4
+      },
+      {
+        "id": "steel-star-5",
+        "x": 17,
+        "z": 3,
+        "yWebGL": 6.7,
+        "yCanvas": 6.6
+      },
+      {
+        "id": "steel-star-6",
+        "x": -3,
+        "z": 36,
+        "yWebGL": 1.5,
+        "yCanvas": 1.4
+      },
+      {
+        "id": "steel-star-7",
+        "x": 11,
+        "z": 11,
+        "yWebGL": 3.7,
+        "yCanvas": 3.6
+      }
+    ]
+  },
+  "combat": {
+    "groundPulseCooldownSeconds": 0.3,
+    "groundPulseRange": 17,
+    "queenPulseRange": 85,
+    "circuitCrew": [
+      {
+        "name": "Rivet",
+        "x": -3,
+        "z": -24,
+        "maxShield": 2
+      },
+      {
+        "name": "Static",
+        "x": 2,
+        "z": -30,
+        "maxShield": 2
+      },
+      {
+        "name": "Spar",
+        "x": -2,
+        "z": -34,
+        "maxShield": 2
+      }
+    ],
+    "voltJackal": {
+      "name": "Volt Jackal",
+      "x": 9,
+      "z": 14,
+      "maxShield": 4
+    },
+    "alienQueen": {
+      "name": "Alien Queen",
+      "x": 3,
+      "y": 27,
+      "z": -45,
+      "maxShield": 9
+    },
+    "requiredAlienBugs": 6,
+    "initialArmor": 100
+  },
+  "world": {
+    "groundAccess": {
+      "groundMinZ": -83,
+      "groundMaxZ": 51,
+      "riverNorthZ": -64,
+      "riverSouthZ": -36,
+      "bridgeHalfWidth": 5.6
+    }
+  },
+  "scopeNotes": [
+    "Definition snapshot, not runtime save state or complete level geometry.",
+    "Native importer and save migration are not implemented.",
+    "Visual and physics parity require separate runtime validation."
+  ]
+}

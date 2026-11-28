@@ -1,0 +1,13 @@
+{
+  "FileVersion": 3,
+  "EngineAssociation": "5.3",
+  "Category": "Games",
+  "Description": "Steel City native prototype foundation",
+  "Modules": [
+    {
+      "Name": "SteelCity",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
+}
