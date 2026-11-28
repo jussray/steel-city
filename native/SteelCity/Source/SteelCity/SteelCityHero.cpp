@@ -15,6 +15,17 @@ ASteelCityHero::ASteelCityHero(const FObjectInitializer& Initializer)
     CameraBoom->bUsePawnControlRotation = true;
     FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+    // Local camera-only art direction; no world-volume or replicated-state mutation.
+    // Neutral-centered multipliers are starting values, not a calibrated render.
+    FollowCamera->PostProcessBlendWeight = 0.65f;
+    FPostProcessSettings& Look = FollowCamera->PostProcessSettings;
+    Look.bOverride_BloomIntensity = true;
+    Look.BloomIntensity = 1.5f;
+    Look.bOverride_ColorGammaShadows = true;
+    Look.ColorGammaShadows = FVector4(0.95f, 1.0f, 1.08f, 1.0f);
+    Look.bOverride_ColorGainHighlights = true;
+    Look.ColorGainHighlights = FVector4(1.08f, 1.03f, 0.95f, 1.0f);
+
     CombatComponent = CreateDefaultSubobject<USteelCityCombatComponent>(TEXT("CombatComponent"));
 }
 void ASteelCityHero::SetupPlayerInputComponent(UInputComponent* Input)
