@@ -38,6 +38,8 @@ jobs:
         run: python tests/verify_joystick.py
       - name: Verify 3D scene WebGL rendering (software GPU, not production proof)
         run: xvfb-run -a python tests/verify_webgl.py
+      - name: Verify screen-space bloom pixels, resize and opt-out (software GPU)
+        run: xvfb-run -a python tests/verify_bloom.py
       - name: Storyboard cast in WebGL and canvas fallback (software GPU, not production proof)
         run: xvfb-run -a python tests/verify_cast.py
       - name: Playwright parity for eleven hillside houses across WebGL and canvas
