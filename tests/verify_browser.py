@@ -119,6 +119,9 @@ def verify(page, url, require_webgl, require_hardware):
         page.keyboard.down(key)
         try:
             page.wait_for_function(condition, timeout=30000)
+        except Exception as exc:
+            page.screenshot(path=str(proof / f"movement-failure-{page.viewport_size['width']}px.png"))
+            raise AssertionError(f"Movement gate {key} ({condition}) failed: {page.evaluate('window.__steelCityDebug()')}; browser errors={errors}") from exc
         finally:
             page.keyboard.up(key)
     over_water = page.evaluate("window.__steelCityDebug()")

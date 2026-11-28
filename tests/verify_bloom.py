@@ -29,8 +29,8 @@ fixture = r"""source => {
     if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw Error('Fixture program link failed');
     gl.useProgram(pr);
     const loc={p:-1,n:-1,c:-1,e:-1};
-    const make=new Function('gl','canvas','sh','pr','loc',source+';return createSteelBloom();');
-    const bloom=make(gl,canvas,sh,pr,loc);
+    const make=new Function('gl','canvas','sh','pr','loc','location',source+';return createSteelBloom();');
+    const bloom=make(gl,canvas,sh,pr,loc,{search:'?bloom=on'});
     if(!bloom||!bloom.stats.enabled)throw Error('Bloom setup: '+JSON.stringify(bloom?.stats));
     const pixel=(x,y)=>{const p=new Uint8Array(4);gl.readPixels(x,y,1,1,gl.RGBA,gl.UNSIGNED_BYTE,p);return [...p]};
     function draw(){
@@ -65,6 +65,7 @@ with sync_playwright() as p:
             ("desktop", {"width":1280,"height":760}, True),
             ("mobile_emulated", {"width":390,"height":844}, True),
             ("opt_out", {"width":390,"height":844}, False),
+            ("default_safe", {"width":390,"height":844}, False),
         ):
             page = browser.new_page(viewport=viewport, device_scale_factor=1)
             errors = []
@@ -72,7 +73,7 @@ with sync_playwright() as p:
             page.route("https://steel-city.local/index.html*", lambda route: route.fulfill(body=GAME, content_type="text/html"))
             page.route("https://steel-city.local/assets/pittsburgh-night-skyline.jpg",
                        lambda route: route.fulfill(path=str(SKYLINE), content_type="image/jpeg"))
-            page.goto("https://steel-city.local/index.html" + ("" if enabled else "?bloom=off"),wait_until="domcontentloaded")
+            page.goto("https://steel-city.local/index.html" + ("?bloom=on" if enabled else ("" if label == "default_safe" else "?bloom=off")),wait_until="domcontentloaded")
             page.wait_for_function("typeof window.__steelCityDebug === 'function'",timeout=20000)
             assert page.evaluate("window.__steelCityDebug().webgl"), label
             page.locator("#playMuted").click()
