@@ -2,6 +2,7 @@
 #include "SteelCityGameState.h"
 #include "Components/TextBlock.h"
 #include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
 #include "SteelCityHero.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Blueprint/WidgetTree.h"

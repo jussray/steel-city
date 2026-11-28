@@ -33,9 +33,9 @@ TSharedRef<SWidget> USteelCityJoystick::RebuildWidget()
 void USteelCityJoystick::UpdateInput(const FGeometry& Geometry, const FPointerEvent& Event)
 {
     const FVector2D Size = Geometry.GetLocalSize();
-    const float Radius = FMath::Max(1.f, FMath::Min(Size.X,Size.Y)*.5f-24.f);
+    const double Radius = FMath::Max(1.0, FMath::Min(Size.X,Size.Y)*.5-24.0);
     FVector2D Delta = Geometry.AbsoluteToLocal(Event.GetScreenSpacePosition())-Size*.5f;
-    const float Length = Delta.Size();
+    const double Length = Delta.Size();
     if (Length > Radius) Delta *= Radius/Length;
     Input = Delta/Radius;
     if (Input.Size() < .08f) Input = FVector2D::ZeroVector;
