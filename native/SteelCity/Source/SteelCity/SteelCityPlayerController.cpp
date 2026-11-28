@@ -3,7 +3,8 @@
 void ASteelCityPlayerController::BeginPlay()
 {
     Super::BeginPlay();
-    if (!IsLocalController() || !HUDWidgetClass || HUDWidgetInstance) return;
+    if (!IsLocalController() || HUDWidgetInstance) return;
+    if (!HUDWidgetClass) HUDWidgetClass = USteelCityHUD::StaticClass();
     HUDWidgetInstance = CreateWidget<USteelCityHUD>(this, HUDWidgetClass);
     if (!HUDWidgetInstance) return;
     HUDWidgetInstance->AddToPlayerScreen();
