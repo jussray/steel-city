@@ -17,6 +17,9 @@ public:
     UFUNCTION(BlueprintCallable, Category="Steel City|Input") void MoveVertical(float Value);
     UFUNCTION(BlueprintCallable, Category="Steel City|Input") void ToggleFlight();
     UFUNCTION(BlueprintCallable, Category="Steel City|Input") void Blast();
+    AActor* FindTalkTarget() const;
+    UFUNCTION(BlueprintCallable, Category="Steel City|Input") void Talk();
+    UPROPERTY(BlueprintReadOnly, Category="Steel City|Interaction") FText LastDialogue;
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly) TObjectPtr<USpringArmComponent> CameraBoom;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly) TObjectPtr<UCameraComponent> FollowCamera;

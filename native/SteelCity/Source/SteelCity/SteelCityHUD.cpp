@@ -12,6 +12,11 @@
 #include "Components/UniformGridSlot.h"
 #include "Components/VerticalBox.h"
 #include "Components/Border.h"
+#include "Components/Image.h"
+#include "SteelCityJoystick.h"
+#include "Engine/SceneCapture2D.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "Engine/TextureRenderTarget2D.h"
 
 TSharedRef<SWidget> USteelCityHUD::RebuildWidget()
 {
@@ -59,8 +64,8 @@ TSharedRef<SWidget> USteelCityHUD::RebuildWidget()
             Grid->AddChildToUniformGrid(Button, Row, Col);
             return Button;
         };
-        UButton* Talk = Action(TEXT("TalkButton"), NSLOCTEXT("SteelCity", "Talk", "TALK"), 0, 0, Cyan);
-        Talk->SetIsEnabled(false); // Native NPC interaction is not implemented yet.
+        TalkButton = Action(TEXT("TalkButton"), NSLOCTEXT("SteelCity", "Talk", "TALK"), 0, 0, Cyan);
+        TalkButton->SetIsEnabled(false);
         FlyButton = Action(TEXT("FlyButton"), NSLOCTEXT("SteelCity", "Fly", "FLY"), 0, 1, Cyan);
         BlastButton = Action(TEXT("BlastButton"), NSLOCTEXT("SteelCity", "Blast", "BLAST"), 0, 2, Gold);
         DownButton = Action(TEXT("DownButton"), NSLOCTEXT("SteelCity", "Down", "DOWN"), 1, 0, Cyan);
@@ -71,6 +76,24 @@ TSharedRef<SWidget> USteelCityHUD::RebuildWidget()
         GridSlot->SetAlignment(FVector2D(1.f, 1.f));
         GridSlot->SetPosition(FVector2D(-20.f, -20.f));
         GridSlot->SetAutoSize(true);
+        MinimapImage = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(),TEXT("MinimapImage"));
+        MinimapImage->SetVisibility(ESlateVisibility::HitTestInvisible);
+        UCanvasPanelSlot* MapSlot = Root->AddChildToCanvas(MinimapImage);
+        MapSlot->SetPosition(FVector2D(20.f,20.f));
+        MapSlot->SetSize(FVector2D(132.f,132.f));
+        DialogueText = Text(TEXT("DialogueText"),FText::GetEmpty(),Cyan,14);
+        DialogueText->SetVisibility(ESlateVisibility::HitTestInvisible);
+        UCanvasPanelSlot* DialogueSlot = Root->AddChildToCanvas(DialogueText);
+        DialogueSlot->SetAnchors(FAnchors(.5f,0.f));
+        DialogueSlot->SetAlignment(FVector2D(.5f,0.f));
+        DialogueSlot->SetPosition(FVector2D(0.f,28.f));
+        DialogueSlot->SetAutoSize(true);
+        Joystick = WidgetTree->ConstructWidget<USteelCityJoystick>(USteelCityJoystick::StaticClass(),TEXT("Joystick"));
+        UCanvasPanelSlot* JoySlot = Root->AddChildToCanvas(Joystick);
+        JoySlot->SetAnchors(FAnchors(0.f,1.f));
+        JoySlot->SetAlignment(FVector2D(0.f,1.f));
+        JoySlot->SetPosition(FVector2D(20.f,-20.f));
+        JoySlot->SetSize(FVector2D(140.f,140.f));
     }
     return Super::RebuildWidget();
 }
@@ -79,6 +102,7 @@ void USteelCityHUD::NativeConstruct()
 {
     Super::NativeConstruct();
     RefreshBinding();
+    if (TalkButton) TalkButton->OnClicked.AddUniqueDynamic(this,&USteelCityHUD::OnTalkClicked);
     if (FlyButton) FlyButton->OnClicked.AddUniqueDynamic(this, &USteelCityHUD::OnFlyClicked);
     if (BlastButton) BlastButton->OnClicked.AddUniqueDynamic(this, &USteelCityHUD::OnBlastClicked);
     if (DownButton) { DownButton->OnPressed.AddUniqueDynamic(this, &USteelCityHUD::OnDownPressed); DownButton->OnReleased.AddUniqueDynamic(this, &USteelCityHUD::OnDownReleased); }
@@ -90,14 +114,30 @@ void USteelCityHUD::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
     Super::NativeTick(MyGeometry, InDeltaTime);
     if (ASteelCityHero* Hero = Cast<ASteelCityHero>(GetOwningPlayerPawn()))
     {
+        if (Joystick)
+        {
+            const FVector2D Axis=Joystick->GetJoystickInput();
+            Hero->MoveForward(-Axis.Y); // screen up is forward
+            Hero->MoveRight(Axis.X);
+        }
+        if (DialogueText && !DialogueText->GetText().EqualTo(Hero->LastDialogue)) DialogueText->SetText(Hero->LastDialogue);
         if (bDownHeld) Hero->MoveVertical(-1.f);
         if (bRiseHeld) Hero->MoveVertical(1.f);
+    }
+    WorldViewTimer -= InDeltaTime;
+    if (WorldViewTimer<=0.f)
+    {
+        WorldViewTimer=.2f;
+        RefreshLocalWorldView(Cast<ASteelCityHero>(GetOwningPlayerPawn()));
     }
     // State may arrive after a local widget is constructed or change during travel.
     RefreshBinding();
 }
 void USteelCityHUD::NativeDestruct()
 {
+    if (Joystick) Joystick->ResetInput();
+    ReleaseMinimap();
+    if (TalkButton) TalkButton->OnClicked.RemoveDynamic(this,&USteelCityHUD::OnTalkClicked);
     OnDownReleased(); OnRunReleased(); OnJumpReleased();
     if (FlyButton) FlyButton->OnClicked.RemoveDynamic(this, &USteelCityHUD::OnFlyClicked);
     if (BlastButton) BlastButton->OnClicked.RemoveDynamic(this, &USteelCityHUD::OnBlastClicked);
@@ -170,4 +210,37 @@ void USteelCityHUD::OnJumpReleased()
     bRiseHeld = false;
     if (ASteelCityHero* Hero = JumpingHero.Get()) Hero->StopJumping();
     JumpingHero.Reset();
+}
+
+void USteelCityHUD::OnTalkClicked()
+{
+    if (ASteelCityHero* Hero=Cast<ASteelCityHero>(GetOwningPlayerPawn())) Hero->Talk();
+}
+void USteelCityHUD::RefreshLocalWorldView(ASteelCityHero* Hero)
+{
+    if (TalkButton) TalkButton->SetIsEnabled(Hero && Hero->FindTalkTarget()!=nullptr);
+    if (!MinimapImage || !Hero || !GetWorld() || !GetOwningPlayer() || !GetOwningPlayer()->IsLocalController()) return;
+    if (!IsValid(MinimapCapture))
+    {
+        MinimapCapture=GetWorld()->SpawnActor<ASceneCapture2D>();
+        if (!IsValid(MinimapCapture)) return;
+        MinimapTarget=NewObject<UTextureRenderTarget2D>(this);
+        MinimapTarget->InitAutoFormat(256,256);
+        USceneCaptureComponent2D* Capture=MinimapCapture->GetCaptureComponent2D();
+        Capture->TextureTarget=MinimapTarget;
+        Capture->ProjectionType=ECameraProjectionMode::Orthographic;
+        Capture->OrthoWidth=3000.f;
+        Capture->bCaptureEveryFrame=false;
+        Capture->bCaptureOnMovement=false;
+        MinimapImage->SetBrushResourceObject(MinimapTarget);
+    }
+    MinimapCapture->SetActorLocationAndRotation(Hero->GetActorLocation()+FVector(0.f,0.f,3500.f),FRotator(-90.f,0.f,0.f));
+    MinimapCapture->GetCaptureComponent2D()->CaptureScene();
+}
+void USteelCityHUD::ReleaseMinimap()
+{
+    if (MinimapImage) MinimapImage->SetBrushResourceObject(nullptr);
+    if (IsValid(MinimapCapture)) MinimapCapture->Destroy();
+    MinimapCapture=nullptr;
+    MinimapTarget=nullptr;
 }

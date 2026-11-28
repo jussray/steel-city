@@ -9,3 +9,6 @@ Playable map, hero and pickup art, UMG widget assets, Enhanced Input actions, to
 
 ## HUD and art direction candidate
 Create a Widget Blueprint derived from USteelCityHUD with a TextBlock named StarCountText, assign it on a derived player controller, and select that controller in the level GameMode. The widget subscribes to replicated count changes and handles initial/late GameState arrival. Validate 0/5 through 5/5, duplicate rejection, late join and widget teardown. The hero camera contains a local, conservative bloom and blue/gold grade starting preset; tune it with real assets. No actual UMG layout or native rendered evidence exists.
+
+## Native interaction candidate
+Programmatic touch joystick, local 256x256 minimap capture at five updates/second, and authority-only line-of-sight Talk are authored. Place an ASteelCityNPC with configured Dialogue in the editor to test. Native map and joystick are rectangular fallbacks; circular material/brush art, objective runtime, multiplayer RPC and mobile capture/hold testing remain pending. No asset purchase or native compile. The previous no-widget statement is superseded by the programmatic fallback.

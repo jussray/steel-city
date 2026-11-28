@@ -4,6 +4,8 @@
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/InputComponent.h"
+#include "SteelCityInteractable.h"
+#include "Engine/World.h"
 ASteelCityHero::ASteelCityHero(const FObjectInitializer& Initializer)
     : Super(Initializer.SetDefaultSubobjectClass<USteelCityMovementComponent>(ACharacter::CharacterMovementComponentName))
 {
@@ -38,6 +40,7 @@ void ASteelCityHero::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
     Input->BindAction("Fly", IE_Pressed, this, &ASteelCityHero::ToggleFlight);
     Input->BindAction("Blast", IE_Pressed, this, &ASteelCityHero::Blast);
+    Input->BindAction("Talk", IE_Pressed, this, &ASteelCityHero::Talk);
     Input->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
     Input->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 }
@@ -64,4 +67,20 @@ void ASteelCityHero::ToggleFlight()
 void ASteelCityHero::Blast()
 {
     if (CombatComponent) CombatComponent->RequestBlast();
+}
+
+AActor* ASteelCityHero::FindTalkTarget() const
+{
+    if (!HasAuthority() || !GetWorld() || GetCharacterMovement()->IsFlying()) return nullptr;
+    const FVector Start=GetActorLocation();
+    const FVector End=Start+GetActorForwardVector()*800.f; // provisional native scale
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(SteelCityTalk),false,this);
+    FHitResult Hit;
+    if (!GetWorld()->LineTraceSingleByChannel(Hit,Start,End,ECC_Visibility,Params)) return nullptr;
+    AActor* Target=Hit.GetActor();
+    return IsValid(Target) && Target->GetClass()->ImplementsInterface(USteelCityInteractable::StaticClass()) ? Target : nullptr;
+}
+void ASteelCityHero::Talk()
+{
+    if (AActor* Target=FindTalkTarget()) LastDialogue=ISteelCityInteractable::Execute_Interact(Target,this);
 }
