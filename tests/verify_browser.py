@@ -92,6 +92,23 @@ def verify(page, url, require_webgl, require_hardware):
     assert page.evaluate("window.__steelCityDebug().y") > y, "Flight ascend did not work"
     page.keyboard.press("j")
     page.wait_for_timeout(30)
+    # Ground waypoints must land at the destination, not try to land over water first.
+    # Use real movement and the same GO button available to players.
+    for key, condition in (
+        ("KeyW", "window.__steelCityDebug().z < -40"),
+        ("KeyD", "window.__steelCityDebug().x > 8"),
+    ):
+        page.keyboard.down(key)
+        try:
+            page.wait_for_function(condition, timeout=30000)
+        finally:
+            page.keyboard.up(key)
+    over_water = page.evaluate("window.__steelCityDebug()")
+    assert over_water["skyMode"] and -64 < over_water["z"] < -36 and abs(over_water["x"]) > 5.6, over_water
+    page.locator("#storyRoute").click()
+    page.wait_for_function("!window.__steelCityDebug().skyMode", timeout=5000)
+    landed = page.evaluate("window.__steelCityDebug()")
+    assert landed["campaignStage"] == 1 and landed["z"] >= -36, landed
     assert not errors, f"Browser JS exceptions: {errors}"
     page.locator("#restart").click()
     page.wait_for_timeout(80)

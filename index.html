@@ -791,7 +791,7 @@ function sagaAttackQueen(){if(sagaStage!==5||!state.started||!sky.active)return 
 function sagaAttack(){if(sky.active){if(sagaAttackQueen())return;shoot()}else sagaAttackGround()}
 function sagaGo(){if(!state.started)begin(false);let loc;
  switch(sagaStage){case 0:loc=[0,27,0];break;case 1:{let t=sagaFoes.find(x=>x.hp>0)||sagaFoes[0];loc=[t.x+2,t.z+3,0];break}case 2:loc=sagaBeacon?[-4,-17,0]:[3,-17,0];break;case 3:loc=[9,16,0];break;case 4:loc=[0,20,17];break;case 5:loc=[3,-38,26];break;case 6:loc=[18,-30,0];break;default:return}
- if(loc[2]>0&&!sky.active)toggleFlight();if(loc[2]===0&&sky.active)toggleFlight();sagaWarp(loc[0],loc[1],loc[2]);toast('MISSION WAYPOINT · '+sagaStages[sagaStage].title.toUpperCase())}
+ if(loc[2]===0&&!STEEL_HILL.canTraverseGround(loc[0],loc[1])){toast('GROUND WAYPOINT UNAVAILABLE');return;}if(loc[2]>0&&!sky.active)toggleFlight();sagaWarp(loc[0],loc[1],loc[2]);if(loc[2]===0&&sky.active)toggleFlight();toast('MISSION WAYPOINT · '+sagaStages[sagaStage].title.toUpperCase())}
 function sagaTick(dt){sagaCooldown=Math.max(0,sagaCooldown-dt);sagaPulse+=dt;if(sagaStage===4&&sky.kills>=6)sagaAdvance();if(sagaPulse>.14){sagaPulse=0;sagaRender()}}
 
 
@@ -1079,7 +1079,7 @@ function sagaAttackQueen(){if(sagaStage!==5||!state.started||!sky.active)return 
 function sagaAttack(){if(sky.active){if(sagaAttackQueen())return;shoot()}else sagaAttackGround()}
 function sagaGo(){if(!state.started)begin(false);let loc;
  switch(sagaStage){case 0:loc=[0,27,0];break;case 1:{let t=sagaFoes.find(x=>x.hp>0)||sagaFoes[0];loc=[t.x+2,t.z+3,0];break}case 2:loc=sagaBeacon?[-4,-17,0]:[3,-17,0];break;case 3:loc=[9,16,0];break;case 4:loc=[0,20,17];break;case 5:loc=[3,-38,26];break;case 6:loc=[18,-30,0];break;default:return}
- if(loc[2]>0&&!sky.active)toggleFlight();if(loc[2]===0&&sky.active)toggleFlight();sagaWarp(loc[0],loc[1],loc[2]);toast('MISSION WAYPOINT · '+sagaStages[sagaStage].title.toUpperCase())}
+ if(loc[2]===0&&!STEEL_HILL.canTraverseGround(loc[0],loc[1])){toast('GROUND WAYPOINT UNAVAILABLE');return;}if(loc[2]>0&&!sky.active)toggleFlight();sagaWarp(loc[0],loc[1],loc[2]);if(loc[2]===0&&sky.active)toggleFlight();toast('MISSION WAYPOINT · '+sagaStages[sagaStage].title.toUpperCase())}
 function sagaTick(dt){sagaCooldown=Math.max(0,sagaCooldown-dt);sagaPulse+=dt;if(sagaStage===4&&sky.kills>=6)sagaAdvance();if(sagaPulse>.14){sagaPulse=0;sagaRender()}}
 
 
