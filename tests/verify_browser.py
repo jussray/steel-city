@@ -74,6 +74,24 @@ def verify(page, url, require_webgl, require_hardware):
     proof = ROOT / "proof" / "steel-city"
     proof.mkdir(parents=True, exist_ok=True)
     page.screenshot(path=str(proof / f"fallback-{page.viewport_size['width']}px.png"))
+    # Idle game updates must keep the mission HUD nodes stable.
+    # Wait for active animation frames, not just an arbitrary fixed sleep.
+    stable_hud = page.evaluate("""() => new Promise(resolve => {
+        const progress = document.querySelector('#storyProgress i');
+        const card = document.querySelector('#storyActCards .storyAct');
+        const start = performance.now();
+        let frames = 0;
+        function check() {
+            frames++;
+            if (frames >= 12 && performance.now() - start >= 500) {
+                resolve(!!progress && !!card &&
+                    progress === document.querySelector('#storyProgress i') &&
+                    card === document.querySelector('#storyActCards .storyAct'));
+            } else requestAnimationFrame(check);
+        }
+        requestAnimationFrame(check);
+    })""")
+    assert stable_hud, "Idle mission HUD unnecessarily replaces existing nodes"
     page.locator("#storyOpen").click()
     assert page.locator(".storyAct").count() == 7, "Expected seven acts in journal"
     page.locator("#storyClose").click()
