@@ -597,13 +597,22 @@ star(cx,cy,cz,u,v,R,r,depth,col,emi=0){
  for(let k=0;k<10;k++){const a=pt(k),b=pt(k+1);this.tri(F,a,b,col,emi);this.tri(B,b,a,col,emi)}
 }
 ellipsoid(x,y,z,rx,ry,rz,col,emi=0,segments=10,rings=6){
- // Faceted original helmet/armor primitive, actual 3D triangles with lit normals.
+ // Smooth outward normals for original character and armor geometry. Reuse ring
+ // vertices inside this primitive; keep the exact triangle budget and silhouette.
+ const C=c(col),grid=[];
+ for(let lat=0;lat<=rings;lat++){
+  const theta=lat/rings*Math.PI,st=Math.sin(theta),ct=Math.cos(theta),row=[];
+  for(let lon=0;lon<segments;lon++){
+   const phi=lon/segments*2*Math.PI,cp=Math.cos(phi),sp=Math.sin(phi),ux=st*cp,uz=st*sp;
+   row.push({p:[x+rx*ux,y+ry*ct,z+rz*uz],n:unit([ux/rx,ct/ry,uz/rz])});
+  }
+  grid.push(row);
+ }
+ const tri=(a,b,d)=>{for(const v of [a,b,d])this.vert(v.p,v.n,C,emi)};
  for(let lat=0;lat<rings;lat++)for(let lon=0;lon<segments;lon++){
-  const a=lat/rings*Math.PI,b=(lat+1)/rings*Math.PI,c=lon/segments*2*Math.PI,d=(lon+1)/segments*2*Math.PI;
-  const p=(u,v)=>[x+rx*Math.sin(u)*Math.cos(v),y+ry*Math.cos(u),z+rz*Math.sin(u)*Math.sin(v)];
-  const p0=p(a,c),p1=p(b,c),p2=p(b,d),p3=p(a,d);
-  if(lat!==0)this.tri(p0,p1,p3,col,emi);
-  if(lat!==rings-1)this.tri(p1,p2,p3,col,emi);
+  const nn=(lon+1)%segments,p0=grid[lat][lon],p1=grid[lat+1][lon],p2=grid[lat+1][nn],p3=grid[lat][nn];
+  if(lat!==0)tri(p0,p3,p1);
+  if(lat!==rings-1)tri(p1,p3,p2);
  }
 }}
 const STEEL_HILL=window.__steelHillsideContract;
