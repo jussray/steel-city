@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - feat/market-square-detail-20261128
       - build/restore-steel-city-saga
       - fix/steel-city-hillside-parity-20261115
       - claude/magical-fermat-psq8s1
@@ -28,6 +29,8 @@ jobs:
           python -m playwright install chromium
       - name: Verify native source contracts (not Unreal compilation)
         run: python tests/verify_native_source.py
+      - name: Verify market storefront geometry boundaries
+        run: python tests/verify_market_detail.py
       - name: Verify smooth character geometry and face winding
         run: python tests/verify_mesh_normals.py
       - name: Verify collection boundary and emissive light selection

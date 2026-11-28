@@ -715,6 +715,31 @@ const towers=[[-17,-28,9,9,24,'#27354c','#e0b86d'],[19,-24,11,12,40,'#1b2839','#
 tower(-34,-52,11,11,37,'#35445c','#bdd2e8',2.15);for(let sx of [-1,1])for(let sz of [-1,1]){let xx=-34+sx*4.5,zz=-52+sz*4.5;world.box(xx,38.3,zz,1.45,3.1,1.45,'#707d8e');world.pyramid(xx,40,zz,2.1,5,2.1,'#d5b478',.35)}
 // More low-rise neighborhood architecture along the streets, with navigation gaps.
 for(let zz of [-32,-9,16,39])for(let xx of [-47,-35,-23,23,35,47]){if(Math.abs(zz+9)<1&&xx===23)continue;let w=R(7,10),d=R(7,10),h=R(5,12);if(zz===-32||zz===39){tower(xx,zz,w,d,h,rand()>.5?'#37404a':'#43404a',rand()>.5?'#f4c07f':'#92aec0',2.4)}else if(Math.abs(xx)>20){tower(xx,zz,w,d,h,'#3a4556','#ddbf8b',2.7)}}
+// Market district detail: facade cladding only, never new collision or navigation objects.
+function addMarketStorefronts(mesh, buildings){
+ let facades=0, pieces=0;
+ for(const b of buildings){
+  if(b.kind||Math.abs(b.x)<15||Math.abs(b.x)>30||b.z< -10||b.z>44||b.h>30)continue;
+  const side=b.x<0?1:-1, face=b.x+side*b.w*.5, width=b.d*.80, center=b.z;
+  const box=(offset,y,z,depth,height,w,col,emission=0)=>{mesh.box(face+side*offset,y,z,depth,height,w,col,emission);pieces++};
+  box(.025,1.35,center,.05,2.35,width,'#172534');
+  for(let k=-1;k<=1;k++){
+   const z=center+k*width*.31;
+   box(.057,1.32,z,.014,1.83,width*.26,k===0?'#344f63':'#526b78',.12);
+   box(.068,1.72,z,.010,.46,width*.23,k===0?'#8ebac5':'#e4b877',.36);
+   box(.069,.63,z,.012,.08,width*.24,'#a28b66',.08);
+   box(.075,1.34,z,.015,1.85,.055,'#bca67c',.08);
+  }
+  for(let k=-2;k<=2;k++)box(.073,1.34,center+k*width*.235,.030,2.35,.095,'#b6a082',.08);
+  box(.067,2.70,center,.060,.16,width,'#b8a17b',.14);
+  box(.069,2.46,center,.042,.24,width*.94,'#33465d');
+  box(.081,2.46,center,.014,.055,width*.83,'#ffd18a',.72);
+  box(.058,.17,center,.055,.22,width,'#58626b');
+  facades++;
+ }
+ return {revision:'market-storefront-v1',facades,pieces};
+}
+const marketDetail=addMarketStorefronts(world,buildings);
 // Sidewalk planters, trees and lamp glow.
 function tree(x,z){world.rod([x,.1,z],[x,3,z],.25,'#544b3c');for(let p=0;p<3;p++)world.pyramid(x+R(-.8,.8),2.5+p*.55,z+R(-.8,.8),3.1,2.5,3.1,p===0?'#1f554c':'#265d53')}
 for(let z=-30;z<46;z+=9.4){for(let x of [-9.8,9.8]){world.rod([x,0,z],[x,5,z],.10,'#879aa7');world.rod([x,4.8,z],[x+(x<0?1:-1)*1.1,4.8,z],.11,'#9aa8a9');world.box(x+(x<0?1:-1)*1.1,4.67,z,.9,.13,.45,'#ffe0a0',1.45)}if(z%2<1)tree(-12,z)}
@@ -1121,7 +1146,7 @@ function createSteelBloom(){
 const steelBloom=createSteelBloom();
 let prev=0;function loop(ts){let dt=Math.min(.12,Math.max(0,(ts-prev)/1000||0));prev=ts;resize();for(let remaining=dt;remaining>.0001;remaining-=.05)tick(Math.min(.05,remaining));let p=state.pos,cf=cineFrame(p,dt),ey=cf.eye;for(let i=0;i<3;i++)state.cam[i]+=(ey[i]-state.cam[i])*cf.k;gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(.026,.038,.080,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.uniformMatrix4fv(loc.proj,false,perspective(cf.fov,canvas.width/canvas.height,.1,220));gl.uniformMatrix4fv(loc.view,false,look(state.cam,cf.target));gl.uniform3fv(loc.cam,new Float32Array(state.cam));gl.uniform2f(locRes,canvas.width,canvas.height);gl.uniform1f(loc.time,state.t);const glow=selectLocalGlow(p,state.started,state.stars,pickups,sky.shots,state.t);gl.uniform4fv(locGoldGlow,glow.gold);gl.uniform4fv(locCyanGlow,glow.cyan);gl.uniform1f(loc.staticScene,1);drawBuffer(sbuf,worldBuf.length/10);renderDynamic();gl.uniform1f(loc.staticScene,0);drawBuffer(dbuf,dynamic.v.length/10);if(state.started&&steelBloom)steelBloom.apply();map();requestAnimationFrame(loop)}resize();state.cam=[0,10,40];requestAnimationFrame(loop);
 window.__steelCityDebug=()=>({castRevision:CAST_REVISION,heroShapeRevision:HERO_SHAPE_REVISION,castStats:{...castStats},marketClock:{...MARKET_CLOCK},graphicsRevision:'cinematic-geometry-v3',lightingRevision:'rain-slick-neon-v2',materialRevision:'masonry-glass-puddles-v1',neighborhoodDetail:'mount-washington-homes-v2',bridgeDetail:STEEL_BRIDGE.revision,bridgeTrussSegments,bridgeFinishRevision:STEEL_BRIDGE.finish.revision,bridgeFinishPieces,bridgeLightingRevision:BRIDGE_LIGHT.revision,bridgePortalMasonry,hillsideWalkMinZ:STEEL_HILL.ACCESS.groundMinZ,hillsideHomeCount:hillsideHomes.length,hillsideSolidCount:buildings.filter(b=>b.kind==='hillside-home').length,hillsideHomeFootprints:buildings.filter(b=>b.kind==='hillside-home').map(b=>({x:b.x,z:b.z,w:b.w,d:b.d,h:b.h,baseY:b.baseY})),campaignStage:sagaStage,campaignComplete:sagaCompleted,campaignBeacon:sagaBeacon,campaignCrewAlive:sagaFoes.filter(x=>x.hp>0).length,campaignJackalHp:sagaJackal.hp,campaignQueenHp:sagaQueen.hp,started:state.started,x:+state.pos.x.toFixed(2),y:+state.pos.y.toFixed(2),z:+state.pos.z.toFixed(2),stars:state.stars,total:pickups.length,worldTriangles:worldBuf.length/30,webgl:true,freeRoam:true,motionBlend:+state.moveBlend.toFixed(3),gaitPhase:+state.gaitPhase.toFixed(3),sound:state.sound,finished:state.finished,cameraYaw:state.yaw,joystickX:+(window.__steelJoystick?.x||0).toFixed(3),joystickY:+(window.__steelJoystick?.y||0).toFixed(3),skyMode:sky.active,health:sky.hp,bugsDefeated:sky.kills,bugsAlive:sky.enemies.filter(e=>!e.dead).length,shots:sky.shots.length,enemyShots:sky.enemyShots.length});
-{const base=window.__steelCityDebug;window.__steelCityDebug=()=>({...base(),surfaceDetailRevision:'steel-armor-asphalt-v1',bloom:steelBloom?{...steelBloom.stats}:{enabled:false,frames:0,reason:'experimental bloom is opt-in (?bloom=on)'},cinematicRevision:CINE.revision,cinematicCamera:{mode:CINE.camera.mode,fovDeg:+(cineFov*180/Math.PI).toFixed(1),shoulder:+cineShoulder.toFixed(2)},cinematicPieces})}
+{const base=window.__steelCityDebug;window.__steelCityDebug=()=>({...base(),marketDetail:{...marketDetail},surfaceDetailRevision:'steel-armor-asphalt-v1',bloom:steelBloom?{...steelBloom.stats}:{enabled:false,frames:0,reason:'experimental bloom is opt-in (?bloom=on)'},cinematicRevision:CINE.revision,cinematicCamera:{mode:CINE.camera.mode,fovDeg:+(cineFov*180/Math.PI).toFixed(1),shoulder:+cineShoulder.toFixed(2)},cinematicPieces})}
 })();
 </script><script>// Portable perspective renderer: used only when WebGL is disabled by device or policy.
 (()=>{
