@@ -55,6 +55,8 @@ with sync_playwright() as p:
             assert before.get("bridgePortalMasonry") == 8, before
             assert before.get("cinematicRevision") == "storyboard-city-v1", before
             assert before.get("surfaceDetailRevision") == "steel-armor-asphalt-v1", before
+            market = before["marketDetail"]
+            assert market["revision"] == "market-storefront-v1" and market["facades"] > 0 and market["pieces"] == market["facades"] * 22, market
             lighting = page.evaluate("window.__steelBridgeContract.lighting")
             assert lighting["archEmission"] <= .15 and lighting["railEmission"] <= .15, lighting
             assert before.get("hillsideHomeCount") == 11, before

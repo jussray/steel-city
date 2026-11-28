@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - feat/market-square-detail-20261128
       - build/restore-steel-city-saga
       - fix/steel-city-hillside-parity-20261115
       - claude/magical-fermat-psq8s1
@@ -28,6 +29,12 @@ jobs:
           python -m playwright install chromium
       - name: Verify native source contracts (not Unreal compilation)
         run: python tests/verify_native_source.py
+      - name: Verify slow-render simulation timing and hidden-tab reset
+        run: python tests/verify_simulation_clock.py
+      - name: Verify dual-touch camera ownership and movement heading
+        run: python tests/verify_camera_input.py
+      - name: Verify market storefront geometry boundaries
+        run: python tests/verify_market_detail.py
       - name: Verify smooth character geometry and face winding
         run: python tests/verify_mesh_normals.py
       - name: Verify collection boundary and emissive light selection
@@ -40,6 +47,8 @@ jobs:
         run: python scripts/export_graphics.py
       - name: Desktop and mobile joystick, camera, and skyline proof
         run: python tests/verify_joystick.py
+      - name: Verify simultaneous real touch movement and camera drag in both renderers
+        run: xvfb-run -a python tests/verify_dual_touch.py
       - name: Verify 3D scene WebGL rendering (software GPU, not production proof)
         run: xvfb-run -a python tests/verify_webgl.py
       - name: Verify screen-space bloom pixels, resize and opt-out (software GPU)
