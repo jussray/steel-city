@@ -29,6 +29,8 @@ jobs:
           python -m playwright install chromium
       - name: Verify native source contracts (not Unreal compilation)
         run: python tests/verify_native_source.py
+      - name: Verify dual-touch camera ownership and movement heading
+        run: python tests/verify_camera_input.py
       - name: Verify market storefront geometry boundaries
         run: python tests/verify_market_detail.py
       - name: Verify smooth character geometry and face winding
